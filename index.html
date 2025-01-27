@@ -214,13 +214,28 @@
     #newRunBtn {
       font-variant: small-caps;
     }
+
+    #jsonFileInputGroup {
+      margin-right:100px;
+      padding-top:1em;
+    }
+
+    #jsonFileInput {
+      text-align: center;
+    }
   </style>
 </head>
-<body>
 <div class="container">
   <div class="d-flex align-items-center justify-content-between mb-4">
     <h1 class="m-0">QuickChart</h1>
     <div class="d-flex align-items-center">
+      <!-- Add this new section for JSON file input -->
+      <div class="d-flex justify-content-center mb-4">
+        <div class="input-group" id="jsonFileInputGroup" style="max-width: 400px;">
+          <input type="text" id="jsonFileInput" class="form-control" placeholder="Format Code" value="default"/>
+          <button id="loadJsonBtn" class="btn btn-primary">Load</button>
+        </div>
+      </div>
       <div class="form-check form-switch me-3">
         <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
         <label class="form-check-label" for="toggleSectionTitles">
@@ -321,20 +336,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     buildSections();
   } catch (err) {
     console.error("Failed to load default.json", err);
-
-    // For testing, you can create a fallback section with a customDropdown example:
-    dchartSections = [
-      {
-        part: "Testing",
-        includeTitle: true,
-        sentences: [
-          {
-            text: "Patient prefers [customDropdown:Fruits:Apple,Banana,Cherry] to other fruits.",
-          }
-        ]
-      }
-    ];
-    buildSections();
   }
 });
 
@@ -1007,6 +1008,67 @@ function showConfirmationModal(title, message, disclaimer, callbackYes, callback
   const modal = new bootstrap.Modal(document.getElementById("confirmationModal"));
   modal.show();
 }
+
+document.getElementById("loadJsonBtn").addEventListener("click", async () => {
+  const jsonFileName = document.getElementById("jsonFileInput").value.trim()+".json";
+  if (!jsonFileName) {
+    alert("Invalid Code");
+    return;
+  }
+
+  try {
+    const response = await fetch(jsonFileName);
+    if (!response.ok) {
+      throw new Error("Invalid Code");
+    }
+    const data = await response.json();
+
+    // Update the global data with the new JSON file
+    rawCommonSentences = data.commonSentences || [];
+    globalDropdownOptions = data.globalDropdownOptions || {};
+    defaultDchartSections = data.dchartSections || [];
+
+    commonSentences = rawCommonSentences.map((s) => ({
+      original: s,
+      display: shortPlaceholderString(s),
+      searchable: expandedPlaceholderString(s),
+    }));
+
+    fuse = new Fuse(commonSentences, fuseOptions);
+
+    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+
+    buildSections();
+  } catch (err) {
+    console.error(`Failed to load ${jsonFileName}`, err);
+    alert(`Failed to load ${jsonFileName}. Falling back to default.json.`);
+
+    // Fall back to default.json
+    try {
+      const defaultResponse = await fetch("default.json");
+      const defaultData = await defaultResponse.json();
+
+      rawCommonSentences = defaultData.commonSentences || [];
+      globalDropdownOptions = defaultData.globalDropdownOptions || {};
+      defaultDchartSections = defaultData.dchartSections || [];
+
+      commonSentences = rawCommonSentences.map((s) => ({
+        original: s,
+        display: shortPlaceholderString(s),
+        searchable: expandedPlaceholderString(s),
+      }));
+
+      fuse = new Fuse(commonSentences, fuseOptions);
+
+      dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+
+      buildSections();
+    } catch (defaultErr) {
+      console.error("Failed to load default.json", defaultErr);
+      alert("Failed to load default.json. Please check the file and try again.");
+    }
+  }
+});
 </script>
 </body>
 </html>
