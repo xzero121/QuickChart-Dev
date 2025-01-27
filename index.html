@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuickChart</title>
+
+  <!-- Bootstrap 5 (CDN) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  />
+  <!-- SortableJS (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <!-- Fuse.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
+
+  <style>
+    body {
+      padding: 1rem;
+    }
+    .dchart-section {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .section-title {
+      margin: 0;
+    }
+    .sentence-list {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 0;
+      min-height: 2rem;
+    }
+    .sentence-list li {
+      background: #ffffff;
+      margin-bottom: 0.5rem;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      position: relative;
+      padding: 1rem 2rem 0.75rem 2.5rem;
+    }
+    .has-tabs:not(:first-child) {
+      margin-top: 2.5rem;
+    }
+    .drag-handle {
+      position: absolute;
+      left: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: move;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+    .remove-sentence-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      color: red;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+    .remove-sentence-btn:hover {
+      color: darkred;
+    }
+    .add-item-form {
+      display: inline-block;
+      width: 100%;
+      position: relative;
+    }
+    .add-item-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      align-items: center;
+      width: 100%;
+    }
+    .add-item-form input[type="text"] {
+      flex: 1;
+    }
+    .suggestions-box {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 42px;
+      z-index: 999;
+      background: white;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    .suggestions-box ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .suggestions-box li {
+      padding: 6px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .suggestions-box li:hover,
+    .suggestions-box li.highlight {
+      background-color: #e9ecef;
+    }
+    .inline-field {
+      display: inline-block;
+      width: auto;
+      min-width: 50px;
+      margin: 0 3px;
+      vertical-align: baseline;
+      font-size: 1em;
+      border: none;
+      border-bottom: 1px dotted #777;
+      background-color: transparent;
+      padding: 0 2px;
+      outline: none;
+      text-align: left;
+    }
+    .inline-field::placeholder {
+      text-align: center;
+    }
+    .inline-field:focus {
+      border-bottom-color: #000;
+    }
+    .custom-dropdown {
+      display: inline-block;
+      position: relative;
+    }
+    .suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 999;
+      display: none;
+      margin-top: 4px;
+      width: 200px;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      padding: 0;
+      list-style: none;
+    }
+    .suggestions li {
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+    .suggestions li:hover,
+    .suggestions li.highlight {
+      background-color: #e9ecef;
+    }
+    .tabs-container {
+      position: absolute;
+      top: -1.7rem;  
+      left: 2.5rem; 
+      display: flex;
+      gap: 4px;
+    }
+    .tab-button {
+      padding: 2px 8px;
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: 4px 4px 0 0;
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+      top: 1px;
+    }
+    .tab-button.active {
+      background-color: #fff;
+      border-bottom: 1px solid #fff;
+      z-index: 2;
+    }
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+    #license {
+      font-size: 0.9rem;
+    }
+    #license a {
+      font-weight: bold;
+      color: var(--bs-alert-color)
+    }
+    /* Capitalize the "NEW RUN" button text */
+    #newRunBtn {
+      font-variant: small-caps;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="m-0">QuickChart</h1>
+    <div class="d-flex align-items-center">
+      <div class="form-check form-switch me-3">
+        <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
+        <label class="form-check-label" for="toggleSectionTitles">
+          Include Section Titles in Final Output
+        </label>
+      </div>
+      <button id="newRunBtn" class="btn btn-warning">New Run</button>
+    </div>
+  </div>
+
+  <div id="sectionContainer"></div>
+
+  <button id="generateBtn" class="btn btn-primary mb-3">Generate Final Text</button>
+
+  <div class="mb-3">
+    <label class="form-label fw-bold">Final Narrative</label>
+    <textarea class="form-control" id="finalText" rows="4"></textarea>
+  </div>
+
+  <button id="copyBtn" class="btn btn-success mb-5">Copy to Clipboard</button>
+
+  <!-- Disclaimer -->
+  <div id="disclaimer" class="alert alert-secondary py-1 text-center" role="alert">
+    <strong>Disclaimer:</strong> No information is stored or sent to a server. 
+    All data is stored in your browser's memory.
+  </div>
+  <div id="license" class="alert alert-light py-1 text-center" role="alert" xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
+    <a property="dct:title" rel="cc:attributionURL" href="https://xzero121.github.io/QuickChart/">QuickChart</a> by <span property="cc:attributionName">B. Brown, EMT-B</span> is licensed under 
+    <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-ND 4.0
+    <img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1" alt="">
+    </a>
+  </div>
+</div>
+
+<!-- Modal for confirmations -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmationModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="confirmationModalBody"></div>
+      <div class="modal-footer d-flex align-items-center justify-content-between">
+        <div id="confirmationDisclaimer" class="text-muted small"></div>
+        <div>
+          <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes</button>
+          <button type="button" class="btn btn-secondary" id="confirmNoBtn">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
+
+<script>
+/**
+ * Regex to match placeholders:
+ *  [text:Label]
+ *  [number:Label]
+ *  [dropdown:Label:Option1,Option2,etc]
+ *  [customDropdown:Label:Option1,Option2,etc]
+ */
+const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
+
+/** Data placeholders we will fetch from default.json */
+let rawCommonSentences = [];
+let commonSentences = [];
+let globalDropdownOptions = {};
+let defaultDchartSections = [];
+let dchartSections = [];
+
+/** For fuzzy searching the "common sentences" */
+let fuse;
+const fuseOptions = {
+  keys: ["display", "searchable"],
+  includeMatches: true,
+  threshold: 0.01,
+  minMatchCharLength: 2,
+  ignoreLocation: true
+};
+
+/**
+ * Called once DOM is loaded, and we then fetch the default.json file
+ * to populate the data
+ */
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const response = await fetch("default.json");
+    const data = await response.json();
+
+    // Merge the fetched data
+    rawCommonSentences = data.commonSentences || [];
+    globalDropdownOptions = data.globalDropdownOptions || {};
+    defaultDchartSections = data.dchartSections || [];
+
+    // Initialize commonSentences
+    commonSentences = rawCommonSentences.map((s) => ({
+      original: s,
+      display: shortPlaceholderString(s),
+      searchable: expandedPlaceholderString(s),
+    }));
+
+    // Initialize Fuse for searching
+    fuse = new Fuse(commonSentences, fuseOptions);
+
+    // Clone the default sections into the working array
+    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+
+    // Finally, build the UI
+    buildSections();
+  } catch (err) {
+    console.error("Failed to load default.json", err);
+  }
+});
+
+/** Resets everything back to the default data and rebuilds the UI */
+function resetAll() {
+  dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+  buildSections();
+  document.getElementById("finalText").value = "";
+}
+
+/** Helper to create shorter version of placeholders for display in suggestion box */
+function shortPlaceholderString(sentence) {
+  return sentence.replace(placeholderRegex, (match, type, label) => {
+    return `[${label}]`;
+  });
+}
+
+/** Helper to create an expanded placeholder string (for better search results) */
+function expandedPlaceholderString(sentence) {
+  return sentence.replace(placeholderRegex, (match, theType, label, opts) => {
+    if (!opts) {
+      return `[${label}]`;
+    }
+    return `[${label}(${opts})]`;
+  });
+}
+
+/** 
+ * Rebuilds the entire DCHART UI from the dchartSections data structure. 
+ * Ensures that any existing inline field values are stored before rebuild.
+ */
+function buildSections() {
+  // first store user inputs so we don't lose them
+  storeAllInlineValues();
+
+  // Reassign IDs in case user re-ordered sections or added new lines
+  assignDynamicIDs();
+
+  const container = document.getElementById("sectionContainer");
+  container.innerHTML = "";
+
+  dchartSections.forEach((secObj) => {
+    const sectionDiv = document.createElement("div");
+    sectionDiv.classList.add("dchart-section");
+    sectionDiv.dataset.part = secObj.part;
+
+    // Section Header
+    const header = document.createElement("div");
+    header.classList.add("section-header");
+    const titleEl = document.createElement("h5");
+    titleEl.classList.add("section-title");
+    titleEl.innerText = secObj.part;
+    header.appendChild(titleEl);
+    sectionDiv.appendChild(header);
+
+    // Sentence list
+    const ul = document.createElement("ul");
+    ul.classList.add("sentence-list");
+    ul.dataset.part = secObj.part;
+
+    secObj.sentences.forEach((sentenceObj) => {
+      const li = document.createElement("li");
+      li.dataset.id = sentenceObj.id;
+
+      const handle = document.createElement("span");
+      handle.classList.add("drag-handle");
+      handle.innerHTML = "&#9776;";
+      li.appendChild(handle);
+
+      // If we have tabs
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        // This sentence is a "tabbed" group
+        li.classList.add("has-tabs");
+        const tabsContainer = document.createElement("div");
+        tabsContainer.classList.add("tabs-container");
+
+        // Create each tab button
+        sentenceObj.tabs.forEach((tab, i) => {
+          const tabBtn = document.createElement("div");
+          tabBtn.classList.add("tab-button");
+          if (i === sentenceObj.activeTabIndex) {
+            tabBtn.classList.add("active");
+          }
+          tabBtn.innerText = tab.title || `Tab ${i + 1}`;
+          tabBtn.addEventListener("click", () => {
+            storeAllInlineValues();
+            sentenceObj.activeTabIndex = i;
+            buildSections();
+          });
+          tabsContainer.appendChild(tabBtn);
+        });
+        li.appendChild(tabsContainer);
+
+        // Create each tab pane
+        sentenceObj.tabs.forEach((tab, i) => {
+          const tabPane = document.createElement("div");
+          tabPane.classList.add("tab-pane");
+          tabPane.dataset.tabIndex = i;
+          if (i === sentenceObj.activeTabIndex) {
+            tabPane.classList.add("active");
+          }
+          tabPane.innerHTML = buildInlineFieldsForTab(sentenceObj, i);
+          li.appendChild(tabPane);
+        });
+      } else {
+        // Normal sentence
+        li.innerHTML += buildInlineFields(sentenceObj.text, sentenceObj.values);
+      }
+
+      // Remove-sentence button
+      const removeBtn = document.createElement("button");
+      removeBtn.classList.add("remove-sentence-btn");
+      removeBtn.type = "button";
+      removeBtn.innerHTML = "&times;";
+      removeBtn.title = "Remove this sentence";
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showConfirmationModal(
+          "Remove this sentence?",
+          "Are you sure you want to remove this sentence?",
+          "",
+          () => {
+            removeSentence(secObj.part, sentenceObj.id);
+            buildSections();
+          },
+          () => {}
+        );
+      });
+      li.appendChild(removeBtn);
+
+      ul.appendChild(li);
+    });
+
+    sectionDiv.appendChild(ul);
+
+    // Form to add a new sentence
+    const form = document.createElement("form");
+    form.classList.add("add-item-form");
+    form.dataset.part = secObj.part;
+
+    const groupDiv = document.createElement("div");
+    groupDiv.classList.add("add-item-group");
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.classList.add("form-control", "form-control-sm");
+    input.placeholder = "add a new sentence...";
+
+    const addBtn = document.createElement("button");
+    addBtn.type = "submit";
+    addBtn.classList.add("btn", "btn-sm", "btn-secondary");
+    addBtn.innerText = "Add";
+
+    groupDiv.appendChild(input);
+    groupDiv.appendChild(addBtn);
+
+    const suggestionsBox = document.createElement("div");
+    suggestionsBox.classList.add("suggestions-box");
+    suggestionsBox.innerHTML = `<ul></ul>`;
+
+    form.appendChild(groupDiv);
+    form.appendChild(suggestionsBox);
+
+    // Handle manual sentence addition
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newText = input.value.trim();
+      if (newText) {
+        secObj.sentences.push({ text: newText });
+        buildSections();
+      }
+      input.value = "";
+      suggestionsBox.style.display = "none";
+    });
+
+    // Handle suggestions from the commonSentences via fuse
+    input.addEventListener("input", () => {
+      const query = input.value.trim();
+      if (!query) {
+        suggestionsBox.style.display = "none";
+        fuseResults = [];
+        focusedIndex = -1;
+        return;
+      }
+      fuseResults = fuse.search(query);
+      if (fuseResults.length === 0) {
+        suggestionsBox.style.display = "none";
+        focusedIndex = -1;
+        return;
+      }
+      const ulEl = suggestionsBox.querySelector("ul");
+      ulEl.innerHTML = "";
+      fuseResults.forEach((res) => {
+        const li = document.createElement("li");
+        li.textContent = res.item.display;
+        li.addEventListener("mousedown", () => {
+          secObj.sentences.push({ text: res.item.original });
+          input.value = "";
+          suggestionsBox.style.display = "none";
+          buildSections();
+        });
+        ulEl.appendChild(li);
+      });
+      suggestionsBox.style.display = "block";
+      focusedIndex = -1;
+    });
+
+    // Arrow key navigation for suggestions
+    input.addEventListener("keydown", (e) => {
+      const listEl = suggestionsBox.querySelector("ul");
+      if (!listEl) return;
+      const items = Array.from(listEl.querySelectorAll("li"));
+      if (items.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        focusedIndex = (focusedIndex + 1) % items.length;
+        highlightSuggestion(items, focusedIndex);
+      }
+      else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        focusedIndex = (focusedIndex - 1 + items.length) % items.length;
+        highlightSuggestion(items, focusedIndex);
+      }
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        if (focusedIndex >= 0 && focusedIndex < items.length) {
+          // "Click" the highlighted item
+          items[focusedIndex].click();
+        }
+      }
+      else if (e.key === "Escape") {
+        suggestionsBox.style.display = "none";
+      }
+    });
+
+    // Hide suggestions on blur
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        suggestionsBox.style.display = "none";
+      }, 150);
+    });
+
+    sectionDiv.appendChild(form);
+    container.appendChild(sectionDiv);
+  });
+
+  // Make the sentences sortable across sections
+  makeSentencesDraggable();
+  // Activate the custom dropdown logic
+  attachDropdownLogic();
+}
+
+/**
+ * Loops through each section's sentences and ensures every sentence has a unique ID.
+ */
+function assignDynamicIDs() {
+  let counter = 1;
+  dchartSections.forEach((section) => {
+    section.sentences.forEach((sentenceObj) => {
+      if (!sentenceObj.id) {
+        sentenceObj.id = "sentence-" + counter++;
+      }
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        // default active tab
+        if (typeof sentenceObj.activeTabIndex === "undefined") {
+          sentenceObj.activeTabIndex = 0;
+        }
+        // store tab-specific values
+        if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues)) {
+          sentenceObj.tabValues = sentenceObj.tabs.map(() => []);
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Collects current text/number dropdown values from inline fields in the DOM
+ * and saves them back into dchartSections so they persist after rebuild.
+ */
+function storeAllInlineValues() {
+  dchartSections.forEach((section) => {
+    section.sentences.forEach((sentenceObj) => {
+      const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
+      if (!li) return;
+
+      // If sentence has tabs, gather values from the active tab
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        sentenceObj.tabs.forEach((tab, tabIndex) => {
+          const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
+          if (!tabPane) return;
+          const fields = Array.from(tabPane.querySelectorAll(".inline-field"));
+          fields.forEach((field, idx) => {
+            sentenceObj.tabValues[tabIndex][idx] = field.value;
+          });
+        });
+      } else {
+        // Simple sentence
+        const fields = Array.from(li.querySelectorAll(".inline-field:not(.tab-pane .inline-field)"));
+        if (!sentenceObj.values) {
+          sentenceObj.values = [];
+        }
+        fields.forEach((field, idx) => {
+          sentenceObj.values[idx] = field.value;
+        });
+      }
+    });
+  });
+}
+
+/**
+ * Removes a sentence from a specific DCHART part.
+ */
+function removeSentence(partLabel, sentenceId) {
+  const section = dchartSections.find((s) => s.part === partLabel);
+  if (!section) {
+    console.error(`Section "${partLabel}" not found.`);
+    return;
+  }
+  const idx = section.sentences.findIndex((s) => s.id === sentenceId);
+  if (idx === -1) {
+    console.error(`Sentence ID "${sentenceId}" not found in "${partLabel}".`);
+    return;
+  }
+  section.sentences.splice(idx, 1);
+}
+
+/**
+ * Builds inline fields for placeholders in a standard (non-tabbed) sentence.
+ */
+function buildInlineFields(text, valuesArray) {
+  let placeholderIndex = 0;
+  const cleanText = text.replace(/<br\s*\/?>/gi, "");
+  return cleanText.replace(placeholderRegex, (match, type, label, options) => {
+    const val = (valuesArray && valuesArray[placeholderIndex]) || "";
+    placeholderIndex++;
+
+    let optsArray = [];
+    // If options (like "14G,16G,18G") are present, split them
+    if (options) {
+      optsArray = options.split(",").map((x) => x.trim());
+    } 
+    // Or if a globalDropdownOptions entry exists, use it
+    else if (globalDropdownOptions[label]) {
+      optsArray = globalDropdownOptions[label];
+    }
+
+    // Create the appropriate input or custom dropdown UI
+    if (type === "customDropdown") {
+      const listItems = optsArray.map(opt => `<li>${opt}</li>`).join("");
+      return `
+        <div class="custom-dropdown">
+          <input
+            type="text"
+            autocapitalize="none"
+            class="inline-field custom-dropdown-input"
+            data-type="customDropdown"
+            data-label="${label}"
+            placeholder="${label}"
+            value="${val}"
+          />
+          <ul class="suggestions">
+            ${listItems}
+          </ul>
+        </div>
+      `;
+    } else if (type === "dropdown") {
+      const dlId = "dl-" + Math.random().toString(36).substring(2);
+      let dataListHTML = `<datalist id="${dlId}">`;
+      optsArray.forEach((opt) => {
+        dataListHTML += `<option value="${opt}"></option>`;
+      });
+      dataListHTML += `</datalist>`;
+      return `
+        <span style="white-space:nowrap;">
+          <input
+            type="text"
+            autocapitalize="none"
+            list="${dlId}"
+            class="inline-field"
+            data-type="dropdown"
+            data-label="${label}"
+            placeholder="${label}"
+            value="${val}"
+          />
+          ${dataListHTML}
+        </span>
+      `;
+    } else if (type === "text") {
+      return `
+        <input
+          type="text"
+          autocapitalize="none"
+          class="inline-field"
+          data-type="text"
+          data-label="${label}"
+          placeholder="${label}"
+          value="${val}"
+        />
+      `;
+    } else if (type === "number") {
+      return `
+        <input
+          type="number"
+          autocapitalize="none"
+          class="inline-field"
+          data-type="number"
+          data-label="${label}"
+          placeholder="${label}"
+          value="${val}"
+        />
+      `;
+    }
+
+    // fallback if none matched
+    return match;
+  });
+}
+
+/**
+ * For a tabbed sentence, builds the placeholders in the active tab’s text.
+ */
+function buildInlineFieldsForTab(sentenceObj, tabIndex) {
+  const tabContent = sentenceObj.tabs[tabIndex].text || "";
+  const tabValuesArray = sentenceObj.tabValues[tabIndex] || [];
+  return buildInlineFields(tabContent, tabValuesArray);
+}
+
+/**
+ * Enables drag-and-drop reordering across all .sentence-list elements.
+ */
+function makeSentencesDraggable() {
+  const lists = document.querySelectorAll(".sentence-list");
+  lists.forEach((ul) => {
+    new Sortable(ul, {
+      animation: 150,
+      group: { name: "dchartGroup", pull: true, put: true },
+      handle: ".drag-handle",
+      onEnd: () => {
+        storeAllInlineValues();
+
+        // gather up all the sentences in memory by ID
+        const sentenceMap = {};
+        dchartSections.forEach((sec) => {
+          sec.sentences.forEach((sent) => {
+            sentenceMap[sent.id] = sent;
+          });
+        });
+        // clear out each section
+        dchartSections.forEach((sec) => {
+          sec.sentences = [];
+        });
+
+        // Re-populate dchartSections based on new DOM order
+        const container = document.getElementById("sectionContainer");
+        const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
+        partDivs.forEach((div) => {
+          const partLabel = div.dataset.part;
+          const section = dchartSections.find((s) => s.part === partLabel);
+          if (!section) return;
+          const ulEl = div.querySelector(".sentence-list");
+          const liArray = Array.from(ulEl.children).filter((child) => child.matches("li[data-id]"));
+          liArray.forEach((li) => {
+            const id = li.dataset.id;
+            if (sentenceMap[id]) {
+              section.sentences.push(sentenceMap[id]);
+            } else {
+              // fallback if not found in dictionary
+              section.sentences.push({ id, text: li.innerText });
+            }
+          });
+        });
+        buildSections();
+      },
+    });
+  });
+}
+
+/**
+ * Attach logic to custom dropdowns so they filter as you type
+ */
+/**
+ * Attaches the logic for custom dropdowns: focusing, selecting, up/down arrows, etc.
+ */
+function attachDropdownLogic() {
+  document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
+    const input = dropdown.querySelector(".custom-dropdown-input");
+    const suggestionBox = dropdown.querySelector(".suggestions");
+    if (!input || !suggestionBox) return;
+
+    let focusedIndex = -1;
+    let items = Array.from(suggestionBox.querySelectorAll("li"));
+
+    // Show all items on focus
+    input.addEventListener("focus", () => {
+      suggestionBox.style.display = "block";
+    });
+
+    // Filter suggestions on input
+    input.addEventListener("input", () => {
+      const val = input.value.toLowerCase();
+      items.forEach(li => {
+        if (li.textContent.toLowerCase().includes(val)) {
+          li.style.display = "block";
+        } else {
+          li.style.display = "none";
+        }
+      });
+      suggestionBox.style.display = "block";
+      focusedIndex = -1;
+      highlightItem(items, -1);
+    });
+
+    // Hide on blur
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        suggestionBox.style.display = "none";
+        clearHighlight(items);
+      }, 150);
+    });
+
+    // Clicking an item
+    items.forEach((li, idx) => {
+      li.addEventListener("click", () => {
+        input.value = li.textContent.trim();
+      });
+    });
+
+    // Keyboard navigation
+    input.addEventListener("keydown", (e) => {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          doMove(1);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          doMove(-1);
+          break;
+        case "Enter":
+          e.preventDefault();
+          if (focusedIndex >= 0 && focusedIndex < items.length && items[focusedIndex].style.display !== "none") {
+            input.value = items[focusedIndex].textContent.trim();
+          }
+          suggestionBox.style.display = "none";
+          input.blur();
+          break;
+        case "Escape":
+          suggestionBox.style.display = "none";
+          clearHighlight(items);
+          break;
+      }
+    });
+
+    function doMove(delta) {
+      // gather only visible items
+      const visibleItems = items.filter(li => li.style.display !== "none");
+      if (visibleItems.length === 0) return;
+      const currentVisibleIndex = visibleItems.indexOf(visibleItems.find(li => li.classList.contains("highlight")));
+      // If not found, we start from -1
+      let idx = currentVisibleIndex === -1 ? -1 : currentVisibleIndex;
+      idx += delta;
+      if (idx < 0) idx = visibleItems.length - 1;
+      if (idx >= visibleItems.length) idx = 0;
+      highlightItem(visibleItems, idx);
+    }
+
+    function highlightItem(list, index) {
+      list.forEach(li => li.classList.remove("highlight"));
+      if (index >= 0 && index < list.length) {
+        list[index].classList.add("highlight");
+        focusedIndex = items.indexOf(list[index]);
+      } else {
+        focusedIndex = -1;
+      }
+    }
+
+    function clearHighlight(list) {
+      list.forEach(li => li.classList.remove("highlight"));
+      focusedIndex = -1;
+    }
+  });
+}
+
+/**
+ * Generate final text
+ */
+function generateFinalText() {
+  storeAllInlineValues();
+  const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
+  let output = "";
+
+  const container = document.getElementById("sectionContainer");
+  const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
+
+  partDivs.forEach((div) => {
+    const partLabel = div.dataset.part;
+    const sectionConfig = dchartSections.find((s) => s.part === partLabel);
+    if (sectionConfig && sectionConfig.includeTitle && includeSectionTitles) {
+      output += partLabel + ":\n";
+    }
+    const ul = div.querySelector(".sentence-list");
+    const liArray = Array.from(ul.children).filter((child) => child.matches("li[data-id]"));
+
+    liArray.forEach((li) => {
+      const sentenceId = li.dataset.id;
+      const sentenceObj = findSentenceById(sentenceId);
+      if (!sentenceObj) {
+        console.warn(`Sentence with ID "${sentenceId}" not found.`);
+        return;
+      }
+      // Tabbed sentence
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex];
+        let placeholderIndex = 0;
+        let replaced = activeTab.text.replace(placeholderRegex, () => {
+          const val =
+            sentenceObj.tabValues[sentenceObj.activeTabIndex] &&
+            sentenceObj.tabValues[sentenceObj.activeTabIndex][placeholderIndex]
+              ? sentenceObj.tabValues[sentenceObj.activeTabIndex][placeholderIndex].trim()
+              : "_";
+          placeholderIndex++;
+          return val;
+        });
+        replaced = replaced.replace(/<br\s*\/?>/gi, "");
+        if (replaced) {
+          output += replaced + " ";
+        }
+      } else {
+        // Normal sentence
+        let placeholderIndex = 0;
+        let replaced = sentenceObj.text.replace(placeholderRegex, () => {
+          const val =
+            sentenceObj.values && sentenceObj.values[placeholderIndex]
+              ? sentenceObj.values[placeholderIndex].trim()
+              : "_";
+          placeholderIndex++;
+          return val;
+        });
+        replaced = replaced.replace(/<br\s*\/?>/gi, "");
+        if (replaced) {
+          output += replaced + " ";
+        }
+      }
+    });
+
+    output += "\n\n";
+  });
+
+  return output.trim();
+}
+
+/** Helper to find a sentence object by ID in dchartSections */
+function findSentenceById(id) {
+  for (const sec of dchartSections) {
+    const s = sec.sentences.find((x) => x.id === id);
+    if (s) return s;
+  }
+  return null;
+}
+
+/**
+ * Button actions
+ */
+document.getElementById("generateBtn").addEventListener("click", () => {
+  const finalTextArea = document.getElementById("finalText");
+  if (finalTextArea.value.trim()) {
+    showConfirmationModal(
+      "Generate Final Text",
+      "This will override the current final narrative. Continue?",
+      "",
+      () => {
+        finalTextArea.value = generateFinalText();
+      },
+      () => {}
+    );
+  } else {
+    finalTextArea.value = generateFinalText();
+  }
+});
+
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const finalTextArea = document.getElementById("finalText");
+  if (!finalTextArea.value.trim()) {
+    showConfirmationModal(
+      "Copy to Clipboard",
+      "Nothing to copy! Generate the text first.",
+      "",
+      () => {},
+      () => {}
+    );
+    return;
+  }
+  navigator.clipboard
+    .writeText(finalTextArea.value)
+    .then(() => {
+      showConfirmationModal(
+        "Copy to Clipboard",
+        "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
+        "This will not affect the clipboard.",
+        () => resetAll(),
+        () => {}
+      );
+    })
+    .catch((err) => {
+      console.error("Could not copy text: ", err);
+      showConfirmationModal(
+        "Copy Failed",
+        "Failed to copy text to clipboard.",
+        "",
+        () => {},
+        () => {}
+      );
+    });
+});
+
+/** New Run button handler */
+document.getElementById("newRunBtn").addEventListener("click", () => {
+  showConfirmationModal(
+    "New Run",
+    "Would you like to start a new run?",
+    "This will not affect the clipboard.",
+    () => resetAll(),
+    () => {}
+  );
+});
+
+/**
+ * Reusable function to show a simple confirmation modal with Yes/No.
+ */
+function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo) {
+  const modalLabel = document.getElementById("confirmationModalLabel");
+  const modalBody = document.getElementById("confirmationModalBody");
+  const modalDisclaimer = document.getElementById("confirmationDisclaimer");
+  const yesBtn = document.getElementById("confirmYesBtn");
+  const noBtn = document.getElementById("confirmNoBtn");
+
+  modalLabel.textContent = title || "";
+  modalBody.innerHTML = message || "";
+  modalDisclaimer.textContent = disclaimer || "";
+
+  yesBtn.onclick = () => {
+    bootstrap.Modal.getInstance(document.getElementById("confirmationModal")).hide();
+    if (callbackYes) callbackYes();
+  };
+  noBtn.onclick = () => {
+    bootstrap.Modal.getInstance(document.getElementById("confirmationModal")).hide();
+    if (callbackNo) callbackNo();
+  };
+
+  const modal = new bootstrap.Modal(document.getElementById("confirmationModal"));
+  modal.show();
+}
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", () => {
+  buildSections();
+});
+</script>
+</body>
+</html>
