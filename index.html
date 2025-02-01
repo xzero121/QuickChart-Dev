@@ -226,17 +226,14 @@
   </style>
 </head>
 <div class="container">
-  <div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-4 header-bar">
     <h1 class="m-0">QuickChart</h1>
-    <div class="d-flex align-items-center">
-      <!-- Add this new section for JSON file input -->
-      <div class="d-flex justify-content-center mb-4">
-        <div class="input-group" id="jsonFileInputGroup" style="max-width: 400px;">
-          <input type="text" id="jsonFileInput" class="form-control" placeholder="Format Code" value="default"/>
-          <button id="loadJsonBtn" class="btn btn-primary">Load</button>
-        </div>
+    <div class="header-right">
+      <div class="input-group" id="jsonFileInputGroup" style="max-width: 400px;">
+        <input type="text" id="jsonFileInput" class="form-control" placeholder="Format Code" value="default"/>
+        <button id="loadJsonBtn" class="btn btn-primary">Load</button>
       </div>
-      <div class="form-check form-switch me-3">
+      <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
         <label class="form-check-label" for="toggleSectionTitles">
           Include Section Titles in Final Output
