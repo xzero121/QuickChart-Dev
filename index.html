@@ -181,6 +181,8 @@
       left: 2.5rem;
       display: flex;
       gap: 4px;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .tab-button {
       padding: 2px 8px;
@@ -295,7 +297,7 @@
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
         <label class="form-check-label" for="toggleSectionTitles">
-          Include Section Titles in Final Output
+          Output Section Titles
         </label>
       </div>
       <button id="newRunBtn" class="btn btn-warning">New Run</button>
