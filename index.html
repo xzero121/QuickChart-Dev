@@ -20,6 +20,38 @@
       padding: 1rem;
     }
 
+    /* Header Styles */
+    .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        gap: 1rem; /* Space between title and right side */
+        margin-bottom: 1.5rem !important; /* Override default mb-4 */
+    }
+    .header-right {
+        display: flex;
+        flex-direction: column; /* Stack JSON input and toggles */
+        align-items: flex-end; /* Align items to the right */
+        gap: 0.5rem; /* Space between JSON input and toggles row */
+    }
+     #jsonFileInputGroup {
+        min-width: 250px; /* Ensure input group has some minimum width */
+    }
+    .toggle-newrun-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem; /* Space between toggle and button */
+        justify-content: flex-end; /* Align this row content to the right */
+        width: 100%; /* Take full width of header-right */
+    }
+    /* Ensure label is clickable and aligned */
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+    }
+
+
     /* Sections */
     .dchart-section {
       background-color: #f8f9fa;
@@ -161,8 +193,7 @@
      .custom-dropdown .inline-field.custom-dropdown-input {
          min-width: 80px;
          display: inline-block;
-         /* Position relative NOT needed here if container is display:contents */
-         /* position: relative; */
+         /* position: relative; */ /* Not needed if container is display:contents */
      }
 
     /* Suggestions list specifically for custom dropdowns */
@@ -186,12 +217,7 @@
     .custom-dropdown .suggestions ul { padding: 0; margin: 0; list-style: none; }
     .custom-dropdown .suggestions li {
         padding: .5rem 1rem; cursor: pointer; border-bottom: 1px solid #eee;
-        margin: 0;
-        /* Allow wrapping */
-        white-space: normal;
-        overflow: visible; /* Remove hidden */
-        text-overflow: clip; /* Remove ellipsis */
-        /* Optional: Add line-height for wrapped text */
+        margin: 0; white-space: normal; overflow: visible; text-overflow: clip;
         line-height: 1.4;
     }
     .custom-dropdown .suggestions li:last-child { border-bottom: none; }
@@ -223,16 +249,22 @@
 <span id="width-measurer"></span>
 
 <div class="container">
-  <div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-4 header-bar">
     <h1 class="m-0">QuickChart</h1>
-    <div class="d-flex align-items-center">
-      <div class="form-check form-switch me-3" title="Toggle inclusion of section titles (D, C, H, A, R, T, M) in the final narrative">
-        <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
-        <label class="form-check-label" for="toggleSectionTitles">
-          Include Section Titles
-        </label>
+    <div class="header-right">
+      <div class="input-group" id="jsonFileInputGroup" style="max-width: 400px;">
+        <input type="text" id="jsonFileInput" class="form-control form-control-sm" placeholder="Config Name (e.g., default)" value="default" title="Enter configuration name (e.g., default, trauma) and click Load">
+        <button id="loadJsonBtn" class="btn btn-primary btn-sm">Load</button>
       </div>
-      <button id="newRunBtn" class="btn btn-warning" title="Clear the current narrative and start over">New Run</button>
+      <div class="toggle-newrun-row">
+        <div class="form-check form-switch" title="Toggle inclusion of section titles (D, C, H, A, R, T, M) in the final narrative">
+          <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked="">
+          <label class="form-check-label" for="toggleSectionTitles">
+            Output Section Titles
+          </label>
+        </div>
+        <button id="newRunBtn" class="btn btn-warning btn-sm" title="Clear the current narrative and start over with the loaded configuration's defaults">New Run</button>
+      </div>
     </div>
   </div>
 
@@ -249,7 +281,7 @@
   <button id="copyBtn" class="btn btn-success mb-5" title="Copy the generated narrative to the clipboard">Copy to Clipboard</button>
 
   <div id="disclaimer" class="alert alert-secondary py-1 text-center small" role="alert">
-    <strong>Disclaimer:</strong> Data is stored in your browser's local storage. Clearing browser data will remove saved narrative. No information is sent to a server.
+    <strong>Disclaimer:</strong> Data is stored in your browser's local storage. Clearing browser data will remove saved narratives. No information is sent to a server.
   </div>
   <div id="license" class="alert alert-light py-1 text-center small" role="alert" xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
     <a property="dct:title" rel="cc:attributionURL" href="https://xzero121.github.io/QuickChart/">QuickChart</a> by <span property="cc:attributionName">B. Brown, EMT-B</span> is licensed under
@@ -287,7 +319,7 @@
  * QuickChart Application Script
  * Handles dynamic sentence building, reordering, state management,
  * and final narrative generation for EMS charting.
- * Includes auto-sizing inputs and improved dropdown behavior.
+ * Includes auto-sizing inputs, improved dropdown behavior, and JSON config loading.
  */
 
 // --- Constants ---
@@ -295,12 +327,15 @@ const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::(
 const LOCAL_STORAGE_KEY = 'quickChartState_v2';
 const MIN_INLINE_WIDTH = 50; // Min width for inline fields (px)
 const MAX_INLINE_WIDTH_PERCENT = 80; // Max width relative to parent (%)
+const DEFAULT_CONFIG_NAME = 'default'; // Default config file name
 
 // --- Global State ---
 let rawCommonSentences = []; let commonSentences = [];
-let globalDropdownOptions = {}; let defaultDchartSections = [];
-let dchartSections = []; let fuse; let sentenceIdCounter = 1;
+let globalDropdownOptions = {}; let defaultDchartSections = []; // Holds the *defaults* from the loaded JSON
+let dchartSections = []; // Holds the *current working state* (potentially modified by user)
+let fuse; let sentenceIdCounter = 1;
 let widthMeasurerSpan; // Ref to hidden span for width calc
+let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
 
 // --- Fuse.js Options ---
 const fuseOptions = { keys: ["display", "searchable"], includeMatches: true, threshold: 0.1, minMatchCharLength: 2, ignoreLocation: true };
@@ -313,52 +348,191 @@ async function initializeApp() {
   widthMeasurerSpan = document.getElementById('width-measurer');
   if (!widthMeasurerSpan) console.error("Width measurer span not found!");
 
+  // Attach listeners for header buttons FIRST
+  attachHeaderListeners();
+
   try {
-    const response = await fetch("default.json");
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    // Load initial 'default' configuration
+    await loadConfiguration(DEFAULT_CONFIG_NAME, true); // Pass true for initial load
 
-    rawCommonSentences = data.commonSentences || [];
-    globalDropdownOptions = data.globalDropdownOptions || {};
-    defaultDchartSections = data.dchartSections || [];
-
-    commonSentences = rawCommonSentences.map((s) => ({ original: s, display: shortPlaceholderString(s), searchable: expandedPlaceholderString(s) }));
-    fuse = new Fuse(commonSentences, fuseOptions);
-    console.log("Fuse.js initialized.");
-
+    // Load saved state *after* loading default config structure
     loadState();
+
+    // Build UI based on potentially saved state (or defaults if no save)
     buildSectionsUI();
     attachInputSizingListeners();
-    attachBlurListeners(); // Attach general blur listener (for saving)
-    attachDropdownLogic(); // Attach specific dropdown listeners (focus, keydown, mousedown, blur-for-hide)
+    attachBlurListeners();
+    attachDropdownLogic();
     adjustAllInitialSizes();
 
     console.log("QuickChart Initialized Successfully.");
 
   } catch (err) {
     console.error("Failed to initialize QuickChart:", err);
-    showConfirmationModal("Initialization Error", `Could not load application data. Error: ${err.message}`, "", () => {}, () => {}, true);
-    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
-    assignInitialIDs(dchartSections);
-    buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); // Attempt fallback UI build
+    showConfirmationModal("Initialization Error", `Could not load initial configuration. Please check console or refresh. Error: ${err.message}`, "", () => {}, () => {}, true);
+    // Attempt to build empty UI or show error message
+    document.getElementById('sectionContainer').innerHTML = '<p class="text-danger">Error loading configuration.</p>';
   }
 }
 
-// --- State Management --- (loadState, saveState, resetAll - unchanged)
+/** Attaches event listeners to header elements */
+function attachHeaderListeners() {
+    const loadBtn = document.getElementById('loadJsonBtn');
+    const fileInput = document.getElementById('jsonFileInput');
+    const newRunBtn = document.getElementById('newRunBtn');
+
+    if (loadBtn && fileInput) {
+        loadBtn.addEventListener('click', () => {
+            const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
+            // Ask for confirmation before loading new config, as it resets current work
+            showConfirmationModal(
+                `Load Configuration: ${configName}?`,
+                `Loading '${configName}' will discard your current narrative and replace it with the defaults from that configuration. Continue?`,
+                "Your work will not be saved.",
+                async () => { // Yes callback
+                    await loadConfiguration(configName);
+                    // After loading, rebuild UI and reset state based on new defaults
+                    resetToCurrentConfigDefaults();
+                },
+                () => {} // No callback
+            );
+        });
+         // Allow loading via Enter key in the input field
+        fileInput.addEventListener("keypress", (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission
+                loadBtn.click(); // Trigger the button click
+            }
+        });
+    } else {
+        console.error("Load button or file input not found.");
+    }
+
+    if (newRunBtn) {
+        newRunBtn.addEventListener('click', () => {
+             showConfirmationModal(
+                "Start New Run",
+                `This will discard changes and reset to the defaults for the '${currentConfigName}' configuration. Continue?`,
+                "",
+                () => resetToCurrentConfigDefaults(), // Reset to current config defaults
+                () => {}
+            );
+        });
+    } else {
+         console.error("New Run button not found.");
+    }
+
+     // Optional: Add listener for title toggle if needed immediately
+     // document.getElementById('toggleSectionTitles')?.addEventListener('change', () => { console.log("Titles toggled."); });
+}
+
+
+/**
+ * Fetches and processes a JSON configuration file.
+ * Updates global defaults and optionally resets the working state.
+ * @param {string} configName - The name of the configuration (e.g., 'default', 'trauma').
+ * @param {boolean} [isInitialLoad=false] - Flag to indicate if this is the first load.
+ */
+async function loadConfiguration(configName, isInitialLoad = false) {
+    const filename = `${configName.toLowerCase()}.json`;
+    console.log(`Attempting to load configuration: ${filename}`);
+    try {
+        const response = await fetch(filename);
+        if (!response.ok) {
+            throw new Error(`Configuration file '${filename}' not found or could not be loaded (Status: ${response.status})`);
+        }
+        const data = await response.json();
+
+        // --- Update Global Defaults ---
+        rawCommonSentences = data.commonSentences || [];
+        globalDropdownOptions = data.globalDropdownOptions || {};
+        // Store the loaded sections as the *new* defaults
+        defaultDchartSections = data.dchartSections || [];
+
+        // --- Update Fuse Search Data ---
+        commonSentences = rawCommonSentences.map((s) => ({
+            original: s,
+            display: shortPlaceholderString(s),
+            searchable: expandedPlaceholderString(s),
+        }));
+        fuse = new Fuse(commonSentences, fuseOptions); // Re-initialize Fuse
+
+        // --- Update State & UI ---
+        currentConfigName = configName; // Track the successfully loaded config name
+        document.getElementById('jsonFileInput').value = configName; // Update input field
+
+        if (!isInitialLoad) {
+            // Only show success message if not the very first load
+             showConfirmationModal("Load Successful", `Configuration '${configName}' loaded successfully.`, "", () => {}, () => {}, true);
+        }
+        console.log(`Configuration '${configName}' loaded.`);
+
+    } catch (error) {
+        console.error(`Failed to load or parse configuration '${filename}':`, error);
+        showConfirmationModal("Load Error", `Could not load configuration '${configName}'. Please check the name and ensure the file exists. <br><small>(${error.message})</small>`, "", () => {}, () => {}, true);
+        // Optionally revert input field to previously successful config name
+        document.getElementById('jsonFileInput').value = currentConfigName;
+        throw error; // Re-throw error so calling function knows it failed
+    }
+}
+
+
+// --- State Management ---
+
+/** Loads the working state (dchartSections) from localStorage */
 function loadState() {
   const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (savedState) {
-    try { dchartSections = JSON.parse(savedState); assignInitialIDs(dchartSections); console.log("State loaded."); }
-    catch (e) { console.error("Failed parse saved state.", e); localStorage.removeItem(LOCAL_STORAGE_KEY); dchartSections = JSON.parse(JSON.stringify(defaultDchartSections)); assignInitialIDs(dchartSections); }
-  } else { console.log("No saved state found."); dchartSections = JSON.parse(JSON.stringify(defaultDchartSections)); assignInitialIDs(dchartSections); }
+    try {
+      // Load saved sections into the working state
+      dchartSections = JSON.parse(savedState);
+      // Ensure data integrity (assign IDs, initialize values) based on loaded state
+      assignInitialIDs(dchartSections);
+      console.log("Working state loaded from localStorage.");
+    } catch (e) {
+      console.error("Failed parse saved state, using defaults from loaded config.", e);
+      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear corrupted state
+      // Reset working state to the defaults of the *currently loaded* config
+      resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
+    }
+  } else {
+    console.log("No saved working state found, using defaults from loaded config.");
+    // Reset working state to the defaults of the *currently loaded* config
+    resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
+  }
+  // Ensure counter is ahead of any loaded IDs
   sentenceIdCounter = findHighestSentenceId(dchartSections) + 1;
 }
-function saveState() { try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dchartSections)); } catch (e) { console.error("Failed save state.", e); } }
-function resetAll() {
-  console.log("Resetting state."); dchartSections = JSON.parse(JSON.stringify(defaultDchartSections)); assignInitialIDs(dchartSections);
-  localStorage.removeItem(LOCAL_STORAGE_KEY); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes();
-  document.getElementById("finalText").value = ""; document.getElementById("toggleSectionTitles").checked = true; saveState();
+
+/** Saves the current working state (dchartSections) to localStorage */
+function saveState() {
+    try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dchartSections));
+    } catch (e) {
+        console.error("Failed save state.", e);
+        showConfirmationModal("Save Error", "Could not save changes to browser storage. Storage might be full.", "", ()=>{}, ()=>{}, true);
+    }
 }
+
+/** Resets the working state (dchartSections) to the defaults of the currently loaded config */
+function resetToCurrentConfigDefaults(rebuildUI = true) {
+    console.log(`Resetting to defaults for config: ${currentConfigName}`);
+    // Deep clone the defaults from the *currently loaded* configuration
+    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+    assignInitialIDs(dchartSections); // Assign fresh IDs and initialize values
+    localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear any previous saved state for this session
+    if (rebuildUI) {
+        buildSectionsUI(); // Rebuild UI with defaults
+        // Re-attach listeners and adjust sizes for the new default elements
+        attachInputSizingListeners();
+        attachBlurListeners();
+        attachDropdownLogic();
+        adjustAllInitialSizes();
+    }
+    document.getElementById("finalText").value = ""; // Clear output textarea
+    // Don't save state here, let user interaction trigger saves
+}
+
 
 // --- ID and Value Initialization --- (assignInitialIDs, findHighestSentenceId, initializeSentenceValues - unchanged)
 function assignInitialIDs(sections) {
@@ -387,7 +561,7 @@ function buildSectionsUI() {
   const container = document.getElementById("sectionContainer"); if (!container) { console.error("Section container not found!"); return; }
   container.innerHTML = ""; dchartSections.forEach(secObj => container.appendChild(createSectionElement(secObj)));
   makeSentencesDraggable();
-  // Listeners attached in initializeApp/resetAll/addSentence/switchTab
+  // Listeners attached separately
 }
 function createSectionElement(secObj) {
     const sectionDiv = document.createElement("div"); sectionDiv.classList.add("dchart-section"); sectionDiv.dataset.part = secObj.part;
@@ -535,28 +709,29 @@ function showDropdownSuggestions(inputElement) {
         console.error("Cannot find required ancestors for dropdown input:", inputElement);
         return;
     }
-    const suggestionBox = dropdownContainer.querySelector(".suggestions");
-    if (!suggestionBox) {
-         console.error("Cannot find suggestions box for dropdown input:", inputElement);
-         return;
+    // Find the suggestions UL element - assuming it's a sibling or predictable child of the input's parent
+    // Since custom-dropdown is display:contents, input's parent might be the contentDiv.
+    // Let's assume suggestions is a sibling of the input within the conceptual custom-dropdown structure
+    const suggestionBox = inputElement.nextElementSibling; // Try finding as immediate sibling first
+    if (!suggestionBox || !suggestionBox.classList.contains('suggestions')) {
+         // Fallback: query within the LI (less ideal if multiple dropdowns in one LI)
+         const suggestionsInLi = liAncestor.querySelectorAll('.suggestions');
+         // Need a way to reliably associate input with its specific suggestions UL
+         // TODO: Improve this association if needed (e.g., data attributes)
+         console.warn("Cannot reliably find suggestions box for input:", inputElement);
+         // For now, try finding the first one in the LI as a guess
+         suggestionBox = liAncestor.querySelector('.suggestions');
+         if (!suggestionBox) return;
     }
 
-    // Ensure LI is the positioning context (it should be already from CSS)
-    // if (window.getComputedStyle(liAncestor).position === 'static') {
-    //     liAncestor.style.position = 'relative'; // Make sure LI is positioned
-    // }
 
     // Calculate position relative to the LI's top-left corner
-    // offsetTop/Left are relative to the offsetParent, which *should* be the LI
-    // if the intermediate div is display:contents. Verify this assumption.
-    // If offsetParent isn't LI, this calculation will be wrong.
-    // Let's assume offsetParent is the LI for now.
     const inputTopRelativeToLi = inputElement.offsetTop;
     const inputLeftRelativeToLi = inputElement.offsetLeft;
     const inputHeight = inputElement.offsetHeight;
     const inputWidth = inputElement.offsetWidth;
 
-    suggestionBox.style.position = 'absolute'; // Position relative to LI
+    suggestionBox.style.position = 'absolute'; // Position relative to LI (which has position:relative)
     suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
     suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
     suggestionBox.style.minWidth = `${inputWidth}px`;
@@ -564,23 +739,15 @@ function showDropdownSuggestions(inputElement) {
 
     suggestionBox.style.display = "block";
 
-    // Viewport boundary checks might still be useful even with absolute positioning
-    // Check if dropdown goes off-screen vertically and adjust
-    const suggestionsRect = suggestionBox.getBoundingClientRect(); // Use viewport coords for boundary check
-    const liRect = liAncestor.getBoundingClientRect();
-
+    // Viewport boundary checks might still be useful
+    const suggestionsRect = suggestionBox.getBoundingClientRect();
     if (suggestionsRect.bottom > window.innerHeight) {
-        // If it goes off bottom, position it above the input instead
-        // Calculate top relative to LI again
         suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
     }
-     // Check horizontal overflow relative to the LI/viewport
     if (suggestionsRect.right > window.innerWidth) {
-        // If it goes off right, align right edge with input right edge (relative to LI)
          suggestionBox.style.left = `${inputLeftRelativeToLi + inputWidth - suggestionBox.offsetWidth}px`;
     }
      if (suggestionsRect.left < 0) {
-        // If it goes off left, reset left (relative to LI)
          suggestionBox.style.left = '0px';
     }
 }
@@ -606,9 +773,17 @@ function handleDropdownBlur(event) { if (event.target.matches('.custom-dropdown-
 function handleDropdownBlurDirect(event) { processDropdownBlur(event.target); }
 function processDropdownBlur(inputElement) { setTimeout(() => {
     const dropdownContainer = inputElement.closest('.custom-dropdown'); // Find container
-    if (dropdownContainer && !dropdownContainer.contains(document.activeElement)) { hideDropdownSuggestions(inputElement); }
-    else if (!dropdownContainer) { hideDropdownSuggestions(inputElement); } }, 150);
+    // Check if the currently focused element is the input itself or inside the suggestions
+    const suggestionBox = dropdownContainer?.querySelector('.suggestions');
+    const activeElement = document.activeElement;
+    const isFocusInside = dropdownContainer && dropdownContainer.contains(activeElement);
+    // If focus moved outside the dropdown completely, hide it
+    if (!isFocusInside) {
+        hideDropdownSuggestions(inputElement);
+    }
+    }, 150);
 }
+
 
 // --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
 document.getElementById("generateBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const changesDetected = storeAllInlineValues(); if (changesDetected) { saveState(); console.log("Values updated."); } const generatedText = generateFinalText(); const currentText = finalTextArea.value.trim(); if (currentText && currentText !== generatedText.trim()) { showConfirmationModal("Generate", "Override current narrative?", "", () => { finalTextArea.value = generatedText; }, () => {}); } else { finalTextArea.value = generatedText; } });
@@ -622,9 +797,8 @@ function generateFinalText() { console.log("Generating final text..."); const in
 function findSentenceById(id) { for (const sec of dchartSections) { if (!sec.sentences) continue; const sentence = sec.sentences.find(s => s.id === id); if (sentence) return sentence; } console.warn(`Sentence ID ${id} not found.`); return null; }
 
 // --- Button Event Listeners --- (copyBtn, newRunBtn, toggleSectionTitles - unchanged)
-document.getElementById("copyBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const textToCopy = finalTextArea.value.trim(); if (!textToCopy) { showConfirmationModal("Copy", "Nothing to copy!", "", () => {}, () => {}, true); return; } navigator.clipboard.writeText(textToCopy).then(() => { console.log("Copied."); showConfirmationModal("Copied", "Copied!<br><br>Start new run?", "Clears work.", () => resetAll(), () => {}); }).catch(err => { console.error("Copy failed: ", err); showConfirmationModal("Copy Failed", "Could not copy.", "", () => {}, () => {}, true); }); });
-document.getElementById("newRunBtn").addEventListener("click", () => { if (localStorage.getItem(LOCAL_STORAGE_KEY)) { showConfirmationModal("New Run", "Discard current narrative?", "Saved data clears.", () => resetAll(), () => {}); } else { resetAll(); } });
-document.getElementById('toggleSectionTitles').addEventListener('change', () => { console.log("Titles toggled."); });
+document.getElementById("copyBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const textToCopy = finalTextArea.value.trim(); if (!textToCopy) { showConfirmationModal("Copy", "Nothing to copy!", "", () => {}, () => {}, true); return; } navigator.clipboard.writeText(textToCopy).then(() => { console.log("Copied."); showConfirmationModal("Copied", "Copied!<br><br>Start new run?", "Clears work.", () => resetToCurrentConfigDefaults(), () => {}); }).catch(err => { console.error("Copy failed: ", err); showConfirmationModal("Copy Failed", "Could not copy.", "", () => {}, () => {}, true); }); });
+// New Run button listener is attached in attachHeaderListeners
 
 // --- Input Auto-Sizing --- (adjustInputWidth, adjustTextareaHeight, handlers, adjustAllInitialSizes... - unchanged)
 function attachInputSizingListeners() { const container = document.getElementById('sectionContainer'); if (container) { container.removeEventListener('input', handleAutoSizingInput); container.addEventListener('input', handleAutoSizingInput); } }
