@@ -1,10 +1,9 @@
 {
   "commonSentences": [
     "The patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand].",
-    "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [number:Pressure], rate [number:Rate], FiO2 [number:FiO2], PEEP [number:PEEP], and tidal volume [number:Tidal Volume].",
-    "The patient was [number:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
-    "The patient's GCS was assessed as [number:GCS] ([customDropdown:GCS Eye:4 (Spontaneously),3 (To verbal command),2 (To pain),1 (No eye opening),NT (Not Testable)],[customDropdown:GCS Verbal:5 (Oriented),4 (Confused),3 (Inappropriate words),2 (Incomprehensible sounds),1 (No verbal response),NT (Not Testable)],[customDropdown:GCS Motor:6 (Obeys commands),5 (Localizes pain),4 (Withdraws from pain),3 (Flexion to pain),2 (Extension to pain),1 (No motor response),NT (Not Testable)]).",
-    "[text:Person] signed on behalf of patient due to the patient being unable to sign due to [customDropdown:Reason not Signed]"
+    "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], and tidal volume [text:Tidal Volume].",
+    "The patient was [text:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
+    "The patient's GCS was assessed as [text:GCS] ([customDropdown:GCS Eye:4 (Spontaneously),3 (To verbal command),2 (To pain),1 (No eye opening),NT (Not Testable)],[customDropdown:GCS Verbal:5 (Oriented),4 (Confused),3 (Inappropriate words),2 (Incomprehensible sounds),1 (No verbal response),NT (Not Testable)],[customDropdown:GCS Motor:6 (Obeys commands),5 (Localizes pain),4 (Withdraws from pain),3 (Flexion to pain),2 (Extension to pain),1 (No motor response),NT (Not Testable)])."
   ],
   "globalDropdownOptions": {
     "Unit #": ["Medic 5", "Medic 6"],
@@ -31,7 +30,7 @@
     "Medical Necessity": [
       "1: Patient was bed confined before and after transport",
       "2: Patient required Cardiac / Hemodynamic monitoring during transport",
-      "3: Patient is confused, combative, lethargic, or comatose",
+      "3: Patient is confused, combatative, lethargic, or comatose",
       "4: Patient has contractures",
       "5: Patient is a danger to self or others - requires monitoring",
       "6: Patient has DVT required elevation of lower extremity",
@@ -57,13 +56,13 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "[customDropdown:Unit #] was dispatched to [customDropdown:Sending Facility] for [number:Age]yo [customDropdown:Gender]."
+          "text": "[customDropdown:Unit #] was dispatched to [customDropdown:Sending Facility] for [text:Age] [customDropdown:Age Unit:year-old, month-old] [customDropdown:Gender]."
         },
         {
           "text": "The response was [customDropdown:Response Type]."
         },
         {
-          "text": "Upon arrival, the patient’s condition was [text:Initial Condition:Stable,Unstable]."
+          "text": "Upon arrival, the patient’s condition was [customDropdown:Initial Condition:stable,stable and within normal limits]."
         },
         {
           "tabs": [
@@ -84,7 +83,16 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [number:Duration] [customDropdown:Duration Units:Minutes, Hours, Days, Weeks, Years]."
+          "tabs": [
+            {
+              "title": "Complaint",
+              "text": "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [text:Duration] [customDropdown:Duration Units:minutes, hours, days, weeks, months, years]."
+            },
+            {
+              "title": "No Complaint",
+              "text": "The patient had no stated complaint at the time of EMS transport. [text:Additional Info]."
+            }
+          ]
         }
       ]
     },
@@ -96,10 +104,7 @@
           "text": "The patient was recently [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
         },
         {
-          "text": "The patient’s medical history, medications, and allergies are detailed in the HPI. The OPQRST assessment, along with the SAMPLE history, is documented above."
-        },
-        {
-          "text": "Including [text:Pertinent Positive Findings]."
+          "text": "The patient’s medical history, medications, and allergies are detailed in the HPI."
         }
       ]
     },
@@ -108,7 +113,7 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [text:ABCs]."
+          "text": "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
         },
         {
           "text": "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
@@ -165,7 +170,7 @@
           "text": "The patient was transported to [customDropdown:Receiving Facility]."
         },
         {
-          "text": "Upon arrival, the patient’s condition was [text:Arrival Condition:stable,unstable]."
+          "text": "Upon arrival, the patient’s condition was [customDropdown:Arrival Condition:stable,stable and within normal limits]."
         },
         {
           "tabs": [
