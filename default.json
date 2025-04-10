@@ -6,7 +6,23 @@
     "The patient's GCS was assessed as [text:GCS] ([customDropdown:GCS Eye:4 (Spontaneously),3 (To verbal command),2 (To pain),1 (No eye opening),NT (Not Testable)],[customDropdown:GCS Verbal:5 (Oriented),4 (Confused),3 (Inappropriate words),2 (Incomprehensible sounds),1 (No verbal response),NT (Not Testable)],[customDropdown:GCS Motor:6 (Obeys commands),5 (Localizes pain),4 (Withdraws from pain),3 (Flexion to pain),2 (Extension to pain),1 (No motor response),NT (Not Testable)])."
   ],
   "globalDropdownOptions": {
-    "Unit #": ["Medic 5", "Medic 6"],
+    "Unit #": [
+      "Medic 5", 
+      "Medic 6", 
+      "*Medic 1", 
+      "*Medic 2", 
+      "*Medic 3", 
+      "*Medic 4", 
+      "*Medic 7", 
+      "*Medic 8", 
+      "*Medic 9", 
+      "*Medic 10", 
+      "*Medic 11", 
+      "*Medic 12", 
+      "*Medic 13", 
+      "*Medic 14", 
+      "*Medic 15"
+    ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
@@ -50,9 +66,11 @@
     ],
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   },
-  "dchartSections": [
+  "narrativeSections": [
     {
       "part": "D",
+      "subpart": "ispatch:",
+      "tooltip": "Dispatch and arrival information.",
       "includeTitle": true,
       "sentences": [
         {
@@ -80,6 +98,8 @@
     },
     {
       "part": "C",
+      "subpart": "hief Complaint:",
+      "tooltip": "Chief complaint at the time of EMS transport.",
       "includeTitle": true,
       "sentences": [
         {
@@ -98,6 +118,8 @@
     },
     {
       "part": "H",
+      "subpart": "istory of Present Illness:",
+      "tooltip": "History of present illness, including any pertinent medical history.",
       "includeTitle": true,
       "sentences": [
         {
@@ -110,6 +132,8 @@
     },
     {
       "part": "A",
+      "subpart": "ssessment:",
+      "tooltip": "Assessment of the patient’s condition.",
       "includeTitle": true,
       "sentences": [
         {
@@ -128,6 +152,8 @@
     },
     {
       "part": "R",
+      "subpart": "eassessment:",
+      "tooltip": "Reassessment of the patient’s condition and any interventions performed.",
       "includeTitle": true,
       "sentences": [
         {
@@ -152,6 +178,8 @@
     },
     {
       "part": "T",
+      "subpart": "ransport:",
+      "tooltip": "Transport information, including the method of transport and any complications.",
       "includeTitle": true,
       "sentences": [
         {
@@ -191,6 +219,8 @@
     },
     {
       "part": "M",
+      "subpart": "edical Necessity:",
+      "tooltip": "Medical necessity for ambulance transport, including the reason for transport and the receiving facility.",
       "includeTitle": true,
       "sentences": [
         {
@@ -221,6 +251,7 @@
     },
     {
       "part": "Sign Off",
+      "tooltip": "Sign off information, including the provider's name and signature.",
       "includeTitle": false,
       "sentences": [
         {
