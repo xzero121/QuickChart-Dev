@@ -7,21 +7,21 @@
   ],
   "globalDropdownOptions": {
     "Unit #": [
+      "Medic 1", 
+      "Medic 2", 
+      "Medic 3", 
+      "Medic 4", 
       "Medic 5", 
-      "Medic 6", 
-      "*Medic 1", 
-      "*Medic 2", 
-      "*Medic 3", 
-      "*Medic 4", 
-      "*Medic 7", 
-      "*Medic 8", 
-      "*Medic 9", 
-      "*Medic 10", 
-      "*Medic 11", 
-      "*Medic 12", 
-      "*Medic 13", 
-      "*Medic 14", 
-      "*Medic 15"
+      "Medic 6",
+      "Medic 7", 
+      "Medic 8", 
+      "Medic 9", 
+      "Medic 10", 
+      "Medic 11", 
+      "Medic 12", 
+      "Medic 13", 
+      "Medic 14", 
+      "Medic 15"
     ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
@@ -40,8 +40,19 @@
     "Straps Count": ["x5"],
     "Patient Condition": ["improved", "did not change", "worsened"],
     "Transfer of Location": ["hospital bed", "facility bed"],
-    "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
-    "Receiving Facility": ["Baptist Floyd", "Baptist Health Louisville"],
+    "Sending Facility": [
+      "Baptist Healthy Floyd", 
+      "Baptist Freestanding ER in Jeffersonville",
+      "Baptist Health La Grange",
+      "Baptist Health Louisville",
+      "Baptist Health Corbin",
+      "Baptist Health Hardin",
+      "Baptist Health Paducah"
+    ],
+    "Receiving Facility": [
+      "Baptist Floyd", 
+      "Baptist Health Louisville"
+    ],
     "Reason": ["higher level of care", "long term care"],
     "Medical Necessity": [
       "1: Patient was bed confined before and after transport",
