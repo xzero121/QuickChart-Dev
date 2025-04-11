@@ -1,4 +1,1167 @@
-document.getElementById("generateBtn").addEventListener("click", async () => { // Make async for potential confirmation
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuickChart</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
+
+  <style>
+    html,
+    body {
+      overscroll-behavior: none;
+    }
+
+    body {
+      padding: 1rem;
+    }
+
+    /* Header Styles */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem !important;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+    }
+
+    #jsonFileInputGroup {
+      min-width: 250px;
+    }
+
+    .toggle-newrun-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    .form-check-label {
+      cursor: pointer;
+      user-select: none;
+    }
+
+
+    /* Sections */
+    .narrative-section {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: .25rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: .5rem;
+      font-weight: 600;
+    }
+
+    .section-header .section-subpart {
+      font-size: 0.85em;
+      color: #6c757d;
+      margin-left: 0.25em;
+      font-weight: normal;
+    }
+
+    .section-title-wrapper[data-bs-toggle="tooltip"] {
+      cursor: help;
+      display: inline-block;
+    }
+
+    .sentence-list {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 0;
+    }
+
+    .sentence-list li {
+      background-color: #fff;
+      margin-bottom: .5rem;
+      border: 1px solid #dee2e6;
+      border-radius: .25rem;
+      position: relative;
+      padding: 0.75rem 2rem;
+    }
+
+    .sentence-content {
+      line-height: 1.8;
+    }
+
+    /* Drag handle for reordering */
+    .drag-handle {
+      position: absolute;
+      left: .5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: move;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+
+    /* Remove button */
+    .remove-sentence-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      color: red;
+      font-size: 1.2rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .remove-sentence-btn:hover {
+      color: darkred;
+    }
+
+    /* Add item form and group */
+    .add-item-form {
+      width: 100%;
+      position: relative;
+      margin-top: .5rem;
+    }
+
+    .add-item-group {
+      display: flex;
+      align-items: flex-start;
+      gap: .5rem;
+      width: 100%;
+    }
+
+    .add-item-form textarea.auto-height-textarea {
+      flex: 1;
+      padding: .25rem .5rem;
+      font-size: .875rem;
+      line-height: 1.5;
+      border-radius: .2rem;
+      border: 1px solid #ced4da;
+      resize: none;
+      overflow-y: hidden;
+      min-height: calc(1.5em + .5rem + 2px);
+      box-sizing: border-box;
+    }
+
+    .add-item-form textarea.auto-height-textarea:focus {
+      border-color: #86b7fe;
+      outline: 0;
+      box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+    }
+
+
+    /* Suggestions box for autocomplete (Add Sentence) */
+    .suggestions-box {
+      position: absolute;
+      top: 100%;
+      margin-top: 2px;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: .25rem;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+    }
+
+    .suggestions-box ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .suggestions-box li {
+      padding: .5rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .suggestions-box li:last-child {
+      border-bottom: none;
+    }
+
+    .suggestions-box li:hover,
+    .suggestions-box li.highlight {
+      background-color: #e9ecef;
+    }
+
+
+    /* Inline fields: input and static display */
+    .inline-field {
+      display: inline-block;
+      width: auto;
+      min-width: 50px;
+      max-width: 80%;
+      margin: 0 .25rem;
+      vertical-align: baseline;
+      font: inherit;
+      font-size: 1em;
+      border: none;
+      border-bottom: 1px dotted #777;
+      background-color: transparent;
+      padding: 0 .25rem;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .inline-field::placeholder {
+      text-align: center;
+      opacity: 0.6;
+    }
+
+    .inline-field:focus {
+      outline: none;
+      border-bottom-color: #0d6efd;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    /* Custom dropdown container */
+    .custom-dropdown {
+      display: contents;
+    }
+
+    /* Input within custom dropdown */
+    .custom-dropdown .inline-field.custom-dropdown-input {
+      min-width: 80px;
+      display: inline-block;
+    }
+
+    /* Suggestions list specifically for custom dropdowns */
+    .custom-dropdown .suggestions {
+      position: absolute;
+      z-index: 1000;
+      display: none;
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: .25rem;
+      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+      width: auto;
+      max-width: 350px;
+      max-height: 200px;
+      overflow-y: auto;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .custom-dropdown .suggestions ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .custom-dropdown .suggestions li {
+      padding: .5rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      margin: 0;
+      padding: 1em 5px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.4;
+    }
+
+    .custom-dropdown .suggestions li:last-child {
+      border-bottom: none;
+    }
+
+    .custom-dropdown .suggestions li:hover,
+    .custom-dropdown .suggestions li.highlight {
+      background-color: #e9ecef;
+    }
+
+
+    /* Tabs */
+    .has-tabs {
+      margin-top: 2rem;
+    }
+
+    li.has-tabs:first-child {
+      margin-top: 1.6rem;
+    }
+
+    .tabs-container {
+      position: absolute;
+      top: -1.7rem;
+      left: 2.5rem;
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .tab-button {
+      padding: 2px 8px;
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: .25rem .25rem 0 0;
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+      top: 1px;
+      border-bottom: none;
+      color: #000;
+    }
+
+    .tab-button.active {
+      background-color: #fff;
+      border-bottom-color: #fff;
+      z-index: 2;
+      font-weight: 500;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* License and buttons */
+    #license {
+      font-size: 0.9rem;
+    }
+
+    #license a {
+      font-weight: bold;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    #license a:hover {
+      text-decoration: underline;
+    }
+
+    #license img.cc-icon {
+      height: 1em !important;
+      margin-left: 3px;
+      vertical-align: baseline;
+    }
+
+    #newRunBtn {
+      font-variant: small-caps;
+    }
+
+    /* Hidden span for measuring input width */
+    #width-measurer {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+      white-space: pre;
+      visibility: hidden;
+      font: inherit;
+      font-size: 1em;
+      padding: 0 .25rem;
+      border: none;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body>
+  <span id="width-measurer"></span>
+
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-4 header-bar">
+      <h1 class="m-0">QuickChart</h1>
+      <div class="header-right">
+        <div class="input-group" id="jsonFileInputGroup" style="max-width: 400px;">
+          <input type="text" id="jsonFileInput" class="form-control form-control-sm"
+            placeholder="Config Name (e.g., default)" value="default"
+            title="Enter configuration name (e.g., default, trauma) and click Load">
+          <button id="loadJsonBtn" class="btn btn-primary btn-sm">Load</button>
+        </div>
+        <div class="toggle-newrun-row">
+          <div class="form-check form-switch"
+            title="Toggle inclusion of section titles in the final narrative">
+            <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked="">
+            <label class="form-check-label" for="toggleSectionTitles">
+              Output Section Titles
+            </label>
+          </div>
+          <button id="newRunBtn" class="btn btn-warning btn-sm"
+            title="Clear the current narrative and start over with the loaded configuration's defaults">New Run</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sectionContainer">
+    </div>
+
+    <button id="generateBtn" class="btn btn-primary mb-3" title="Generate the final narrative text below">Generate Final
+      Text</button>
+
+    <div class="mb-3">
+      <label for="finalText" class="form-label fw-bold">Final Narrative</label>
+      <textarea class="form-control" id="finalText" rows="6"
+        placeholder="Generated narrative will appear here..."></textarea>
+    </div>
+
+    <button id="copyBtn" class="btn btn-success mb-5" title="Copy the generated narrative to the clipboard">Copy to
+      Clipboard</button>
+
+    <div id="disclaimer" class="alert alert-secondary py-1 text-center small" role="alert">
+      <strong>Disclaimer:</strong> Data is stored in your browser's local storage. Clearing browser data will remove
+      saved narrative. No information is sent to a server.
+    </div>
+    <div id="license" class="alert alert-light py-1 text-center small" role="alert"
+      xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
+      <a property="dct:title" rel="cc:attributionURL" href="https://xzero121.github.io/QuickChart/">QuickChart</a> by
+      <span property="cc:attributionName">B. Brown, EMT-B</span> is licensed under
+      <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/?ref=chooser-v1" target="_blank"
+        rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-ND 4.0
+        <img class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img
+          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img
+          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img
+          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1" alt="">
+      </a>
+    </div>
+  </div>
+
+  <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="confirmationModalBody"></div>
+        <div class="modal-footer d-flex align-items-center justify-content-between">
+          <div id="confirmationDisclaimer" class="text-muted small"></div>
+          <div>
+            <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes</button>
+            <button type="button" class="btn btn-secondary" id="confirmNoBtn" data-bs-dismiss="modal">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // --- Constants ---
+    const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
+    const LOCAL_STORAGE_KEY = 'quickChartState_v2';
+    const MIN_INLINE_WIDTH = 50; // Min width for inline fields (px)
+    const MAX_INLINE_WIDTH_PERCENT = 80; // Max width relative to parent (%)
+    const DEFAULT_CONFIG_NAME = 'default'; // Default config file name
+    const HIDDEN_ITEM_MARKER = '*'; // Prefix for dropdown options hidden by default
+
+    // --- Global State ---
+    let rawCommonSentences = []; let commonSentences = [];
+    let globalDropdownOptions = {}; let defaultNarrativeSections = []; // Holds the *defaults* from the loaded JSON
+    let narrativeSections = []; // Holds the *current working state* (potentially modified by user)
+    let fuse; let sentenceIdCounter = 1;
+    let widthMeasurerSpan; // Ref to hidden span for width calc
+    let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
+
+    // --- Fuse.js Options ---
+    const fuseOptions = { keys: ["display", "searchable"], includeMatches: true, threshold: 0.1, minMatchCharLength: 2, ignoreLocation: true };
+
+    // --- Initialization ---
+    document.addEventListener("DOMContentLoaded", initializeApp);
+
+    function initializeTooltips() {
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    // Check if it already has a tooltip instance to avoid duplicates
+    if (!bootstrap.Tooltip.getInstance(tooltipTriggerEl)) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    }
+    return null; // Return null or the existing instance if you need it
+  });
+  console.log("Tooltips initialized.");
+}
+
+    async function initializeApp() {
+      console.log("Initializing QuickChart...");
+      widthMeasurerSpan = document.getElementById('width-measurer');
+      if (!widthMeasurerSpan) console.error("Width measurer span not found!");
+
+      // Attach listeners for header buttons FIRST
+      attachHeaderListeners();
+
+      try {
+        // Load initial 'default' configuration
+        await loadConfiguration(DEFAULT_CONFIG_NAME, true); // Pass true for initial load
+
+        // Load saved state *after* loading default config structure
+        loadState();
+
+        // Build UI based on potentially saved state (or defaults if no save)
+        buildSectionsUI();
+        initializeTooltips();
+        attachInputSizingListeners();
+        attachBlurListeners();
+        attachDropdownLogic(); // Includes new input listener attachment
+        adjustAllInitialSizes();
+
+        console.log("QuickChart Initialized Successfully.");
+
+      } catch (err) {
+        console.error("Failed to initialize QuickChart:", err);
+        showConfirmationModal("Initialization Error", `Could not load initial configuration. Please check console or refresh. Error: ${err.message}`, "", () => { }, () => { }, true);
+        // Attempt to build empty UI or show error message
+        document.getElementById('sectionContainer').innerHTML = '<p class="text-danger">Error loading configuration.</p>';
+      }
+    }
+
+    /** Attaches event listeners to header elements */
+    function attachHeaderListeners() {
+      const loadBtn = document.getElementById('loadJsonBtn');
+      const fileInput = document.getElementById('jsonFileInput');
+      const newRunBtn = document.getElementById('newRunBtn');
+
+      if (loadBtn && fileInput) {
+        loadBtn.addEventListener('click', () => {
+          const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
+          // Ask for confirmation before loading new config, as it resets current work
+          showConfirmationModal(
+            `Load Configuration: ${configName}?`,
+            `Loading '${configName}' will discard your current narrative and replace it with the defaults from that configuration. Continue?`,
+            "Your work will not be saved.",
+            async () => { // Yes callback
+              await loadConfiguration(configName);
+              // After loading, rebuild UI and reset state based on new defaults
+              resetToCurrentConfigDefaults();
+            },
+            () => { } // No callback
+          );
+        });
+        // Allow loading via Enter key in the input field
+        fileInput.addEventListener("keypress", (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent form submission
+            loadBtn.click(); // Trigger the button click
+          }
+        });
+      } else {
+        console.error("Load button or file input not found.");
+      }
+
+      if (newRunBtn) {
+        newRunBtn.addEventListener('click', () => {
+          showConfirmationModal(
+            "Start New Run",
+            `This will discard changes and reset to the defaults for the '${currentConfigName}' configuration. Continue?`,
+            "",
+            () => resetToCurrentConfigDefaults(), // Reset to current config defaults
+            () => { }
+          );
+        });
+      } else {
+        console.error("New Run button not found.");
+      }
+
+      // Optional: Add listener for title toggle if needed immediately
+      // document.getElementById('toggleSectionTitles')?.addEventListener('change', () => { console.log("Titles toggled."); });
+    }
+
+
+    /**
+     * Fetches and processes a JSON configuration file.
+     * Updates global defaults and optionally resets the working state.
+     * @param {string} configName - The name of the configuration (e.g., 'default', 'trauma').
+     * @param {boolean} [isInitialLoad=false] - Flag to indicate if this is the first load.
+     */
+    async function loadConfiguration(configName, isInitialLoad = false) {
+      const filename = `${configName.toLowerCase()}.json`;
+      console.log(`Attempting to load configuration: ${filename}`);
+      try {
+        const response = await fetch(filename);
+        if (!response.ok) {
+          throw new Error(`Configuration file '${filename}' not found or could not be loaded (Status: ${response.status})`);
+        }
+        const data = await response.json();
+
+        // --- Update Global Defaults ---
+        rawCommonSentences = data.commonSentences || [];
+        globalDropdownOptions = data.globalDropdownOptions || {};
+        // Store the loaded sections as the *new* defaults
+        defaultNarrativeSections = data.narrativeSections || [];
+
+        // --- Update Fuse Search Data ---
+        commonSentences = rawCommonSentences.map((s) => ({
+          original: s,
+          display: shortPlaceholderString(s),
+          searchable: expandedPlaceholderString(s),
+        }));
+        fuse = new Fuse(commonSentences, fuseOptions); // Re-initialize Fuse
+
+        // --- Update State & UI ---
+        currentConfigName = configName; // Track the successfully loaded config name
+        document.getElementById('jsonFileInput').value = configName; // Update input field
+
+        if (!isInitialLoad) {
+          // Only show success message if not the very first load
+          showConfirmationModal("Load Successful", `Configuration '${configName}' loaded successfully.`, "", () => { }, () => { }, true);
+        }
+        console.log(`Configuration '${configName}' loaded.`);
+
+      } catch (error) {
+        console.error(`Failed to load or parse configuration '${filename}':`, error);
+        showConfirmationModal("Load Error", `Could not load configuration '${configName}'. Please check the name and ensure the file exists. <br><small>(${error.message})</small>`, "", () => { }, () => { }, true);
+        // Optionally revert input field to previously successful config name
+        document.getElementById('jsonFileInput').value = currentConfigName;
+        throw error; // Re-throw error so calling function knows it failed
+      }
+    }
+
+
+    // --- State Management ---
+
+    /** Loads the working state (narrativeSections) from localStorage */
+    function loadState() {
+      const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedState) {
+        try {
+          // Load saved sections into the working state
+          narrativeSections = JSON.parse(savedState);
+          // Ensure data integrity (assign IDs, initialize values) based on loaded state
+          assignInitialIDs(narrativeSections);
+          console.log("Working state loaded from localStorage.");
+        } catch (e) {
+          console.error("Failed parse saved state, using defaults from loaded config.", e);
+          localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear corrupted state
+          // Reset working state to the defaults of the *currently loaded* config
+          resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
+        }
+      } else {
+        console.log("No saved working state found, using defaults from loaded config.");
+        // Reset working state to the defaults of the *currently loaded* config
+        resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
+      }
+      // Ensure counter is ahead of any loaded IDs
+      sentenceIdCounter = findHighestSentenceId(narrativeSections) + 1;
+    }
+
+    /** Saves the current working state (narrativeSections) to localStorage */
+    function saveState() {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(narrativeSections));
+      } catch (e) {
+        console.error("Failed save state.", e);
+        showConfirmationModal("Save Error", "Could not save changes to browser storage. Storage might be full.", "", () => { }, () => { }, true);
+      }
+    }
+
+    /** Resets the working state (narrativeSections) to the defaults of the currently loaded config */
+    function resetToCurrentConfigDefaults(rebuildUI = true) {
+      console.log(`Resetting to defaults for config: ${currentConfigName}`);
+      // Deep clone the defaults from the *currently loaded* configuration
+      narrativeSections = JSON.parse(JSON.stringify(defaultNarrativeSections));
+      assignInitialIDs(narrativeSections); // Assign fresh IDs and initialize values
+      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear any previous saved state for this session
+      if (rebuildUI) {
+        buildSectionsUI(); // Rebuild UI with defaults
+        // Re-attach listeners and adjust sizes for the new default elements
+        attachInputSizingListeners();
+        attachBlurListeners();
+        attachDropdownLogic();
+        adjustAllInitialSizes();
+      }
+      document.getElementById("finalText").value = ""; // Clear output textarea
+      // Don't save state here, let user interaction trigger saves
+    }
+
+
+    // --- ID and Value Initialization --- (assignInitialIDs, findHighestSentenceId, initializeSentenceValues - unchanged)
+    function assignInitialIDs(sections) {
+      let maxId = 0; sections.forEach(section => {
+        if (!section.sentences) section.sentences = []; section.sentences.forEach(sentenceObj => {
+          if (!sentenceObj.id || !sentenceObj.id.startsWith('sentence-')) sentenceObj.id = "sentence-" + sentenceIdCounter++;
+          else { const idNum = parseInt(sentenceObj.id.split('-')[1]); if (!isNaN(idNum) && idNum > maxId) maxId = idNum; }
+          initializeSentenceValues(sentenceObj);
+        });
+      }); sentenceIdCounter = Math.max(sentenceIdCounter, maxId + 1);
+    }
+    function findHighestSentenceId(sections) {
+      let maxId = 0; sections.forEach(section => {
+        if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
+          if (sentenceObj.id && sentenceObj.id.startsWith('sentence-')) { const idNum = parseInt(sentenceObj.id.split('-')[1]); if (!isNaN(idNum) && idNum > maxId) maxId = idNum; }
+        });
+      }); return maxId;
+    }
+    function initializeSentenceValues(sentenceObj) {
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        if (typeof sentenceObj.activeTabIndex === "undefined" || sentenceObj.activeTabIndex >= sentenceObj.tabs.length) sentenceObj.activeTabIndex = 0;
+        if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues) || sentenceObj.tabValues.length !== sentenceObj.tabs.length) sentenceObj.tabValues = sentenceObj.tabs.map(() => ({}));
+        else sentenceObj.tabValues = sentenceObj.tabValues.map(valStore => (typeof valStore === 'object' && !Array.isArray(valStore) && valStore !== null) ? valStore : {});
+      } else if (!sentenceObj.values || Array.isArray(sentenceObj.values)) sentenceObj.values = {};
+    }
+
+    // --- String Manipulation Helpers --- (shortPlaceholderString, expandedPlaceholderString - unchanged)
+    function shortPlaceholderString(sentence) { return sentence.replace(placeholderRegex, (match, type, label) => `[${label}]`); }
+    function expandedPlaceholderString(sentence) { return sentence.replace(placeholderRegex, (match, theType, label, opts) => opts ? `[${label}(${opts})]` : `[${label}]`); }
+
+    // --- UI Building Functions --- (buildSectionsUI, createSectionElement, createSentenceElement, createTabsContainer, createTabPaneElement, createRemoveButton, createAddSentenceForm - unchanged)
+    function buildSectionsUI() {
+      const container = document.getElementById("sectionContainer"); if (!container) { console.error("Section container not found!"); return; }
+      container.innerHTML = ""; narrativeSections.forEach(secObj => container.appendChild(createSectionElement(secObj)));
+      makeSentencesDraggable();
+      // Listeners attached separately
+    }
+    function createSectionElement(secObj) {
+    const sectionDiv = document.createElement("div");
+    sectionDiv.classList.add("narrative-section");
+    sectionDiv.dataset.part = secObj.part;
+
+    const header = document.createElement("div");
+    header.classList.add("section-header");
+
+    const titleWrapper = document.createElement("span"); // Wrapper for tooltip
+    titleWrapper.classList.add("section-title-wrapper");
+
+    const titleEl = document.createElement("h5"); // Use h5 for the main part
+    titleEl.classList.add("section-title", "m-0", "d-inline"); // Use d-inline to keep spans together
+
+    const mainPartSpan = document.createElement("span");
+    mainPartSpan.classList.add("section-title-main");
+    mainPartSpan.innerText = secObj.part;
+    titleEl.appendChild(mainPartSpan);
+
+    // Add subpart if it exists
+    if (secObj.subpart) {
+        const subPartSpan = document.createElement("span");
+        subPartSpan.classList.add("section-subpart");
+        subPartSpan.innerText = secObj.subpart;
+        titleEl.appendChild(subPartSpan); // Append subpart within the h5
+    }
+
+    titleWrapper.appendChild(titleEl); // Add the h5 (with part/subpart) to the wrapper
+
+    // Add Bootstrap tooltip attributes if tooltip exists
+    if (secObj.tooltip) {
+        titleWrapper.setAttribute('data-bs-toggle', 'tooltip');
+        titleWrapper.setAttribute('data-bs-placement', 'top');
+        titleWrapper.setAttribute('title', secObj.tooltip);
+    }
+
+    header.appendChild(titleWrapper); // Add the wrapper to the header
+
+    sectionDiv.appendChild(header);
+    const ul = document.createElement("ul");
+    ul.classList.add("sentence-list");
+    ul.dataset.part = secObj.part;
+    if (secObj.sentences) {
+        secObj.sentences.forEach(sentenceObj => ul.appendChild(createSentenceElement(sentenceObj, secObj.part)));
+    }
+    sectionDiv.appendChild(ul);
+    sectionDiv.appendChild(createAddSentenceForm(secObj));
+    return sectionDiv;
+}
+    function createSentenceElement(sentenceObj, partLabel) {
+      initializeSentenceValues(sentenceObj); const li = document.createElement("li"); li.dataset.id = sentenceObj.id; li.dataset.part = partLabel;
+      const handle = document.createElement("span"); handle.classList.add("drag-handle"); handle.innerHTML = "&#9776;"; handle.title = "Drag"; li.appendChild(handle);
+      const contentDiv = document.createElement('div'); contentDiv.classList.add('sentence-content');
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        li.classList.add("has-tabs"); li.appendChild(createTabsContainer(sentenceObj));
+        sentenceObj.tabs.forEach((tab, i) => contentDiv.appendChild(createTabPaneElement(sentenceObj, i)));
+      } else contentDiv.innerHTML = buildInlineFields(sentenceObj.text, sentenceObj.values);
+      li.appendChild(contentDiv); li.appendChild(createRemoveButton(sentenceObj.id, partLabel)); return li;
+    }
+    function createTabsContainer(sentenceObj) {
+      const tabsContainer = document.createElement("div"); tabsContainer.classList.add("tabs-container");
+      sentenceObj.tabs.forEach((tab, i) => {
+        const tabBtn = document.createElement("button"); tabBtn.classList.add("tab-button"); tabBtn.type = "button";
+        if (i === sentenceObj.activeTabIndex) tabBtn.classList.add("active"); tabBtn.innerText = tab.title || `Tab ${i + 1}`; tabBtn.dataset.tabIndex = i;
+        tabBtn.addEventListener("click", () => switchTab(sentenceObj.id, i)); tabsContainer.appendChild(tabBtn);
+      }); return tabsContainer;
+    }
+    function createTabPaneElement(sentenceObj, tabIndex) {
+      const tabPane = document.createElement("div"); tabPane.classList.add("tab-pane"); tabPane.dataset.tabIndex = tabIndex; if (tabIndex === sentenceObj.activeTabIndex) tabPane.classList.add("active");
+      const tabContent = sentenceObj.tabs[tabIndex].text || ""; const tabValues = sentenceObj.tabValues[tabIndex] || {}; tabPane.innerHTML = buildInlineFields(tabContent, tabValues); return tabPane;
+    }
+    function createRemoveButton(sentenceId, partLabel) {
+      const removeBtn = document.createElement("button"); removeBtn.classList.add("remove-sentence-btn"); removeBtn.type = "button"; removeBtn.innerHTML = "&times;"; removeBtn.title = "Remove"; removeBtn.setAttribute('aria-label', 'Remove sentence');
+      removeBtn.addEventListener("click", (e) => { e.stopPropagation(); showConfirmationModal("Remove Sentence", "Are you sure?", "", () => removeSentence(partLabel, sentenceId), () => { }); }); return removeBtn;
+    }
+    function createAddSentenceForm(secObj) {
+      const form = document.createElement("form"); form.classList.add("add-item-form"); form.dataset.part = secObj.part; form.addEventListener('submit', (e) => e.preventDefault());
+      const groupDiv = document.createElement("div"); groupDiv.classList.add("add-item-group");
+      const textarea = document.createElement("textarea"); textarea.classList.add("form-control", "form-control-sm", "auto-height-textarea"); textarea.placeholder = "Type to add or search..."; textarea.setAttribute('aria-label', `Add sentence to ${secObj.part}`); textarea.rows = 1;
+      const addBtn = document.createElement("button"); addBtn.type = "button"; addBtn.classList.add("btn", "btn-sm", "btn-secondary"); addBtn.innerText = "Add"; addBtn.title = "Add sentence";
+      addBtn.addEventListener("click", () => { const newText = textarea.value.trim(); if (newText) { addSentence(secObj.part, { text: newText }); textarea.value = ""; adjustTextareaHeight(textarea); } });
+      textarea.addEventListener("keypress", (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const newText = textarea.value.trim(); if (newText) { addSentence(secObj.part, { text: newText }); textarea.value = ""; adjustTextareaHeight(textarea); suggestionsBox.style.display = 'none'; } } });
+      groupDiv.appendChild(textarea); groupDiv.appendChild(addBtn);
+      const suggestionsBox = document.createElement("div"); suggestionsBox.classList.add("suggestions-box"); const suggestionsUl = document.createElement("ul"); suggestionsBox.appendChild(suggestionsUl);
+      form.appendChild(groupDiv); form.appendChild(suggestionsBox);
+      textarea.addEventListener("input", () => { handleSuggestionsInput(textarea, suggestionsBox, secObj.part); adjustTextareaHeight(textarea); });
+      textarea.addEventListener("blur", () => { setTimeout(() => { suggestionsBox.style.display = "none"; }, 150); });
+      setTimeout(() => adjustTextareaHeight(textarea), 0); return form;
+    }
+
+    // --- UI Interaction Functions --- (handleSuggestionsInput, addSentence, removeSentence, switchTab - unchanged logic, but attach necessary listeners on add/switch)
+    function handleSuggestionsInput(inputElement, suggestionsBoxElement, partLabel) {
+      const query = inputElement.value.trim(); const ulEl = suggestionsBoxElement.querySelector("ul"); if (!ulEl) return; ulEl.innerHTML = "";
+      if (query.length < fuseOptions.minMatchCharLength) { suggestionsBoxElement.style.display = "none"; return; }
+      const fuseResults = fuse.search(query); if (fuseResults.length === 0) { suggestionsBoxElement.style.display = "none"; return; }
+      fuseResults.slice(0, 10).forEach((res) => {
+        const li = document.createElement("li"); li.textContent = res.item.display; li.title = res.item.original;
+        li.addEventListener("mousedown", () => { addSentence(partLabel, { text: res.item.original }); inputElement.value = ""; if (inputElement.tagName === 'TEXTAREA') adjustTextareaHeight(inputElement); suggestionsBoxElement.style.display = "none"; });
+        ulEl.appendChild(li);
+      }); suggestionsBoxElement.style.display = "block";
+    }
+    function addSentence(partLabel, sentenceData) {
+      const section = narrativeSections.find(s => s.part === partLabel); if (!section) return;
+      sentenceData.id = "sentence-" + sentenceIdCounter++; initializeSentenceValues(sentenceData); if (!section.sentences) section.sentences = []; section.sentences.push(sentenceData);
+      console.log(`Sentence added: ${sentenceData.id}`); const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
+      if (ul) {
+        const li = createSentenceElement(sentenceData, partLabel); ul.appendChild(li);
+        attachDropdownLogicForElement(li); attachBlurListenersForElement(li); attachInputSizingListenersForElement(li); adjustAllInitialSizesForElement(li);
+        li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
+      saveState();
+    }
+    function removeSentence(partLabel, sentenceId) {
+      const section = narrativeSections.find(s => s.part === partLabel); if (!section || !section.sentences) return;
+      const index = section.sentences.findIndex(s => s.id === sentenceId);
+      if (index > -1) {
+        section.sentences.splice(index, 1); console.log(`Sentence removed data: ${sentenceId}`); const li = document.querySelector(`li[data-id="${sentenceId}"]`);
+        if (li) { li.remove(); console.log(`Sentence removed DOM: ${sentenceId}`); }
+        else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
+        saveState();
+      } else console.warn(`Sentence ID ${sentenceId} not found.`);
+    }
+    function switchTab(sentenceId, tabIndex) {
+      const sentenceObj = findSentenceById(sentenceId); if (!sentenceObj || !sentenceObj.tabs) return; if (tabIndex < 0 || tabIndex >= sentenceObj.tabs.length) return;
+      sentenceObj.activeTabIndex = tabIndex; console.log(`Switched tab ${tabIndex} for ${sentenceId}`); const li = document.querySelector(`li[data-id="${sentenceId}"]`);
+      if (li) {
+        const tabButtons = li.querySelectorAll('.tabs-container .tab-button'); tabButtons.forEach((btn, index) => btn.classList.toggle('active', index === tabIndex));
+        const tabPanes = li.querySelectorAll('.tab-pane'); tabPanes.forEach((pane, index) => {
+          const isActive = index === tabIndex; pane.classList.toggle('active', isActive);
+          if (isActive) {
+            const tabContent = sentenceObj.tabs[index].text || ""; const tabValues = sentenceObj.tabValues[index] || {}; pane.innerHTML = buildInlineFields(tabContent, tabValues);
+            attachDropdownLogicForElement(pane); attachBlurListenersForElement(pane); attachInputSizingListenersForElement(pane); adjustAllInitialSizesForElement(pane);
+          }
+        });
+      } else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
+      saveState();
+    }
+
+    // --- Input Value Handling --- (attachBlurListeners, handleInlineFieldBlurDelegated, handleInlineFieldBlur, storeAllInlineValues - unchanged)
+    function attachBlurListeners() { // Attaches general blur listener for SAVING data
+      const container = document.getElementById('sectionContainer'); if (!container) return;
+      container.removeEventListener('blur', handleInlineFieldBlurDelegated, true); container.addEventListener('blur', handleInlineFieldBlurDelegated, true);
+    }
+    function attachBlurListenersForElement(element) { element.querySelectorAll('.inline-field[data-label]').forEach(field => { field.removeEventListener('blur', handleInlineFieldBlur); field.addEventListener('blur', handleInlineFieldBlur); }); }
+    function handleInlineFieldBlurDelegated(event) { if (event.target.matches('.inline-field[data-label]')) handleInlineFieldBlur(event); }
+    function handleInlineFieldBlur(event) { // Saves data on blur
+      const field = event.target; const label = field.dataset.label; const value = field.value; const li = field.closest('li[data-id]'); if (!li || !label) return;
+      const sentenceId = li.dataset.id; const sentenceObj = findSentenceById(sentenceId); if (!sentenceObj) return; const tabPane = field.closest('.tab-pane[data-tab-index]');
+      let valueChanged = false;
+      if (tabPane) { const tabIndex = parseInt(tabPane.dataset.tabIndex); if (!isNaN(tabIndex) && sentenceObj.tabValues?.[tabIndex]) { if (sentenceObj.tabValues[tabIndex][label] !== value) { sentenceObj.tabValues[tabIndex][label] = value; valueChanged = true; } } }
+      else if (sentenceObj.values) { if (sentenceObj.values[label] !== value) { sentenceObj.values[label] = value; valueChanged = true; } }
+      if (valueChanged) saveState();
+    }
+    function storeAllInlineValues() {
+      let changesMade = false; narrativeSections.forEach(section => {
+        if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
+          const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`); if (!li) return; initializeSentenceValues(sentenceObj);
+          if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+            sentenceObj.tabs.forEach((tab, tabIndex) => {
+              const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`); if (!tabPane) return; if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {};
+              tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => { const label = field.dataset.label; const newValue = field.value; if (sentenceObj.tabValues[tabIndex][label] !== newValue) { sentenceObj.tabValues[tabIndex][label] = newValue; changesMade = true; } });
+            });
+          } else { if (!sentenceObj.values) sentenceObj.values = {}; li.querySelectorAll(".inline-field[data-label]:not(.tab-pane .inline-field)").forEach(field => { const label = field.dataset.label; const newValue = field.value; if (sentenceObj.values[label] !== newValue) { sentenceObj.values[label] = newValue; changesMade = true; } }); }
+        });
+      }); return changesMade;
+    }
+
+    // --- HTML Building for Inline Fields --- (MODIFIED buildInlineFields)
+    function buildInlineFields(textTemplate, valuesObject) {
+      if (!valuesObject) valuesObject = {}; const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, "");
+      return cleanText.replace(placeholderRegex, (match, type, label, options) => {
+        const currentValue = valuesObject[label] || ""; let dropdownOptionsArray = [];
+        if (options) dropdownOptionsArray = options.split(",").map(x => x.trim()); else if (globalDropdownOptions[label]) dropdownOptionsArray = globalDropdownOptions[label];
+        switch (type) {
+          case "customDropdown":
+            const listItems = dropdownOptionsArray.map(opt => {
+              const isHidden = opt.startsWith(HIDDEN_ITEM_MARKER);
+              const displayOpt = isHidden ? opt.substring(HIDDEN_ITEM_MARKER.length) : opt;
+              // Add data-hidden attribute if it starts with the marker
+              const hiddenAttr = isHidden ? ' data-hidden="true"' : '';
+              return `<li class="list-group-item"${hiddenAttr} title="${displayOpt}">${displayOpt}</li>`;
+            }).join("");
+            return `
+            <div class="custom-dropdown">
+              <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>
+              <ul class="suggestions">${listItems}</ul>
+            </div>`;
+          case "text": return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+          case "number": return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+          case "dropdown": return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`; // Standard dropdown might need similar logic if used
+          default: console.warn(`Unknown type: ${type}`); return match;
+        }
+      });
+    }
+
+    // --- Drag and Drop --- (makeSentencesDraggable, handleDragEnd - unchanged)
+    function makeSentencesDraggable() { const lists = document.querySelectorAll(".sentence-list"); lists.forEach(ul => { const existingSortable = Sortable.get(ul); if (existingSortable) existingSortable.destroy(); new Sortable(ul, { animation: 150, group: { name: "narrativeGroup", pull: true, put: true }, handle: ".drag-handle", ghostClass: "sortable-ghost", chosenClass: "sortable-chosen", dragClass: "sortable-drag", onEnd: handleDragEnd, }); }); }
+    function handleDragEnd(evt) {
+      const itemEl = evt.item; const sentenceId = itemEl.dataset.id; const toList = evt.to; const fromList = evt.from; const oldIndex = evt.oldDraggableIndex; const newIndex = evt.newDraggableIndex; const toPartLabel = toList.dataset.part; const fromPartLabel = fromList.dataset.part; console.log(`Sentence ${sentenceId} moved ${fromPartLabel}[${oldIndex}]->${toPartLabel}[${newIndex}]`); let movedSentence; const fromSection = narrativeSections.find(s => s.part === fromPartLabel);
+      if (fromSection?.sentences && oldIndex < fromSection.sentences.length) { movedSentence = fromSection.sentences.splice(oldIndex, 1)[0]; if (!movedSentence || movedSentence.id !== sentenceId) { console.error("Mismatch remove drag!"); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; } }
+      else { console.error(`Cannot find source ${fromPartLabel} or sentence at ${oldIndex}`); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; }
+      if (movedSentence) {
+        const toSection = narrativeSections.find(s => s.part === toPartLabel); if (toSection) { if (!toSection.sentences) toSection.sentences = []; toSection.sentences.splice(newIndex, 0, movedSentence); }
+        else { console.error(`Target section ${toPartLabel} not found.`); fromSection.sentences.splice(oldIndex, 0, movedSentence); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; }
+      }
+      saveState(); if (fromPartLabel !== toPartLabel) itemEl.dataset.part = toPartLabel;
+    }
+
+    // --- Custom Dropdown Logic --- (MODIFIED: Added filtering, hidden item handling)
+    function attachDropdownLogic() {
+      const container = document.getElementById('sectionContainer'); if (!container) return;
+      // Event delegation for efficiency
+      container.removeEventListener('focus', handleDropdownFocus, true); container.addEventListener('focus', handleDropdownFocus, true);
+      container.removeEventListener('input', handleDropdownInput, true); container.addEventListener('input', handleDropdownInput, true); // ADDED for filtering
+      container.removeEventListener('keydown', handleDropdownKeydown); container.addEventListener('keydown', handleDropdownKeydown);
+      container.removeEventListener('mousedown', handleDropdownSuggestionClick); container.addEventListener('mousedown', handleDropdownSuggestionClick);
+      container.removeEventListener('blur', handleDropdownBlur, true); container.addEventListener('blur', handleDropdownBlur, true);
+    }
+    function attachDropdownLogicForElement(element) { // Attach listeners to newly added elements
+      const dropdowns = element.matches('.custom-dropdown-input') ? [element.closest('.custom-dropdown')] : element.querySelectorAll(".custom-dropdown");
+      dropdowns.forEach(dropdown => {
+        const input = dropdown.querySelector(".custom-dropdown-input");
+        const suggestionBox = dropdown.querySelector(".suggestions");
+        if (!input || !suggestionBox) return;
+        input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect);
+        input.removeEventListener('input', handleDropdownInputDirect); input.addEventListener('input', handleDropdownInputDirect); // ADDED for filtering
+        input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect);
+        suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
+        input.removeEventListener('blur', handleDropdownBlurDirect); input.addEventListener('blur', handleDropdownBlurDirect);
+      });
+    }
+
+    // --- Handlers for Dropdown ---
+    function handleDropdownFocus(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
+    function handleDropdownFocusDirect(event) { filterAndShowDropdownSuggestions(event.target); }
+
+    function handleDropdownInput(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
+    function handleDropdownInputDirect(event) { filterAndShowDropdownSuggestions(event.target); }
+
+    function handleDropdownKeydown(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event); }
+    function handleDropdownKeydownDirect(event) { processDropdownKeydown(event.target, event); }
+
+    function handleDropdownSuggestionClick(event) { if (event.target.matches('.custom-dropdown .suggestions li')) { const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
+    function handleDropdownSuggestionClickDirect(event) { if (event.target.matches('li')) { const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
+
+    function handleDropdownBlur(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownBlur(event.target); }
+    function handleDropdownBlurDirect(event) { processDropdownBlur(event.target); }
+
+
+    /** Filters suggestions based on input, handles hidden items, positions and shows dropdown. (NEW/REVISED) */
+    function filterAndShowDropdownSuggestions(inputElement) {
+      const dropdownContainer = inputElement.closest('.custom-dropdown');
+      const suggestionBox = dropdownContainer?.querySelector(".suggestions");
+      const liAncestor = inputElement.closest('li'); // Position relative to the LI
+      if (!suggestionBox || !liAncestor) {
+          console.error("Cannot find suggestions box or list item for input:", inputElement);
+          return;
+      }
+
+      const filterText = inputElement.value.toLowerCase().trim();
+      const items = Array.from(suggestionBox.querySelectorAll("li"));
+      let hasVisibleItems = false;
+
+      items.forEach(item => {
+        const itemText = item.textContent.toLowerCase();
+        const isHiddenByDefault = item.dataset.hidden === 'true';
+
+        // Determine visibility based on filter text
+        let shouldShow = true;
+        if (filterText) {
+            // If filtering, show if text matches (hidden status doesn't matter)
+            shouldShow = itemText.includes(filterText);
+        } else {
+            // If not filtering (just focused), hide items marked as hidden
+            shouldShow = !isHiddenByDefault;
+        }
+
+        item.style.display = shouldShow ? "" : "none";
+        if (shouldShow) {
+          hasVisibleItems = true;
+        }
+      });
+
+      // Only show the box if there are items to display
+      if (hasVisibleItems) {
+        positionDropdownSuggestions(inputElement, suggestionBox, liAncestor);
+        suggestionBox.style.display = "block";
+        highlightDropdownItem(items.filter(li => li.style.display !== 'none'), -1); // Reset highlight on filter/show
+      } else {
+        suggestionBox.style.display = "none";
+      }
+    }
+
+    /** Positions the suggestions dropdown below its input field. (Extracted Logic) */
+    function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
+        // Calculate position relative to the LI's top-left corner
+        const inputTopRelativeToLi = inputElement.offsetTop;
+        const inputLeftRelativeToLi = inputElement.offsetLeft;
+        const inputHeight = inputElement.offsetHeight;
+        const inputWidth = inputElement.offsetWidth;
+
+        suggestionBox.style.position = 'absolute'; // Position relative to LI (which has position:relative)
+        suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
+        suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
+        suggestionBox.style.minWidth = `${inputWidth}px`;
+
+        // Basic viewport boundary checks (can be enhanced)
+        // Defer calculation until after display:block ensures dimensions are accurate
+        requestAnimationFrame(() => {
+            const suggestionsRect = suggestionBox.getBoundingClientRect();
+            const liRect = liAncestor.getBoundingClientRect(); // Use LI for viewport context
+
+            // Adjust vertical position if overflows bottom
+            if (suggestionsRect.bottom > window.innerHeight) {
+              const spaceAbove = inputElement.getBoundingClientRect().top - liRect.top; // Space above input within LI
+              if (suggestionBox.offsetHeight < spaceAbove) { // Only flip if fits above
+                 suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
+              }
+            }
+
+             // Adjust horizontal position if overflows right
+            if (suggestionsRect.right > window.innerWidth) {
+                 const newLeft = window.innerWidth - suggestionsRect.width - 5; // 5px padding from edge
+                 suggestionBox.style.left = `${Math.max(0, newLeft - liRect.left)}px`; // Relative to LI
+            }
+
+            // Prevent overflowing left edge
+            if (suggestionsRect.left < 0) {
+                 suggestionBox.style.left = `${-liRect.left + 5}px`; // Relative to LI, 5px padding
+            }
+        });
+    }
+
+    /** Processes keydown events within the dropdown input (filtering handled by 'input' event). */
+    function processDropdownKeydown(inputElement, event) {
+      const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions");
+      if (!suggestionBox || suggestionBox.style.display === 'none') return;
+
+      // Important: Get only VISIBLE items for navigation
+      const visibleItems = Array.from(suggestionBox.querySelectorAll("li:not([style*='display: none'])"));
+      if (visibleItems.length === 0) return;
+
+      let focusedIndex = visibleItems.findIndex(item => item.classList.contains('highlight'));
+
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault();
+          focusedIndex = (focusedIndex <= 0) ? visibleItems.length - 1 : focusedIndex - 1;
+          highlightDropdownItem(visibleItems, focusedIndex);
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          focusedIndex = (focusedIndex < 0 || focusedIndex >= visibleItems.length - 1) ? 0 : focusedIndex + 1;
+          highlightDropdownItem(visibleItems, focusedIndex);
+          break;
+        case 'Enter':
+        case 'Tab':
+          if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
+            event.preventDefault();
+            selectDropdownItem(inputElement, visibleItems[focusedIndex]);
+            hideDropdownSuggestions(inputElement); // Hide after selection
+          } else if (event.key === 'Enter') {
+              // If Enter is pressed but no item is highlighted, just close the dropdown
+              event.preventDefault();
+              hideDropdownSuggestions(inputElement);
+              inputElement.blur(); // Optionally blur the input
+          }
+          // Allow Tab to function normally if no item is selected
+          break;
+        case 'Escape':
+          event.preventDefault();
+          hideDropdownSuggestions(inputElement);
+          break;
+      }
+    }
+
+    /** Highlights a specific item in the VISIBLE list. */
+    function highlightDropdownItem(visibleItems, index) {
+      // First remove highlight from ALL items (including hidden ones)
+      const suggestionBox = visibleItems[0]?.closest('.suggestions');
+      if(suggestionBox) {
+        suggestionBox.querySelectorAll("li").forEach(item => item.classList.remove("highlight"));
+      }
+      // Then add highlight to the target visible item
+      if (index >= 0 && index < visibleItems.length) {
+        visibleItems[index].classList.add("highlight");
+        visibleItems[index].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    /** Updates input value and title when an item is selected. */
+    function selectDropdownItem(inputElement, selectedLi) {
+      inputElement.value = selectedLi.textContent.trim();
+      inputElement.title = inputElement.value;
+      adjustInputWidth(inputElement);
+      // Trigger blur manually AFTER selection to ensure state is saved
+      // handleInlineFieldBlur({ target: inputElement }); // Already called in click handler, potentially redundant here but safe
+    }
+
+    /** Hides the suggestions dropdown. */
+    function hideDropdownSuggestions(inputElement) {
+      const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions");
+      if (suggestionBox) {
+        suggestionBox.style.display = "none";
+        // Optionally reset highlight on hide
+        const items = Array.from(suggestionBox.querySelectorAll("li"));
+        highlightDropdownItem(items, -1); // Highlight none
+      }
+    }
+
+    /** Handles blur event for dropdown input, hiding suggestions with a delay. */
+    function processDropdownBlur(inputElement) {
+      // Use setTimeout to allow click events on suggestions to register before hiding
+      setTimeout(() => {
+        const dropdownContainer = inputElement.closest('.custom-dropdown');
+        const suggestionBox = dropdownContainer?.querySelector('.suggestions');
+        // Check if the focus has moved to an element *within* the suggestion box
+        const activeElement = document.activeElement;
+        const isFocusInsideSuggestions = suggestionBox && suggestionBox.contains(activeElement);
+
+        // If focus is not inside the suggestions box, hide it
+        if (!isFocusInsideSuggestions) {
+          hideDropdownSuggestions(inputElement);
+        }
+        // The main blur handler (handleInlineFieldBlur) will save the value
+      }, 150); // Delay ms
+    }
+
+
+    // --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
+    document.getElementById("generateBtn").addEventListener("click", async () => { // Make async for potential confirmation
     const finalTextArea = document.getElementById("finalText");
     
     // First, ensure all inline field changes are captured (existing logic)
@@ -63,7 +1226,7 @@ document.getElementById("generateBtn").addEventListener("click", async () => { /
     if (currentText && currentText !== generatedText.trim()) {
         showConfirmationModal(
             "Overwrite Narrative?", // Title
-            "Generating will overwrite the current content in the Final Narrative box. Continue?", // Message
+            "Generating will overwrite the current Final Narrative.<br /><br /> Do you want to continue?", // Message
             "This cannot be undone.", // Disclaimer
              () => { // Yes callback
                  finalTextArea.value = generatedText; // Overwrite
@@ -78,3 +1241,39 @@ document.getElementById("generateBtn").addEventListener("click", async () => { /
         console.log("Final text generated and displayed.");
     }
 });
+    function generateFinalText() {
+      console.log("Generating final text..."); const includeSectionTitles = document.getElementById("toggleSectionTitles").checked; let finalOutput = ""; narrativeSections.forEach(section => {
+        let sectionText = ""; let sectionHasContent = false; if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
+          let currentSentenceText = "";
+          if (sentenceObj.tabs?.length) { const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex]; if (!activeTab) return; const tabValues = sentenceObj.tabValues[sentenceObj.activeTabIndex] || {}; currentSentenceText = (activeTab.text || "").replace(placeholderRegex, (match, type, label) => (tabValues[label] || "").trim() || `[${label}]`); }
+          else { const values = sentenceObj.values || {}; currentSentenceText = (sentenceObj.text || "").replace(placeholderRegex, (match, type, label) => (values[label] || "").trim() || `[${label}]`); }
+          currentSentenceText = currentSentenceText.replace(/<br\s*\/?>/gi, "").replace(/\s+/g, ' ').trim(); if (currentSentenceText) { sectionText += currentSentenceText + " "; sectionHasContent = true; }
+        });
+        if (sectionHasContent) { if (section.includeTitle && includeSectionTitles) finalOutput += section.part + ":\n"; finalOutput += sectionText.trim() + "\n\n"; }
+      }); console.log("Final text generated."); return finalOutput.trim();
+    }
+
+    // --- Utility Functions --- (findSentenceById - unchanged)
+    function findSentenceById(id) { for (const sec of narrativeSections) { if (!sec.sentences) continue; const sentence = sec.sentences.find(s => s.id === id); if (sentence) return sentence; } console.warn(`Sentence ID ${id} not found.`); return null; }
+
+    // --- Button Event Listeners --- (copyBtn, newRunBtn, toggleSectionTitles - unchanged)
+    document.getElementById("copyBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const textToCopy = finalTextArea.value.trim(); if (!textToCopy) { showConfirmationModal("Copy", "Nothing to copy!", "", () => { }, () => { }, true); return; } navigator.clipboard.writeText(textToCopy).then(() => { console.log("Copied."); showConfirmationModal("Copied to the clipboard", "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?", "Paste narrative first, this can not be undone!", () => resetToCurrentConfigDefaults(), () => { }); }).catch(err => { console.error("Copy failed: ", err); showConfirmationModal("Copy Failed", "Could not copy.", "", () => { }, () => { }, true); }); });
+    // New Run button listener is attached in attachHeaderListeners
+
+    // --- Input Auto-Sizing --- (adjustInputWidth, adjustTextareaHeight, handlers, adjustAllInitialSizes... - unchanged)
+    function attachInputSizingListeners() { const container = document.getElementById('sectionContainer'); if (container) { container.removeEventListener('input', handleAutoSizingInput); container.addEventListener('input', handleAutoSizingInput); } }
+    function attachInputSizingListenersForElement(element) { element.querySelectorAll('.inline-field, .auto-height-textarea').forEach(input => { input.removeEventListener('input', handleAutoSizingInputDirect); input.addEventListener('input', handleAutoSizingInputDirect); }); }
+    function handleAutoSizingInput(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
+    function handleAutoSizingInputDirect(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
+    function adjustTextareaHeight(textarea) { if (!textarea) return; textarea.style.height = 'auto'; const newHeight = Math.max(textarea.scrollHeight, parseFloat(getComputedStyle(textarea).minHeight) || 0); textarea.style.height = `${newHeight}px`; }
+    function adjustInputWidth(input) { if (!input || !widthMeasurerSpan) return; const inputStyle = window.getComputedStyle(input); const isCustomDropdown = input.classList.contains('custom-dropdown-input'); const minWidth = parseFloat(inputStyle.minWidth) || (isCustomDropdown ? 80 : MIN_INLINE_WIDTH); widthMeasurerSpan.style.font = inputStyle.font; widthMeasurerSpan.textContent = input.placeholder || ' '; const placeholderWidth = widthMeasurerSpan.scrollWidth; widthMeasurerSpan.textContent = input.value || ' '; const valueWidth = widthMeasurerSpan.scrollWidth; const requiredContentWidth = Math.max(valueWidth, placeholderWidth) + 3; const parentLi = input.closest('li'); let parentWidth = parentLi?.clientWidth || window.innerWidth; parentWidth = parentWidth * 0.9; let maxWidth = parentWidth * (MAX_INLINE_WIDTH_PERCENT / 100); maxWidth = Math.max(maxWidth, minWidth * 1.5); const newWidth = Math.min(maxWidth, Math.max(minWidth, requiredContentWidth)); input.style.width = `${newWidth}px`; }
+    function adjustAllInitialSizes() { document.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); document.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
+    function adjustAllInitialSizesForElement(element) { element.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); element.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
+
+    // --- Modal Dialog --- (showConfirmationModal - unchanged)
+    function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo, singleButton = false) { const modalEl = document.getElementById("confirmationModal"); if (!modalEl) return; const modalLabel = modalEl.querySelector("#confirmationModalLabel"); const modalBody = modalEl.querySelector("#confirmationModalBody"); const modalDisclaimer = modalEl.querySelector("#confirmationDisclaimer"); const yesBtn = modalEl.querySelector("#confirmYesBtn"); const noBtn = modalEl.querySelector("#confirmNoBtn"); if (!modalLabel || !modalBody || !modalDisclaimer || !yesBtn || !noBtn) { console.error("Modal elements not found!"); return; } const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl); modalLabel.textContent = title || "Confirmation"; modalBody.innerHTML = message || ""; modalDisclaimer.textContent = disclaimer || ""; yesBtn.style.display = singleButton ? 'none' : 'inline-block'; noBtn.textContent = singleButton ? 'OK' : 'No'; yesBtn.onclick = () => { bsModal.hide(); if (callbackYes && typeof callbackYes === 'function') callbackYes(); }; noBtn.onclick = () => { bsModal.hide(); if (callbackNo && typeof callbackNo === 'function') callbackNo(); }; bsModal.show(); }
+  </script>
+
+</body>
+
+</html>
