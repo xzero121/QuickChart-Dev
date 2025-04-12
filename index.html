@@ -401,8 +401,7 @@
           <button id="loadJsonBtn" class="btn btn-primary btn-sm">Load</button>
         </div>
         <div class="toggle-newrun-row">
-          <div class="form-check form-switch"
-            title="Toggle inclusion of section titles in the final narrative">
+          <div class="form-check form-switch" title="Toggle inclusion of section titles in the final narrative">
             <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked="">
             <label class="form-check-label" for="toggleSectionTitles">
               Output Section Titles
@@ -493,16 +492,16 @@
     document.addEventListener("DOMContentLoaded", initializeApp);
 
     function initializeTooltips() {
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipTriggerList.map(function (tooltipTriggerEl) {
-    // Check if it already has a tooltip instance to avoid duplicates
-    if (!bootstrap.Tooltip.getInstance(tooltipTriggerEl)) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map(function (tooltipTriggerEl) {
+        // Check if it already has a tooltip instance to avoid duplicates
+        if (!bootstrap.Tooltip.getInstance(tooltipTriggerEl)) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        }
+        return null; // Return null or the existing instance if you need it
+      });
+      console.log("Tooltips initialized.");
     }
-    return null; // Return null or the existing instance if you need it
-  });
-  console.log("Tooltips initialized.");
-}
 
     async function initializeApp() {
       console.log("Initializing QuickChart...");
@@ -733,54 +732,54 @@
       // Listeners attached separately
     }
     function createSectionElement(secObj) {
-    const sectionDiv = document.createElement("div");
-    sectionDiv.classList.add("narrative-section");
-    sectionDiv.dataset.part = secObj.part;
+      const sectionDiv = document.createElement("div");
+      sectionDiv.classList.add("narrative-section");
+      sectionDiv.dataset.part = secObj.part;
 
-    const header = document.createElement("div");
-    header.classList.add("section-header");
+      const header = document.createElement("div");
+      header.classList.add("section-header");
 
-    const titleWrapper = document.createElement("span"); // Wrapper for tooltip
-    titleWrapper.classList.add("section-title-wrapper");
+      const titleWrapper = document.createElement("span"); // Wrapper for tooltip
+      titleWrapper.classList.add("section-title-wrapper");
 
-    const titleEl = document.createElement("h5"); // Use h5 for the main part
-    titleEl.classList.add("section-title", "m-0", "d-inline"); // Use d-inline to keep spans together
+      const titleEl = document.createElement("h5"); // Use h5 for the main part
+      titleEl.classList.add("section-title", "m-0", "d-inline"); // Use d-inline to keep spans together
 
-    const mainPartSpan = document.createElement("span");
-    mainPartSpan.classList.add("section-title-main");
-    mainPartSpan.innerText = secObj.part;
-    titleEl.appendChild(mainPartSpan);
+      const mainPartSpan = document.createElement("span");
+      mainPartSpan.classList.add("section-title-main");
+      mainPartSpan.innerText = secObj.part;
+      titleEl.appendChild(mainPartSpan);
 
-    // Add subpart if it exists
-    if (secObj.subpart) {
+      // Add subpart if it exists
+      if (secObj.subpart) {
         const subPartSpan = document.createElement("span");
         subPartSpan.classList.add("section-subpart");
         subPartSpan.innerText = secObj.subpart;
         titleEl.appendChild(subPartSpan); // Append subpart within the h5
-    }
+      }
 
-    titleWrapper.appendChild(titleEl); // Add the h5 (with part/subpart) to the wrapper
+      titleWrapper.appendChild(titleEl); // Add the h5 (with part/subpart) to the wrapper
 
-    // Add Bootstrap tooltip attributes if tooltip exists
-    if (secObj.tooltip) {
+      // Add Bootstrap tooltip attributes if tooltip exists
+      if (secObj.tooltip) {
         titleWrapper.setAttribute('data-bs-toggle', 'tooltip');
         titleWrapper.setAttribute('data-bs-placement', 'top');
         titleWrapper.setAttribute('title', secObj.tooltip);
-    }
+      }
 
-    header.appendChild(titleWrapper); // Add the wrapper to the header
+      header.appendChild(titleWrapper); // Add the wrapper to the header
 
-    sectionDiv.appendChild(header);
-    const ul = document.createElement("ul");
-    ul.classList.add("sentence-list");
-    ul.dataset.part = secObj.part;
-    if (secObj.sentences) {
+      sectionDiv.appendChild(header);
+      const ul = document.createElement("ul");
+      ul.classList.add("sentence-list");
+      ul.dataset.part = secObj.part;
+      if (secObj.sentences) {
         secObj.sentences.forEach(sentenceObj => ul.appendChild(createSentenceElement(sentenceObj, secObj.part)));
+      }
+      sectionDiv.appendChild(ul);
+      sectionDiv.appendChild(createAddSentenceForm(secObj));
+      return sectionDiv;
     }
-    sectionDiv.appendChild(ul);
-    sectionDiv.appendChild(createAddSentenceForm(secObj));
-    return sectionDiv;
-}
     function createSentenceElement(sentenceObj, partLabel) {
       initializeSentenceValues(sentenceObj); const li = document.createElement("li"); li.dataset.id = sentenceObj.id; li.dataset.part = partLabel;
       const handle = document.createElement("span"); handle.classList.add("drag-handle"); handle.innerHTML = "&#9776;"; handle.title = "Drag"; li.appendChild(handle);
@@ -987,8 +986,8 @@
       const suggestionBox = dropdownContainer?.querySelector(".suggestions");
       const liAncestor = inputElement.closest('li'); // Position relative to the LI
       if (!suggestionBox || !liAncestor) {
-          console.error("Cannot find suggestions box or list item for input:", inputElement);
-          return;
+        console.error("Cannot find suggestions box or list item for input:", inputElement);
+        return;
       }
 
       const filterText = inputElement.value.toLowerCase().trim();
@@ -1002,11 +1001,11 @@
         // Determine visibility based on filter text
         let shouldShow = true;
         if (filterText) {
-            // If filtering, show if text matches (hidden status doesn't matter)
-            shouldShow = itemText.includes(filterText);
+          // If filtering, show if text matches (hidden status doesn't matter)
+          shouldShow = itemText.includes(filterText);
         } else {
-            // If not filtering (just focused), hide items marked as hidden
-            shouldShow = !isHiddenByDefault;
+          // If not filtering (just focused), hide items marked as hidden
+          shouldShow = !isHiddenByDefault;
         }
 
         item.style.display = shouldShow ? "" : "none";
@@ -1027,42 +1026,42 @@
 
     /** Positions the suggestions dropdown below its input field. (Extracted Logic) */
     function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
-        // Calculate position relative to the LI's top-left corner
-        const inputTopRelativeToLi = inputElement.offsetTop;
-        const inputLeftRelativeToLi = inputElement.offsetLeft;
-        const inputHeight = inputElement.offsetHeight;
-        const inputWidth = inputElement.offsetWidth;
+      // Calculate position relative to the LI's top-left corner
+      const inputTopRelativeToLi = inputElement.offsetTop;
+      const inputLeftRelativeToLi = inputElement.offsetLeft;
+      const inputHeight = inputElement.offsetHeight;
+      const inputWidth = inputElement.offsetWidth;
 
-        suggestionBox.style.position = 'absolute'; // Position relative to LI (which has position:relative)
-        suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
-        suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
-        suggestionBox.style.minWidth = `${inputWidth}px`;
+      suggestionBox.style.position = 'absolute'; // Position relative to LI (which has position:relative)
+      suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
+      suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
+      suggestionBox.style.minWidth = `${inputWidth}px`;
 
-        // Basic viewport boundary checks (can be enhanced)
-        // Defer calculation until after display:block ensures dimensions are accurate
-        requestAnimationFrame(() => {
-            const suggestionsRect = suggestionBox.getBoundingClientRect();
-            const liRect = liAncestor.getBoundingClientRect(); // Use LI for viewport context
+      // Basic viewport boundary checks (can be enhanced)
+      // Defer calculation until after display:block ensures dimensions are accurate
+      requestAnimationFrame(() => {
+        const suggestionsRect = suggestionBox.getBoundingClientRect();
+        const liRect = liAncestor.getBoundingClientRect(); // Use LI for viewport context
 
-            // Adjust vertical position if overflows bottom
-            if (suggestionsRect.bottom > window.innerHeight) {
-              const spaceAbove = inputElement.getBoundingClientRect().top - liRect.top; // Space above input within LI
-              if (suggestionBox.offsetHeight < spaceAbove) { // Only flip if fits above
-                 suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
-              }
-            }
+        // Adjust vertical position if overflows bottom
+        if (suggestionsRect.bottom > window.innerHeight) {
+          const spaceAbove = inputElement.getBoundingClientRect().top - liRect.top; // Space above input within LI
+          if (suggestionBox.offsetHeight < spaceAbove) { // Only flip if fits above
+            suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
+          }
+        }
 
-             // Adjust horizontal position if overflows right
-            if (suggestionsRect.right > window.innerWidth) {
-                 const newLeft = window.innerWidth - suggestionsRect.width - 5; // 5px padding from edge
-                 suggestionBox.style.left = `${Math.max(0, newLeft - liRect.left)}px`; // Relative to LI
-            }
+        // Adjust horizontal position if overflows right
+        if (suggestionsRect.right > window.innerWidth) {
+          const newLeft = window.innerWidth - suggestionsRect.width - 5; // 5px padding from edge
+          suggestionBox.style.left = `${Math.max(0, newLeft - liRect.left)}px`; // Relative to LI
+        }
 
-            // Prevent overflowing left edge
-            if (suggestionsRect.left < 0) {
-                 suggestionBox.style.left = `${-liRect.left + 5}px`; // Relative to LI, 5px padding
-            }
-        });
+        // Prevent overflowing left edge
+        if (suggestionsRect.left < 0) {
+          suggestionBox.style.left = `${-liRect.left + 5}px`; // Relative to LI, 5px padding
+        }
+      });
     }
 
     /** Processes keydown events within the dropdown input (filtering handled by 'input' event). */
@@ -1094,10 +1093,10 @@
             selectDropdownItem(inputElement, visibleItems[focusedIndex]);
             hideDropdownSuggestions(inputElement); // Hide after selection
           } else if (event.key === 'Enter') {
-              // If Enter is pressed but no item is highlighted, just close the dropdown
-              event.preventDefault();
-              hideDropdownSuggestions(inputElement);
-              inputElement.blur(); // Optionally blur the input
+            // If Enter is pressed but no item is highlighted, just close the dropdown
+            event.preventDefault();
+            hideDropdownSuggestions(inputElement);
+            inputElement.blur(); // Optionally blur the input
           }
           // Allow Tab to function normally if no item is selected
           break;
@@ -1112,7 +1111,7 @@
     function highlightDropdownItem(visibleItems, index) {
       // First remove highlight from ALL items (including hidden ones)
       const suggestionBox = visibleItems[0]?.closest('.suggestions');
-      if(suggestionBox) {
+      if (suggestionBox) {
         suggestionBox.querySelectorAll("li").forEach(item => item.classList.remove("highlight"));
       }
       // Then add highlight to the target visible item
@@ -1162,86 +1161,106 @@
 
 
     // --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
-    document.getElementById("generateBtn").addEventListener("click", async () => { // Make async for potential confirmation
+    document.getElementById("generateBtn").addEventListener("click", async () => {
     const finalTextArea = document.getElementById("finalText");
-    
-    // First, ensure all inline field changes are captured (existing logic)
-    const changesDetected = storeAllInlineValues(); 
+
+    // First, ensure all inline field changes are captured
+    const changesDetected = storeAllInlineValues();
     if (changesDetected) {
         saveState();
         console.log("Inline field values updated before generating.");
     }
 
-    // --- New Warning Logic Start ---
+    // --- Check for Pending Sentences ---
     const addTextareas = document.querySelectorAll('.add-item-form textarea.auto-height-textarea');
-    let pendingSentences = []; 
-    
-    // Find all textareas with unadded text
+    let pendingSentences = [];
+
     addTextareas.forEach(textarea => {
         const text = textarea.value.trim();
         if (text) {
-            // Find the section part associated with this textarea
             const form = textarea.closest('.add-item-form');
             const part = form?.dataset.part;
             if (part) {
-                // Get a more readable section title if possible
                 const sectionElement = document.querySelector(`.narrative-section[data-part="${part}"]`);
-                const sectionTitle = sectionElement?.querySelector('.section-title-main')?.innerText || part; 
-                
+                const sectionTitle = sectionElement?.querySelector('.section-title-main')?.innerText || part;
                 pendingSentences.push({ textarea, part, sectionTitle, text });
             }
         }
     });
 
-    // Process each pending sentence sequentially using await
+    // --- Process Pending Sentences Sequentially ---
     for (const pending of pendingSentences) {
-        await new Promise((resolve) => { // Wait for user confirmation for each
-            showConfirmationModal(
-                "Unadded Sentence", // Modal Title
-                `You left text in the '${pending.sectionTitle}' section but didn't click Add:<br><br><em>"${pending.text}"</em><br><br>Do you want to add this sentence before generating?`, // Modal Message
-                "Choosing 'No' will discard this unadded text.", // Modal Disclaimer
-                () => { // Yes Callback (User wants to add)
-                    console.log(`Adding pending sentence to ${pending.part}: ${pending.text}`);
-                    addSentence(pending.part, { text: pending.text }); // Use existing addSentence function
-                    pending.textarea.value = ""; // Clear the textarea
-                    adjustTextareaHeight(pending.textarea); // Adjust height after clearing
-                    resolve(); // Continue to next pending sentence or final generation
-                },
-                () => { // No Callback (User does not want to add)
-                    console.log(`Discarding pending sentence from ${pending.part}.`);
-                    pending.textarea.value = ""; // Clear the textarea (discarding text)
-                    adjustTextareaHeight(pending.textarea); // Adjust height
-                    resolve(); // Continue to next pending sentence or final generation
+        await new Promise((resolve) => {
+            const modalEl = document.getElementById("confirmationModal");
+            if (!modalEl) {
+                console.error("Confirmation modal element not found!");
+                resolve(); // Prevent infinite wait if modal is missing
+                return;
+            }
+
+            // Define the function to run when the modal is fully hidden
+            const onModalHidden = (event) => {
+                // Ensure it's the correct modal triggering the event
+                if (event.target === modalEl) {
+                    modalEl.removeEventListener('hidden.bs.modal', onModalHidden); // Clean up the listener
+                    resolve(); // NOW resolve the promise, allowing the loop to continue
                 }
+            };
+
+            // Attach the listener *before* showing the modal
+            modalEl.addEventListener('hidden.bs.modal', onModalHidden);
+
+            // Define the actions for Yes/No clicks (they no longer resolve the promise directly)
+            const handleYes = () => {
+                console.log(`Adding pending sentence to ${pending.part}: ${pending.text}`);
+                addSentence(pending.part, { text: pending.text });
+                pending.textarea.value = "";
+                adjustTextareaHeight(pending.textarea);
+                // The modal hide triggered by showConfirmationModal will eventually call onModalHidden
+            };
+
+            const handleNo = () => {
+                console.log(`Discarding pending sentence from ${pending.part}.`);
+                pending.textarea.value = "";
+                adjustTextareaHeight(pending.textarea);
+                // The modal hide triggered by showConfirmationModal will eventually call onModalHidden
+            };
+
+            // Show the modal using your existing function
+            // It will handle calling bsModal.hide() internally, which triggers our listener
+            showConfirmationModal(
+                "Unadded Sentence",
+                `You left text in the '${pending.sectionTitle}' section but didn't click Add:<br><br><em>"${pending.text}"</em><br><br>Do you want to add this sentence before generating?`,
+                "Choosing 'No' will discard this unadded text.",
+                handleYes, // Pass the handler function
+                handleNo   // Pass the handler function
             );
-        });
-    }
-    // --- New Warning Logic End ---
+        }); // End of await new Promise
+    } // End of for...of loop
 
     // --- Original Generation Logic (runs after handling all pending sentences) ---
     console.log("Proceeding to generate final text...");
     const generatedText = generateFinalText();
     const currentText = finalTextArea.value.trim();
 
-    // Ask for confirmation only if overwriting existing *generated* text
     if (currentText && currentText !== generatedText.trim()) {
         showConfirmationModal(
-            "Overwrite Narrative?", // Title
-            "Generating will overwrite the current Final Narrative.<br /><br /> Do you want to continue?", // Message
-            "This cannot be undone.", // Disclaimer
-             () => { // Yes callback
-                 finalTextArea.value = generatedText; // Overwrite
-                 console.log("Final text generated and displayed.");
-             }, 
-             () => { // No callback
-                 console.log("Narrative generation cancelled by user.");
-             }
+            "Overwrite Narrative?",
+            "Generating will overwrite the current Final Narrative.<br /><br /> Do you want to continue?",
+            "This cannot be undone.",
+            () => {
+                finalTextArea.value = generatedText;
+                console.log("Final text generated and displayed.");
+            },
+            () => {
+                console.log("Narrative generation cancelled by user.");
+            }
         );
     } else {
-        finalTextArea.value = generatedText; // Populate if empty or unchanged
+        finalTextArea.value = generatedText;
         console.log("Final text generated and displayed.");
     }
-});
+}); // End of generateBtn listener
     function generateFinalText() {
       console.log("Generating final text..."); const includeSectionTitles = document.getElementById("toggleSectionTitles").checked; let finalOutput = ""; narrativeSections.forEach(section => {
         let sectionText = ""; let sectionHasContent = false; if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
