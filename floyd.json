@@ -36,7 +36,8 @@
       "*C. Tate, EMT-B",
       "*A. VanTassel, EMT-B",
       "*R. Dobbins, EMT-B",
-      "*T. Anderson, EMT-B"
+      "*T. Anderson, EMT-B",
+      "*S. Park, EMT-B"
     ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
@@ -302,7 +303,7 @@
       "includeTitle": false,
       "sentences": [
         {
-          "text": "I, [text:Provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
+          "text": "I, [customDropdown:Provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
         }
       ]
     }
