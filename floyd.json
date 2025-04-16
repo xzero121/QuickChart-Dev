@@ -89,7 +89,18 @@
       "*Westminster Village",
       "*Waters of Clifty Falls",
       "*Waters of Georgetown (Guerin Woods)",
-      "*Waters of Scottsburg"      
+      "*Waters of Scottsburg",
+      "*Norton Childrens' Hospital",
+      "*Wellstone Regional Hospital",
+      "*Brightwell Behavioral Health",
+      "*UofL Hospital",
+      "*UofL Jewish Hospital",
+      "*Norton's Hospital",
+      "*Norton's Audubon Hospital",
+      "*Norton's Brownsboro Hospital",
+      "*Norton's Women and Childrens' Hospital",
+      "*Norton's Pavilion",
+      "*Kindred Hospital"
     ],
     "Reason": ["higher level of care", "long term care"],
     "Medical Necessity": [
@@ -111,7 +122,7 @@
       "16: Patient requires assistance for administration / regulation of oxygen",
       "17: Patient is unable to maintain seated position for time needed to transport",
       "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer",
-      "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"
+      "19: Patient requires transfer for higher level of care; First hospital lacks equipment / services"
     ],
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   },
