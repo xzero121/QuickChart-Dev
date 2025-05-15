@@ -2,7 +2,7 @@
   "commonSentences": [
     "The patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand].",
     "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], and tidal volume [text:Tidal Volume].",
-    "The patient was [text:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
+    "The patient was on [text:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
     "The patient's GCS was assessed as [text:GCS] ([customDropdown:GCS Eye:4 (Spontaneously),3 (To verbal command),2 (To pain),1 (No eye opening),NT (Not Testable)],[customDropdown:GCS Verbal:5 (Oriented),4 (Confused),3 (Inappropriate words),2 (Incomprehensible sounds),1 (No verbal response),NT (Not Testable)],[customDropdown:GCS Motor:6 (Obeys commands),5 (Localizes pain),4 (Withdraws from pain),3 (Flexion to pain),2 (Extension to pain),1 (No motor response),NT (Not Testable)])."
   ],
   "globalDropdownOptions": {
@@ -41,7 +41,7 @@
     "Patient Condition": ["improved", "did not change", "worsened"],
     "Transfer of Location": ["hospital bed", "facility bed"],
     "Sending Facility": [
-      "Baptist Healthy Floyd", 
+      "Baptist Health Floyd", 
       "Baptist Freestanding ER in Jeffersonville",
       "Baptist Health La Grange",
       "Baptist Health Louisville",
