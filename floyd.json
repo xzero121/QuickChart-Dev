@@ -8,11 +8,12 @@
   "globalDropdownOptions": {
     "Unit #": [
       "Medic 5", 
-      "Medic 6", 
+      "Medic 16", 
       "*Medic 1", 
       "*Medic 2", 
       "*Medic 3", 
       "*Medic 4", 
+      "*Medic 6",
       "*Medic 7", 
       "*Medic 8", 
       "*Medic 9", 
@@ -21,7 +22,7 @@
       "*Medic 12", 
       "*Medic 13", 
       "*Medic 14", 
-      "*Medic 15"
+      "*Medic 15",
     ],
     "Provider": [
       "*G. Linker, Paramedic",
