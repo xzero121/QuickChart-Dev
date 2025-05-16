@@ -21,7 +21,8 @@
       "Medic 12", 
       "Medic 13", 
       "Medic 14", 
-      "Medic 15"
+      "Medic 15",
+      "Medic 16"
     ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
