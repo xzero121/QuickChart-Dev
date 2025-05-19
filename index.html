@@ -546,54 +546,60 @@
 
     /** Attaches event listeners to header elements */
     function attachHeaderListeners() {
-      const loadBtn = document.getElementById('loadJsonBtn');
-      const fileInput = document.getElementById('jsonFileInput');
-      const newRunBtn = document.getElementById('newRunBtn');
+  const loadBtn = document.getElementById('loadJsonBtn');
+  const fileInput = document.getElementById('jsonFileInput');
+  const newRunBtn = document.getElementById('newRunBtn');
 
-      if (loadBtn && fileInput) {
-        loadBtn.addEventListener('click', () => {
-          const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
-          // Ask for confirmation before loading new config, as it resets current work
-          showConfirmationModal(
-            `Load Configuration: ${configName}?`,
-            `Loading '${configName}' will discard your current narrative and replace it with the defaults from that configuration. Continue?`,
-            "Your work will not be saved.",
-            async () => { // Yes callback
-              await loadConfiguration(configName);
-              // After loading, rebuild UI and reset state based on new defaults
-              resetToCurrentConfigDefaults();
-            },
-            () => { } // No callback
-          );
-        });
-        // Allow loading via Enter key in the input field
-        fileInput.addEventListener("keypress", (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault(); // Prevent form submission
-            loadBtn.click(); // Trigger the button click
-          }
-        });
-      } else {
-        console.error("Load button or file input not found.");
+  if (loadBtn && fileInput) {
+    loadBtn.addEventListener('click', () => {
+      const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
+
+      showConfirmationModal(
+        `Load Configuration: ${configName}?`,
+        `Loading '${configName}' will discard your current narrative and replace it with the defaults from that configuration. Continue?`,
+        "Your work will not be saved.",
+        () => {
+          const modalEl = document.getElementById("confirmationModal");
+          modalEl.addEventListener('hidden.bs.modal', async function handler() {
+            modalEl.removeEventListener('hidden.bs.modal', handler);
+            await loadConfiguration(configName);
+            resetToCurrentConfigDefaults();
+          });
+        },
+        () => {
+          // User cancelled; do nothing
+        }
+      );
+    });
+
+    // Allow loading via Enter key in the input field
+    fileInput.addEventListener("keypress", (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadBtn.click();
       }
+    });
+  } else {
+    console.error("Load button or file input not found.");
+  }
 
-      if (newRunBtn) {
-        newRunBtn.addEventListener('click', () => {
-          showConfirmationModal(
-            "Start New Run",
-            `This will discard changes and reset to the defaults for the '${currentConfigName}' configuration. Continue?`,
-            "",
-            () => resetToCurrentConfigDefaults(), // Reset to current config defaults
-            () => { }
-          );
-        });
-      } else {
-        console.error("New Run button not found.");
-      }
+  if (newRunBtn) {
+    newRunBtn.addEventListener('click', () => {
+      showConfirmationModal(
+        "Start New Run",
+        `This will discard changes and reset to the defaults for the '${currentConfigName}' configuration. Continue?`,
+        "",
+        () => resetToCurrentConfigDefaults(),
+        () => {
+          // User cancelled; do nothing
+        }
+      );
+    });
+  } else {
+    console.error("New Run button not found.");
+  }
+}
 
-      // Optional: Add listener for title toggle if needed immediately
-      // document.getElementById('toggleSectionTitles')?.addEventListener('change', () => { console.log("Titles toggled."); });
-    }
 
 
     /**
