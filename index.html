@@ -7,6 +7,7 @@
   <title>QuickChart</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
 
@@ -95,7 +96,7 @@
       border: 1px solid #dee2e6;
       border-radius: .25rem;
       position: relative;
-      padding: 0.75rem 2rem;
+      padding: 0.75rem 2rem; /* Adjusted padding to make space for controls if they were larger */
     }
 
     .sentence-content {
@@ -113,21 +114,87 @@
       user-select: none;
     }
 
-    /* Remove button */
-    .remove-sentence-btn {
+    /* --- Sentence Controls ------------------------------------------------ */
+    .sentence-controls {
       position: absolute;
-      top: 4px;
-      right: 4px;
-      color: red;
-      font-size: 1.2rem;
-      background: transparent;
-      border: none;
-      cursor: pointer;
+      top: 4px; /* Adjust as needed for vertical alignment */
+      right: 4px; /* Adjust as needed for horizontal alignment */
+      display: flex;
+      align-items: center; /* Ensures buttons align nicely if heights vary slightly */
     }
 
-    .remove-sentence-btn:hover {
-      color: darkred;
+    .sentence-controls .btn {
+      border: 1px solid #ced4da; /* Base border for all buttons in the group */
+      background-color: #fff;   /* Default background */
+      color: #212529;           /* Default text color */
+      padding: 0.25rem 0.5rem;   /* Consistent with btn-sm */
+      margin-left: -1px;         /* Key for overlapping borders */
+      border-radius: 0;          /* Middle buttons have no radius */
+      line-height: 1.5;          /* Bootstrap's default for .btn */
+      vertical-align: middle;    /* Helps with alignment, especially with icons */
+      box-shadow: none;          /* Remove any default browser or Bootstrap shadows */
     }
+
+    .sentence-controls .btn:hover,
+    .sentence-controls .btn:focus {
+        /* You might want to define a subtle hover/focus style that doesn't break the group visually */
+        /* For example, a slight brightness change or outline if needed */
+        /* box-shadow: 0 0 0 .2rem rgba(0,123,255,.25); /* Example focus shadow, adjust as needed */
+    }
+
+
+    .sentence-controls .btn:first-child {
+      margin-left: 0; /* No negative margin for the first button */
+      border-top-left-radius: .25rem;    /* Rounded top-left corner */
+      border-bottom-left-radius: .25rem; /* Rounded bottom-left corner */
+    }
+
+    .sentence-controls .btn:last-child {
+      border-top-right-radius: .25rem;   /* Rounded top-right corner */
+      border-bottom-right-radius: .25rem;/* Rounded bottom-right corner */
+    }
+
+    /* Styling for the Edit button */
+    .sentence-controls .edit-sentence-btn {
+      background-color: #ffc107; /* Bootstrap warning yellow */
+      border-color: #ffc107;    /* Match border to background for seamless look */
+      color: #000;               /* Dark text for yellow background for better contrast */
+    }
+
+    .sentence-controls .edit-sentence-btn:hover {
+      background-color: #e0a800; /* Darker yellow for hover */
+      border-color: #d39e00;
+      color: #000;
+    }
+
+    /* Styling for the Lock button */
+    .sentence-controls .lock-sentence-btn {
+      /* Uses default background (#fff) and border (#ced4da) from .sentence-controls .btn */
+      /* Text color will be #212529 */
+    }
+     .sentence-controls .lock-sentence-btn:hover {
+      background-color: #e9ecef; /* Slight grey for hover, adjust as needed */
+    }
+
+
+    /* Ensure the primary color for the locked icon is applied */
+    .sentence-controls .lock-sentence-btn i.bi-lock-fill.text-primary {
+      color: #0d6efd !important; /* Bootstrap's primary blue, or your preferred color */
+    }
+    
+    /* Styling for the Remove button */
+    .sentence-controls .remove-sentence-btn {
+      background-color: #dc3545; /* Bootstrap danger red */
+      border-color: #dc3545;    /* Match border to background */
+      color: #fff;
+    }
+
+    .sentence-controls .remove-sentence-btn:hover {
+      background-color: #c82333; /* Darker red for hover */
+      border-color: #bd2130;
+    }
+    /* --- End Sentence Controls --- */
+
 
     /* Add item form and group */
     .add-item-form {
@@ -245,31 +312,31 @@
 
     /* Custom dropdown container */
     .custom-dropdown {
-      display: contents;
+      display: contents; /* Allows input to flow inline with text but container can be positioned */
     }
 
     /* Input within custom dropdown */
     .custom-dropdown .inline-field.custom-dropdown-input {
-      min-width: 80px;
-      display: inline-block;
+      min-width: 80px; /* Ensure it has a minimum width */
+      display: inline-block; /* Ensure it behaves like other inline fields */
     }
 
     /* Suggestions list specifically for custom dropdowns */
     .custom-dropdown .suggestions {
-      position: absolute;
+      position: absolute; /* Positioned relative to its closest positioned ancestor (the li) */
       z-index: 1000;
       display: none;
       background-color: #fff;
       border: 1px solid #ced4da;
       border-radius: .25rem;
       box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
-      width: auto;
-      max-width: 350px;
+      width: auto; /* Auto width based on content */
+      max-width: 350px; /* Prevent it from becoming too wide */
       max-height: 200px;
       overflow-y: auto;
       list-style: none;
       padding: 0;
-      margin: 0;
+      margin: 0; /* Reset margin */
     }
 
     .custom-dropdown .suggestions ul {
@@ -279,13 +346,13 @@
     }
 
     .custom-dropdown .suggestions li {
-      padding: .5rem 1rem;
+      padding: .5rem 1rem; /* Consistent padding */
       cursor: pointer;
-      border-bottom: 1px solid #eee;
-      margin: 0;
-      padding: 1em 5px;
-      white-space: normal;
-      overflow: visible;
+      border-bottom: 1px solid #eee; /* Separator */
+      margin: 0; /* Reset margin */
+      padding: .5rem .75rem; /* Adjusted padding */
+      white-space: normal; /* Allow text to wrap if needed */
+      overflow: visible; /* Ensure content isn't clipped */
       text-overflow: clip;
       line-height: 1.4;
     }
@@ -302,47 +369,47 @@
 
     /* Tabs */
     .has-tabs {
-      margin-top: 2rem;
+      margin-top: 2rem; /* Space for tabs above */
     }
 
     li.has-tabs:first-child {
-      margin-top: 1.6rem;
+        margin-top: 1.6rem; /* Slightly less if it's the very first item */
     }
 
     .tabs-container {
       position: absolute;
-      top: -1.7rem;
-      left: 2.5rem;
+      top: -1.7rem; /* Position above the sentence content */
+      left: 2.5rem; /* Align with sentence content, past drag handle */
       display: flex;
-      gap: 0.25rem;
+      gap: 0.25rem; /* Space between tab buttons */
     }
 
     .tab-button {
-      padding: 2px 8px;
+      padding: 2px 8px; /* Small padding */
       background-color: #e9ecef;
       border: 1px solid #ced4da;
-      border-radius: .25rem .25rem 0 0;
+      border-radius: .25rem .25rem 0 0; /* Rounded top corners */
       font-size: 0.85rem;
       cursor: pointer;
       position: relative;
-      top: 1px;
-      border-bottom: none;
+      top: 1px; /* Align with top border of li */
+      border-bottom: none; /* No bottom border for inactive tab */
       color: #000;
     }
 
     .tab-button.active {
-      background-color: #fff;
-      border-bottom-color: #fff;
-      z-index: 2;
+      background-color: #fff; /* Match li background */
+      border-bottom-color: #fff; /* Make bottom border "disappear" */
+      z-index: 2; /* Bring active tab to front */
       font-weight: 500;
     }
 
     .tab-pane {
-      display: none;
+      display: none; /* Hide inactive panes */
     }
 
     .tab-pane.active {
-      display: block;
+      display: block; /* Show active pane */
     }
 
     /* License and buttons */
@@ -377,12 +444,68 @@
       left: -9999px;
       white-space: pre;
       visibility: hidden;
-      font: inherit;
-      font-size: 1em;
-      padding: 0 .25rem;
-      border: none;
-      display: inline-block;
+      font: inherit; /* Ensure it matches the input's font */
+      font-size: 1em; /* Ensure it matches the input's font size */
+      padding: 0 .25rem; /* Match input padding */
+      border: none; /* No border */
+      display: inline-block; /* For scrollWidth calculation */
     }
+    
+    body.dark-mode {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+    body.dark-mode .narrative-section,
+    body.dark-mode .sentence-list li {
+        background-color: #1e1e1e;
+        border-color: #333;
+    }
+    body.dark-mode textarea,
+    body.dark-mode .inline-field,
+    body.dark-mode .form-control {
+        background-color: #2a2a2a !important; /* Important to override Bootstrap */
+        color: #e0e0e0 !important;
+        border-color: #444 !important;
+    }
+    body.dark-mode .alert,
+    body.dark-mode .input-group .form-control { /* Ensure input group elements are styled */
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+        border-color: #444;
+    }
+
+    /* Tabs in Dark Mode */
+    body.dark-mode .tabs-container .tab-button {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+    body.dark-mode .tabs-container .tab-button.active {
+        background-color: #444; /* Or a slightly lighter shade of #1e1e1e */
+        color: #fff;
+    }
+    
+    /* Bug report (fix icon & position) */
+    #bugReportTab {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        transform: none; /* Remove any transform if not needed */
+        border-radius: 4px;
+        padding: 8px 12px;
+    }
+    #bugReportTab i {
+        margin-right: 4px;
+    }
+
+    /* Dark mode toggle (floating) */
+    #darkModeToggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000; /* Ensure it's above other content */
+    }
+
   </style>
 </head>
 
@@ -391,15 +514,12 @@
 
   <div class="container">
     <div class="d-flex align-items-center justify-content-between mb-4 header-bar">
-      <!-- Display QuickChartLogoWide.svg, with text fallback -->
       <h1 class="m-0">
-        <img 
-          src="QuickChartLogoWide.svg" 
-          alt="QuickChart" 
-          class="img-fluid" 
-          style="max-width: 200px; height: auto; vertical-align: middle; margin-right: 0.5em;" 
-        />
-      </h1>      
+        <img src="QuickChartLogoWide.svg" alt="QuickChart" class="img-fluid"
+          style="max-width: 200px; height: auto; vertical-align: middle; margin-right: 0.5em;"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <span style="display:none;">QuickChart</span>
+      </h1>
       <h3 class="m-0 fst-italic text-danger">Beta Version</h3>
       <div class="header-right">
         <div class="input-group" id="jsonFileInputGroup" style="max-width: 400px;">
@@ -410,7 +530,7 @@
         </div>
         <div class="toggle-newrun-row">
           <div class="form-check form-switch" title="Toggle inclusion of section titles in the final narrative">
-            <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked="">
+            <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked>
             <label class="form-check-label" for="toggleSectionTitles">
               Output Section Titles
             </label>
@@ -418,11 +538,15 @@
           <button id="newRunBtn" class="btn btn-warning btn-sm"
             title="Clear the current narrative and start over with the loaded configuration's defaults">New Run</button>
         </div>
-      </div>
+         </div>
     </div>
+    <button id="darkModeToggle" class="btn btn-outline-secondary">
+        <i class="bi bi-moon-fill"></i>
+    </button>
+
 
     <div id="sectionContainer">
-    </div>
+      </div>
 
     <button id="generateBtn" class="btn btn-primary mb-3" title="Generate the final narrative text below">Generate Final
       Text</button>
@@ -446,15 +570,13 @@
       <span property="cc:attributionName">B. Brown, EMT-B</span> is licensed under
       <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/?ref=chooser-v1" target="_blank"
         rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-ND 4.0
-        <img class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img
-          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img
-          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img
-          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1" alt="">
+        <img class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt="CC icon"><img
+          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt="BY icon"><img
+          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt="NC icon"><img
+          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1" alt="ND icon">
       </a>
     </div>
-  </div>
-
-  <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
+  </div> <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -462,13 +584,38 @@
           <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body" id="confirmationModalBody"></div>
+        <div class="modal-body" id="confirmationModalBody">
+          </div>
         <div class="modal-footer d-flex align-items-center justify-content-between">
-          <div id="confirmationDisclaimer" class="text-muted small"></div>
+          <div id="confirmationDisclaimer" class="text-muted small">
+            </div>
           <div>
             <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes</button>
             <button type="button" class="btn btn-secondary" id="confirmNoBtn" data-bs-dismiss="modal">No</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bugReportTab" class="btn btn-primary">
+    <i class="bi bi-bug-fill"></i>Report Bug
+  </div>
+
+  <div class="modal fade" id="bugReportModal" tabindex="-1" aria-labelledby="bugReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bugReportModalLabel">Report an Issue</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="bugDescription" class="form-control" rows="4"
+            placeholder="Describe the issue..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="submitBug">Submit</button>
         </div>
       </div>
     </div>
@@ -486,15 +633,24 @@
     const HIDDEN_ITEM_MARKER = '*'; // Prefix for dropdown options hidden by default
 
     // --- Global State ---
-    let rawCommonSentences = []; let commonSentences = [];
-    let globalDropdownOptions = {}; let defaultNarrativeSections = []; // Holds the *defaults* from the loaded JSON
+    let rawCommonSentences = []; 
+    let commonSentences = [];
+    let globalDropdownOptions = {}; 
+    let defaultNarrativeSections = []; // Holds the *defaults* from the loaded JSON
     let narrativeSections = []; // Holds the *current working state* (potentially modified by user)
-    let fuse; let sentenceIdCounter = 1;
+    let fuse; 
+    let sentenceIdCounter = 1;
     let widthMeasurerSpan; // Ref to hidden span for width calc
     let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
 
     // --- Fuse.js Options ---
-    const fuseOptions = { keys: ["display", "searchable"], includeMatches: true, threshold: 0.1, minMatchCharLength: 2, ignoreLocation: true };
+    const fuseOptions = { 
+        keys: ["display", "searchable"], 
+        includeMatches: true, 
+        threshold: 0.1, 
+        minMatchCharLength: 2, 
+        ignoreLocation: true 
+    };
 
     // --- Initialization ---
     document.addEventListener("DOMContentLoaded", initializeApp);
@@ -502,11 +658,10 @@
     function initializeTooltips() {
       const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
       tooltipTriggerList.map(function (tooltipTriggerEl) {
-        // Check if it already has a tooltip instance to avoid duplicates
         if (!bootstrap.Tooltip.getInstance(tooltipTriggerEl)) {
           return new bootstrap.Tooltip(tooltipTriggerEl);
         }
-        return null; // Return null or the existing instance if you need it
+        return null; 
       });
       console.log("Tooltips initialized.");
     }
@@ -516,98 +671,79 @@
       widthMeasurerSpan = document.getElementById('width-measurer');
       if (!widthMeasurerSpan) console.error("Width measurer span not found!");
 
-      // Attach listeners for header buttons FIRST
       attachHeaderListeners();
 
       try {
-        // Load initial 'default' configuration
-        await loadConfiguration(DEFAULT_CONFIG_NAME, true); // Pass true for initial load
-
-        // Load saved state *after* loading default config structure
+        await loadConfiguration(DEFAULT_CONFIG_NAME, true); 
         loadState();
-
-        // Build UI based on potentially saved state (or defaults if no save)
         buildSectionsUI();
         initializeTooltips();
-        attachInputSizingListeners();
-        attachBlurListeners();
-        attachDropdownLogic(); // Includes new input listener attachment
+        attachAllEventListeners(); // Consolidated event listener attachment
         adjustAllInitialSizes();
-
         console.log("QuickChart Initialized Successfully.");
-
       } catch (err) {
         console.error("Failed to initialize QuickChart:", err);
         showConfirmationModal("Initialization Error", `Could not load initial configuration. Please check console or refresh. Error: ${err.message}`, "", () => { }, () => { }, true);
-        // Attempt to build empty UI or show error message
         document.getElementById('sectionContainer').innerHTML = '<p class="text-danger">Error loading configuration.</p>';
       }
     }
+    
+    function attachAllEventListeners() {
+        attachInputSizingListeners();
+        attachBlurListeners();
+        attachDropdownLogic();
+    }
+
+    function attachAllEventListenersForElement(element) {
+        attachInputSizingListenersForElement(element);
+        attachBlurListenersForElement(element);
+        attachDropdownLogicForElement(element);
+    }
+
 
     /** Attaches event listeners to header elements */
     function attachHeaderListeners() {
-  const loadBtn = document.getElementById('loadJsonBtn');
-  const fileInput = document.getElementById('jsonFileInput');
-  const newRunBtn = document.getElementById('newRunBtn');
+      const loadBtn = document.getElementById('loadJsonBtn');
+      const fileInput = document.getElementById('jsonFileInput');
+      const newRunBtn = document.getElementById('newRunBtn');
 
-  if (loadBtn && fileInput) {
-    loadBtn.addEventListener('click', () => {
-      const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
+      if (loadBtn && fileInput) {
+        loadBtn.addEventListener('click', () => {
+          const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
+          showConfirmationModal(
+            `Load Configuration: ${configName}?`,
+            `Loading '${configName}' will discard your current narrative and replace it with the defaults from that configuration. Continue?`,
+            "Your work will not be saved.",
+            () => {
+              const modalEl = document.getElementById("confirmationModal");
+              // Use a one-time event listener for when the modal is hidden
+              modalEl.addEventListener('hidden.bs.modal', async function handler() {
+                modalEl.removeEventListener('hidden.bs.modal', handler); // Clean up
+                await loadConfiguration(configName);
+                resetToCurrentConfigDefaults(); // This will rebuild UI and reattach listeners
+              }, { once: true });
+            },
+            () => {} // User cancelled
+          );
+        });
+        fileInput.addEventListener("keypress", (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); loadBtn.click(); }
+        });
+      } else { console.error("Load button or file input not found."); }
 
-      showConfirmationModal(
-        `Load Configuration: ${configName}?`,
-        `Loading '${configName}' will discard your current narrative and replace it with the defaults from that configuration. Continue?`,
-        "Your work will not be saved.",
-        () => {
-          const modalEl = document.getElementById("confirmationModal");
-          modalEl.addEventListener('hidden.bs.modal', async function handler() {
-            modalEl.removeEventListener('hidden.bs.modal', handler);
-            await loadConfiguration(configName);
-            resetToCurrentConfigDefaults();
-          });
-        },
-        () => {
-          // User cancelled; do nothing
-        }
-      );
-    });
+      if (newRunBtn) {
+        newRunBtn.addEventListener('click', () => {
+          showConfirmationModal(
+            "Start New Run",
+            `This will discard changes and reset to the defaults for the '${currentConfigName}' configuration. Continue?`,
+            "",
+            () => resetToCurrentConfigDefaults(), // This will rebuild UI and reattach listeners
+            () => {} // User cancelled
+          );
+        });
+      } else { console.error("New Run button not found."); }
+    }
 
-    // Allow loading via Enter key in the input field
-    fileInput.addEventListener("keypress", (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        loadBtn.click();
-      }
-    });
-  } else {
-    console.error("Load button or file input not found.");
-  }
-
-  if (newRunBtn) {
-    newRunBtn.addEventListener('click', () => {
-      showConfirmationModal(
-        "Start New Run",
-        `This will discard changes and reset to the defaults for the '${currentConfigName}' configuration. Continue?`,
-        "",
-        () => resetToCurrentConfigDefaults(),
-        () => {
-          // User cancelled; do nothing
-        }
-      );
-    });
-  } else {
-    console.error("New Run button not found.");
-  }
-}
-
-
-
-    /**
-     * Fetches and processes a JSON configuration file.
-     * Updates global defaults and optionally resets the working state.
-     * @param {string} configName - The name of the configuration (e.g., 'default', 'trauma').
-     * @param {boolean} [isInitialLoad=false] - Flag to indicate if this is the first load.
-     */
     async function loadConfiguration(configName, isInitialLoad = false) {
       const filename = `${configName.toLowerCase()}.json`;
       console.log(`Attempting to load configuration: ${filename}`);
@@ -618,133 +754,160 @@
         }
         const data = await response.json();
 
-        // --- Update Global Defaults ---
         rawCommonSentences = data.commonSentences || [];
         globalDropdownOptions = data.globalDropdownOptions || {};
-        // Store the loaded sections as the *new* defaults
-        defaultNarrativeSections = data.narrativeSections || [];
+        defaultNarrativeSections = data.narrativeSections || []; 
 
-        // --- Update Fuse Search Data ---
         commonSentences = rawCommonSentences.map((s) => ({
           original: s,
           display: shortPlaceholderString(s),
           searchable: expandedPlaceholderString(s),
         }));
-        fuse = new Fuse(commonSentences, fuseOptions); // Re-initialize Fuse
+        fuse = new Fuse(commonSentences, fuseOptions);
 
-        // --- Update State & UI ---
-        currentConfigName = configName; // Track the successfully loaded config name
-        document.getElementById('jsonFileInput').value = configName; // Update input field
+        currentConfigName = configName;
+        document.getElementById('jsonFileInput').value = configName;
 
         if (!isInitialLoad) {
-          // Only show success message if not the very first load
           showConfirmationModal("Load Successful", `Configuration '${configName}' loaded successfully.`, "", () => { }, () => { }, true);
         }
         console.log(`Configuration '${configName}' loaded.`);
-
       } catch (error) {
         console.error(`Failed to load or parse configuration '${filename}':`, error);
         showConfirmationModal("Load Error", `Could not load configuration '${configName}'. Please check the name and ensure the file exists. <br><small>(${error.message})</small>`, "", () => { }, () => { }, true);
-        // Optionally revert input field to previously successful config name
-        document.getElementById('jsonFileInput').value = currentConfigName;
-        throw error; // Re-throw error so calling function knows it failed
+        document.getElementById('jsonFileInput').value = currentConfigName; // Revert to last known good
+        throw error;
       }
     }
 
-
     // --- State Management ---
-
-    /** Loads the working state (narrativeSections) from localStorage */
     function loadState() {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedState) {
         try {
-          // Load saved sections into the working state
           narrativeSections = JSON.parse(savedState);
-          // Ensure data integrity (assign IDs, initialize values) based on loaded state
-          assignInitialIDs(narrativeSections);
+          assignInitialIDs(narrativeSections); // Ensure IDs and values are consistent
           console.log("Working state loaded from localStorage.");
         } catch (e) {
-          console.error("Failed parse saved state, using defaults from loaded config.", e);
-          localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear corrupted state
-          // Reset working state to the defaults of the *currently loaded* config
+          console.error("Failed to parse saved state, using defaults from loaded config.", e);
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
           resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
         }
       } else {
         console.log("No saved working state found, using defaults from loaded config.");
-        // Reset working state to the defaults of the *currently loaded* config
         resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
       }
-      // Ensure counter is ahead of any loaded IDs
       sentenceIdCounter = findHighestSentenceId(narrativeSections) + 1;
     }
 
-    /** Saves the current working state (narrativeSections) to localStorage */
     function saveState() {
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(narrativeSections));
       } catch (e) {
-        console.error("Failed save state.", e);
+        console.error("Failed to save state.", e);
         showConfirmationModal("Save Error", "Could not save changes to browser storage. Storage might be full.", "", () => { }, () => { }, true);
       }
     }
 
-    /** Resets the working state (narrativeSections) to the defaults of the currently loaded config */
     function resetToCurrentConfigDefaults(rebuildUI = true) {
+      const lockedIDs = new Set(); // Use a Set for efficient lookup
+      narrativeSections.forEach(sec => 
+        sec.sentences?.forEach(s => { if (s.locked) lockedIDs.add(s.id); })
+      );
+
       console.log(`Resetting to defaults for config: ${currentConfigName}`);
-      // Deep clone the defaults from the *currently loaded* configuration
       narrativeSections = JSON.parse(JSON.stringify(defaultNarrativeSections));
-      assignInitialIDs(narrativeSections); // Assign fresh IDs and initialize values
-      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear any previous saved state for this session
+      assignInitialIDs(narrativeSections); // Assign fresh IDs, initialize values
+
+      // Re-apply locks
+      narrativeSections.forEach(sec => 
+        sec.sentences?.forEach(s => { if (lockedIDs.has(s.id)) s.locked = true; })
+      );
+      
+      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear previous saved state
       if (rebuildUI) {
-        buildSectionsUI(); // Rebuild UI with defaults
-        // Re-attach listeners and adjust sizes for the new default elements
-        attachInputSizingListeners();
-        attachBlurListeners();
-        attachDropdownLogic();
-        adjustAllInitialSizes();
+        buildSectionsUI(); // This will re-render everything
+        attachAllEventListeners(); // Re-attach all relevant listeners to the new DOM
+        adjustAllInitialSizes();   // Adjust sizes for new elements
       }
-      document.getElementById("finalText").value = ""; // Clear output textarea
-      // Don't save state here, let user interaction trigger saves
+      document.getElementById("finalText").value = "";
     }
 
-
-    // --- ID and Value Initialization --- (assignInitialIDs, findHighestSentenceId, initializeSentenceValues - unchanged)
+    // --- ID and Value Initialization ---
     function assignInitialIDs(sections) {
-      let maxId = 0; sections.forEach(section => {
-        if (!section.sentences) section.sentences = []; section.sentences.forEach(sentenceObj => {
-          if (!sentenceObj.id || !sentenceObj.id.startsWith('sentence-')) sentenceObj.id = "sentence-" + sentenceIdCounter++;
-          else { const idNum = parseInt(sentenceObj.id.split('-')[1]); if (!isNaN(idNum) && idNum > maxId) maxId = idNum; }
-          initializeSentenceValues(sentenceObj);
+      let maxId = 0;
+      sections.forEach(section => {
+        if (!section.sentences) section.sentences = [];
+        section.sentences.forEach(sentenceObj => {
+          if (!sentenceObj.id || !sentenceObj.id.startsWith('sentence-')) {
+            sentenceObj.id = "sentence-" + sentenceIdCounter++;
+          } else {
+            const idNum = parseInt(sentenceObj.id.split('-')[1]);
+            if (!isNaN(idNum) && idNum > maxId) maxId = idNum;
+          }
+          initializeSentenceValues(sentenceObj); // Ensure values/tabs are initialized
         });
-      }); sentenceIdCounter = Math.max(sentenceIdCounter, maxId + 1);
+      });
+      sentenceIdCounter = Math.max(sentenceIdCounter, maxId + 1);
     }
+
     function findHighestSentenceId(sections) {
-      let maxId = 0; sections.forEach(section => {
-        if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
-          if (sentenceObj.id && sentenceObj.id.startsWith('sentence-')) { const idNum = parseInt(sentenceObj.id.split('-')[1]); if (!isNaN(idNum) && idNum > maxId) maxId = idNum; }
+      let maxId = 0;
+      sections.forEach(section => {
+        if (!section.sentences) return;
+        section.sentences.forEach(sentenceObj => {
+          if (sentenceObj.id && sentenceObj.id.startsWith('sentence-')) {
+            const idNum = parseInt(sentenceObj.id.split('-')[1]);
+            if (!isNaN(idNum) && idNum > maxId) maxId = idNum;
+          }
         });
-      }); return maxId;
+      });
+      return maxId;
     }
+
     function initializeSentenceValues(sentenceObj) {
+      // Initialize for tabbed sentences
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-        if (typeof sentenceObj.activeTabIndex === "undefined" || sentenceObj.activeTabIndex >= sentenceObj.tabs.length) sentenceObj.activeTabIndex = 0;
-        if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues) || sentenceObj.tabValues.length !== sentenceObj.tabs.length) sentenceObj.tabValues = sentenceObj.tabs.map(() => ({}));
-        else sentenceObj.tabValues = sentenceObj.tabValues.map(valStore => (typeof valStore === 'object' && !Array.isArray(valStore) && valStore !== null) ? valStore : {});
-      } else if (!sentenceObj.values || Array.isArray(sentenceObj.values)) sentenceObj.values = {};
+        if (typeof sentenceObj.activeTabIndex === "undefined" || sentenceObj.activeTabIndex >= sentenceObj.tabs.length) {
+          sentenceObj.activeTabIndex = 0;
+        }
+        if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues) || sentenceObj.tabValues.length !== sentenceObj.tabs.length) {
+          sentenceObj.tabValues = sentenceObj.tabs.map(() => ({}));
+        } else {
+          // Ensure each tab's value store is an object
+          sentenceObj.tabValues = sentenceObj.tabValues.map(valStore => 
+            (typeof valStore === 'object' && !Array.isArray(valStore) && valStore !== null) ? valStore : {}
+          );
+        }
+      } else { // Initialize for non-tabbed sentences
+        if (!sentenceObj.values || Array.isArray(sentenceObj.values)) { // Ensure .values is an object
+          sentenceObj.values = {};
+        }
+      }
     }
 
-    // --- String Manipulation Helpers --- (shortPlaceholderString, expandedPlaceholderString - unchanged)
-    function shortPlaceholderString(sentence) { return sentence.replace(placeholderRegex, (match, type, label) => `[${label}]`); }
-    function expandedPlaceholderString(sentence) { return sentence.replace(placeholderRegex, (match, theType, label, opts) => opts ? `[${label}(${opts})]` : `[${label}]`); }
+    // --- String Manipulation Helpers ---
+    function shortPlaceholderString(sentence) {
+      return sentence.replace(placeholderRegex, (match, type, label) => `[${label}]`);
+    }
+    function expandedPlaceholderString(sentence) {
+      return sentence.replace(placeholderRegex, (match, theType, label, opts) => opts ? `[${label}(${opts})]` : `[${label}]`);
+    }
 
-    // --- UI Building Functions --- (buildSectionsUI, createSectionElement, createSentenceElement, createTabsContainer, createTabPaneElement, createRemoveButton, createAddSentenceForm - unchanged)
+    // --- UI Building Functions ---
     function buildSectionsUI() {
-      const container = document.getElementById("sectionContainer"); if (!container) { console.error("Section container not found!"); return; }
-      container.innerHTML = ""; narrativeSections.forEach(secObj => container.appendChild(createSectionElement(secObj)));
-      makeSentencesDraggable();
-      // Listeners attached separately
+      const container = document.getElementById("sectionContainer");
+      if (!container) { console.error("Section container not found!"); return; }
+      container.innerHTML = ""; // Clear existing content
+      narrativeSections.forEach(secObj => {
+        container.appendChild(createSectionElement(secObj));
+      });
+      makeSentencesDraggable(); // Make new sentences draggable
+      initializeTooltips(); // Re-initialize tooltips for new elements
+      // Event listeners (for inputs, dropdowns etc.) are attached via attachAllEventListeners() after full build
+      // or attachAllEventListenersForElement() when adding single items.
     }
+
     function createSectionElement(secObj) {
       const sectionDiv = document.createElement("div");
       sectionDiv.classList.add("narrative-section");
@@ -753,177 +916,493 @@
       const header = document.createElement("div");
       header.classList.add("section-header");
 
-      const titleWrapper = document.createElement("span"); // Wrapper for tooltip
+      const titleWrapper = document.createElement("span");
       titleWrapper.classList.add("section-title-wrapper");
 
-      const titleEl = document.createElement("h5"); // Use h5 for the main part
-      titleEl.classList.add("section-title", "m-0", "d-inline"); // Use d-inline to keep spans together
+      const titleEl = document.createElement("h5");
+      titleEl.classList.add("section-title", "m-0", "d-inline");
 
       const mainPartSpan = document.createElement("span");
       mainPartSpan.classList.add("section-title-main");
       mainPartSpan.innerText = secObj.part;
       titleEl.appendChild(mainPartSpan);
 
-      // Add subpart if it exists
       if (secObj.subpart) {
         const subPartSpan = document.createElement("span");
         subPartSpan.classList.add("section-subpart");
         subPartSpan.innerText = secObj.subpart;
-        titleEl.appendChild(subPartSpan); // Append subpart within the h5
+        titleEl.appendChild(subPartSpan);
       }
+      titleWrapper.appendChild(titleEl);
 
-      titleWrapper.appendChild(titleEl); // Add the h5 (with part/subpart) to the wrapper
-
-      // Add Bootstrap tooltip attributes if tooltip exists
       if (secObj.tooltip) {
         titleWrapper.setAttribute('data-bs-toggle', 'tooltip');
         titleWrapper.setAttribute('data-bs-placement', 'top');
         titleWrapper.setAttribute('title', secObj.tooltip);
       }
-
-      header.appendChild(titleWrapper); // Add the wrapper to the header
-
+      header.appendChild(titleWrapper);
       sectionDiv.appendChild(header);
+
       const ul = document.createElement("ul");
       ul.classList.add("sentence-list");
-      ul.dataset.part = secObj.part;
+      ul.dataset.part = secObj.part; // For SortableJS group identification
       if (secObj.sentences) {
-        secObj.sentences.forEach(sentenceObj => ul.appendChild(createSentenceElement(sentenceObj, secObj.part)));
+        secObj.sentences.forEach(sentenceObj => {
+          ul.appendChild(createSentenceElement(sentenceObj, secObj.part));
+        });
       }
       sectionDiv.appendChild(ul);
-      sectionDiv.appendChild(createAddSentenceForm(secObj));
+      sectionDiv.appendChild(createAddSentenceForm(secObj)); // Add form for adding new sentences
       return sectionDiv;
     }
+
     function createSentenceElement(sentenceObj, partLabel) {
-      initializeSentenceValues(sentenceObj); const li = document.createElement("li"); li.dataset.id = sentenceObj.id; li.dataset.part = partLabel;
-      const handle = document.createElement("span"); handle.classList.add("drag-handle"); handle.innerHTML = "&#9776;"; handle.title = "Drag"; li.appendChild(handle);
-      const contentDiv = document.createElement('div'); contentDiv.classList.add('sentence-content');
+      initializeSentenceValues(sentenceObj); // Ensure values are ready
+      const li = document.createElement("li");
+      li.dataset.id = sentenceObj.id;
+      li.dataset.part = partLabel; // Keep track of which part it belongs to
+
+      // Drag Handle
+      const handle = document.createElement("span");
+      handle.classList.add("drag-handle");
+      handle.innerHTML = "&#9776;"; // Hamburger icon for dragging
+      handle.title = "Drag to reorder or move to another section";
+      li.appendChild(handle);
+
+      // Content Area (for text and inline fields)
+      const contentDiv = document.createElement('div');
+      contentDiv.classList.add('sentence-content');
+
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-        li.classList.add("has-tabs"); li.appendChild(createTabsContainer(sentenceObj));
-        sentenceObj.tabs.forEach((tab, i) => contentDiv.appendChild(createTabPaneElement(sentenceObj, i)));
-      } else contentDiv.innerHTML = buildInlineFields(sentenceObj.text, sentenceObj.values);
-      li.appendChild(contentDiv); li.appendChild(createRemoveButton(sentenceObj.id, partLabel)); return li;
+        li.classList.add("has-tabs");
+        li.appendChild(createTabsContainer(sentenceObj)); // Tabs go above contentDiv
+        sentenceObj.tabs.forEach((tab, i) => {
+          contentDiv.appendChild(createTabPaneElement(sentenceObj, i));
+        });
+      } else {
+        contentDiv.innerHTML = buildInlineFields(sentenceObj.text, sentenceObj.values);
+      }
+      li.appendChild(contentDiv);
+
+      // Controls (Edit, Lock, Remove buttons)
+      const controls = document.createElement('div');
+      controls.classList.add('sentence-controls');
+      controls.append(
+        createEditButton(sentenceObj, partLabel),
+        createLockButton(sentenceObj, partLabel),
+        createRemoveButton(sentenceObj.id, partLabel)
+      );
+      li.appendChild(controls);
+      return li;
     }
+    
     function createTabsContainer(sentenceObj) {
-      const tabsContainer = document.createElement("div"); tabsContainer.classList.add("tabs-container");
-      sentenceObj.tabs.forEach((tab, i) => {
-        const tabBtn = document.createElement("button"); tabBtn.classList.add("tab-button"); tabBtn.type = "button";
-        if (i === sentenceObj.activeTabIndex) tabBtn.classList.add("active"); tabBtn.innerText = tab.title || `Tab ${i + 1}`; tabBtn.dataset.tabIndex = i;
-        tabBtn.addEventListener("click", () => switchTab(sentenceObj.id, i)); tabsContainer.appendChild(tabBtn);
-      }); return tabsContainer;
-    }
-    function createTabPaneElement(sentenceObj, tabIndex) {
-      const tabPane = document.createElement("div"); tabPane.classList.add("tab-pane"); tabPane.dataset.tabIndex = tabIndex; if (tabIndex === sentenceObj.activeTabIndex) tabPane.classList.add("active");
-      const tabContent = sentenceObj.tabs[tabIndex].text || ""; const tabValues = sentenceObj.tabValues[tabIndex] || {}; tabPane.innerHTML = buildInlineFields(tabContent, tabValues); return tabPane;
-    }
-    function createRemoveButton(sentenceId, partLabel) {
-      const removeBtn = document.createElement("button"); removeBtn.classList.add("remove-sentence-btn"); removeBtn.type = "button"; removeBtn.innerHTML = "&times;"; removeBtn.title = "Remove"; removeBtn.setAttribute('aria-label', 'Remove sentence');
-      removeBtn.addEventListener("click", (e) => { e.stopPropagation(); showConfirmationModal("Remove Sentence", "Are you sure?", "", () => removeSentence(partLabel, sentenceId), () => { }); }); return removeBtn;
-    }
-    function createAddSentenceForm(secObj) {
-      const form = document.createElement("form"); form.classList.add("add-item-form"); form.dataset.part = secObj.part; form.addEventListener('submit', (e) => e.preventDefault());
-      const groupDiv = document.createElement("div"); groupDiv.classList.add("add-item-group");
-      const textarea = document.createElement("textarea"); textarea.classList.add("form-control", "form-control-sm", "auto-height-textarea"); textarea.placeholder = "Type to add or search..."; textarea.setAttribute('aria-label', `Add sentence to ${secObj.part}`); textarea.rows = 1;
-      const addBtn = document.createElement("button"); addBtn.type = "button"; addBtn.classList.add("btn", "btn-sm", "btn-secondary"); addBtn.innerText = "Add"; addBtn.title = "Add sentence";
-      addBtn.addEventListener("click", () => { const newText = textarea.value.trim(); if (newText) { addSentence(secObj.part, { text: newText }); textarea.value = ""; adjustTextareaHeight(textarea); } });
-      textarea.addEventListener("keypress", (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const newText = textarea.value.trim(); if (newText) { addSentence(secObj.part, { text: newText }); textarea.value = ""; adjustTextareaHeight(textarea); suggestionsBox.style.display = 'none'; } } });
-      groupDiv.appendChild(textarea); groupDiv.appendChild(addBtn);
-      const suggestionsBox = document.createElement("div"); suggestionsBox.classList.add("suggestions-box"); const suggestionsUl = document.createElement("ul"); suggestionsBox.appendChild(suggestionsUl);
-      form.appendChild(groupDiv); form.appendChild(suggestionsBox);
-      textarea.addEventListener("input", () => { handleSuggestionsInput(textarea, suggestionsBox, secObj.part); adjustTextareaHeight(textarea); });
-      textarea.addEventListener("blur", () => { setTimeout(() => { suggestionsBox.style.display = "none"; }, 150); });
-      setTimeout(() => adjustTextareaHeight(textarea), 0); return form;
+        const tabsContainer = document.createElement("div");
+        tabsContainer.classList.add("tabs-container");
+        sentenceObj.tabs.forEach((tab, i) => {
+            const tabBtn = document.createElement("button");
+            tabBtn.classList.add("tab-button");
+            tabBtn.type = "button"; // Important for forms
+            if (i === sentenceObj.activeTabIndex) tabBtn.classList.add("active");
+            tabBtn.innerText = tab.title || `Tab ${i + 1}`;
+            tabBtn.dataset.tabIndex = i;
+            tabBtn.addEventListener("click", () => switchTab(sentenceObj.id, i));
+            tabsContainer.appendChild(tabBtn);
+        });
+        return tabsContainer;
     }
 
-    // --- UI Interaction Functions --- (handleSuggestionsInput, addSentence, removeSentence, switchTab - unchanged logic, but attach necessary listeners on add/switch)
-    function handleSuggestionsInput(inputElement, suggestionsBoxElement, partLabel) {
-      const query = inputElement.value.trim(); const ulEl = suggestionsBoxElement.querySelector("ul"); if (!ulEl) return; ulEl.innerHTML = "";
-      if (query.length < fuseOptions.minMatchCharLength) { suggestionsBoxElement.style.display = "none"; return; }
-      const fuseResults = fuse.search(query); if (fuseResults.length === 0) { suggestionsBoxElement.style.display = "none"; return; }
-      fuseResults.slice(0, 10).forEach((res) => {
-        const li = document.createElement("li"); li.textContent = res.item.display; li.title = res.item.original;
-        li.addEventListener("mousedown", () => { addSentence(partLabel, { text: res.item.original }); inputElement.value = ""; if (inputElement.tagName === 'TEXTAREA') adjustTextareaHeight(inputElement); suggestionsBoxElement.style.display = "none"; });
-        ulEl.appendChild(li);
-      }); suggestionsBoxElement.style.display = "block";
+    function createTabPaneElement(sentenceObj, tabIndex) {
+        const tabPane = document.createElement("div");
+        tabPane.classList.add("tab-pane");
+        tabPane.dataset.tabIndex = tabIndex;
+        if (tabIndex === sentenceObj.activeTabIndex) tabPane.classList.add("active");
+        
+        const tabContent = sentenceObj.tabs[tabIndex].text || "";
+        const tabValues = sentenceObj.tabValues[tabIndex] || {}; // Ensure tabValues for this index exists
+        tabPane.innerHTML = buildInlineFields(tabContent, tabValues);
+        return tabPane;
     }
+
+    function createRemoveButton(sentenceId, partLabel) {
+      const removeBtn = document.createElement("button");
+      removeBtn.classList.add("btn", "btn-sm", "remove-sentence-btn"); // Bootstrap and custom classes
+      removeBtn.type = "button";
+      removeBtn.innerHTML = "&times;"; // "X" symbol for remove
+      removeBtn.title = "Remove Sentence";
+      removeBtn.setAttribute('aria-label', 'Remove sentence');
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        showConfirmationModal("Remove Sentence", "Are you sure you want to remove this sentence?", "", 
+          () => removeSentence(partLabel, sentenceId), 
+          () => {} // No action on "No"
+        );
+      });
+      return removeBtn;
+    }
+    
+    function createEditButton(sentenceObj, partLabel) {
+        const btn = document.createElement('button');
+        btn.classList.add('btn', 'btn-sm', 'edit-sentence-btn');
+        btn.title = 'Edit Sentence Text';
+        btn.innerHTML = '<i class="bi bi-pencil-fill"></i>';
+        btn.setAttribute('aria-label', 'Edit sentence text');
+        btn.addEventListener('click', () => {
+            const currentText = sentenceObj.text || (sentenceObj.tabs ? "Tabbed content - edit in config" : "");
+            if (sentenceObj.tabs) {
+                 showConfirmationModal("Edit Tabbed Sentence", "Text for tabbed sentences should be edited in the JSON configuration file.", "", ()=>{}, ()=>{}, true);
+                 return;
+            }
+            const newText = prompt('Edit sentence text:', currentText);
+            if (newText !== null && newText.trim() !== currentText) {
+                sentenceObj.text = newText.trim();
+                saveState();
+                // Rebuild only the affected sentence for efficiency if possible, or full section/UI
+                buildSectionsUI(); // For simplicity, rebuild all. More targeted updates are complex.
+                attachAllEventListeners();
+                adjustAllInitialSizes();
+            }
+        });
+        return btn;
+    }
+
+    function createLockButton(sentenceObj, partLabel) {
+        const btn = document.createElement('button');
+        btn.classList.add('btn', 'btn-sm', 'lock-sentence-btn');
+        btn.title = sentenceObj.locked ? 'Unlock Sentence' : 'Lock Sentence (prevents deletion in New Run)';
+        btn.setAttribute('aria-label', sentenceObj.locked ? 'Unlock sentence' : 'Lock sentence');
+        btn.innerHTML = `<i class="bi bi-lock${sentenceObj.locked ? '-fill text-primary' : ''}"></i>`;
+        
+        btn.addEventListener('click', () => {
+            sentenceObj.locked = !sentenceObj.locked;
+            // Update button appearance immediately
+            btn.title = sentenceObj.locked ? 'Unlock Sentence' : 'Lock Sentence';
+            btn.setAttribute('aria-label', sentenceObj.locked ? 'Unlock sentence' : 'Lock sentence');
+            btn.innerHTML = `<i class="bi bi-lock${sentenceObj.locked ? '-fill text-primary' : ''}"></i>`;
+            saveState();
+            // No need to rebuild UI just for lock state change if only icon/title changes
+        });
+        return btn;
+    }
+
+
+    function createAddSentenceForm(secObj) {
+      const form = document.createElement("form");
+      form.classList.add("add-item-form");
+      form.dataset.part = secObj.part;
+      form.addEventListener('submit', (e) => e.preventDefault()); // Prevent default form submission
+
+      const groupDiv = document.createElement("div");
+      groupDiv.classList.add("add-item-group");
+
+      const textarea = document.createElement("textarea");
+      textarea.classList.add("form-control", "form-control-sm", "auto-height-textarea");
+      textarea.placeholder = "Type to add new sentence or search existing...";
+      textarea.setAttribute('aria-label', `Add sentence to ${secObj.part}`);
+      textarea.rows = 1; // Start with a single row
+
+      const addBtn = document.createElement("button");
+      addBtn.type = "button"; // Important: type="button" to prevent form submission
+      addBtn.classList.add("btn", "btn-sm", "btn-secondary");
+      addBtn.innerText = "Add";
+      addBtn.title = "Add new sentence from text area";
+
+      addBtn.addEventListener("click", () => {
+        const newText = textarea.value.trim();
+        if (newText) {
+          addSentence(secObj.part, { text: newText });
+          textarea.value = ""; // Clear textarea
+          adjustTextareaHeight(textarea); // Reset height
+          suggestionsBox.style.display = 'none'; // Hide suggestions
+        }
+      });
+
+      // Add sentence on Enter (but not Shift+Enter for new lines)
+      textarea.addEventListener("keypress", (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault(); // Prevent new line
+          const newText = textarea.value.trim();
+          if (newText) {
+            addSentence(secObj.part, { text: newText });
+            textarea.value = "";
+            adjustTextareaHeight(textarea);
+            suggestionsBox.style.display = 'none';
+          }
+        }
+      });
+
+      groupDiv.appendChild(textarea);
+      groupDiv.appendChild(addBtn);
+
+      // Suggestions Box for autocomplete
+      const suggestionsBox = document.createElement("div");
+      suggestionsBox.classList.add("suggestions-box");
+      const suggestionsUl = document.createElement("ul");
+      suggestionsBox.appendChild(suggestionsUl);
+
+      form.appendChild(groupDiv);
+      form.appendChild(suggestionsBox);
+
+      // Event listeners for textarea (autocomplete and auto-height)
+      textarea.addEventListener("input", () => {
+        handleSuggestionsInput(textarea, suggestionsBox, secObj.part);
+        adjustTextareaHeight(textarea);
+      });
+      textarea.addEventListener("blur", () => {
+        // Delay hiding suggestions to allow click on a suggestion
+        setTimeout(() => { suggestionsBox.style.display = "none"; }, 150);
+      });
+      
+      // Initial height adjustment
+      setTimeout(() => adjustTextareaHeight(textarea), 0);
+      return form;
+    }
+
+    // --- UI Interaction Functions ---
+    function handleSuggestionsInput(inputElement, suggestionsBoxElement, partLabel) {
+      const query = inputElement.value.trim();
+      const ulEl = suggestionsBoxElement.querySelector("ul");
+      if (!ulEl) return;
+      ulEl.innerHTML = ""; // Clear previous suggestions
+
+      if (query.length < fuseOptions.minMatchCharLength) {
+        suggestionsBoxElement.style.display = "none";
+        return;
+      }
+
+      const fuseResults = fuse.search(query);
+      if (fuseResults.length === 0) {
+        suggestionsBoxElement.style.display = "none";
+        return;
+      }
+
+      fuseResults.slice(0, 10).forEach((res) => { // Show top 10 results
+        const li = document.createElement("li");
+        li.textContent = res.item.display; // Show shortened version
+        li.title = res.item.original;    // Full text on hover
+
+        // Use mousedown for selection to fire before blur on textarea
+        li.addEventListener("mousedown", () => {
+          addSentence(partLabel, { text: res.item.original });
+          inputElement.value = ""; // Clear input
+          if (inputElement.tagName === 'TEXTAREA') adjustTextareaHeight(inputElement);
+          suggestionsBoxElement.style.display = "none";
+        });
+        ulEl.appendChild(li);
+      });
+      suggestionsBoxElement.style.display = "block";
+    }
+
     function addSentence(partLabel, sentenceData) {
-      const section = narrativeSections.find(s => s.part === partLabel); if (!section) return;
-      sentenceData.id = "sentence-" + sentenceIdCounter++; initializeSentenceValues(sentenceData); if (!section.sentences) section.sentences = []; section.sentences.push(sentenceData);
-      console.log(`Sentence added: ${sentenceData.id}`); const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
+      const section = narrativeSections.find(s => s.part === partLabel);
+      if (!section) { console.error(`Section ${partLabel} not found.`); return; }
+
+      sentenceData.id = "sentence-" + sentenceIdCounter++;
+      initializeSentenceValues(sentenceData); // Ensure values are initialized
+      if (!section.sentences) section.sentences = [];
+      section.sentences.push(sentenceData);
+      console.log(`Sentence added: ${sentenceData.id} to ${partLabel}`);
+
+      const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
       if (ul) {
-        const li = createSentenceElement(sentenceData, partLabel); ul.appendChild(li);
-        attachDropdownLogicForElement(li); attachBlurListenersForElement(li); attachInputSizingListenersForElement(li); adjustAllInitialSizesForElement(li);
+        const li = createSentenceElement(sentenceData, partLabel);
+        ul.appendChild(li);
+        // Attach listeners and adjust sizes for the new element specifically
+        attachAllEventListenersForElement(li);
+        adjustAllInitialSizesForElement(li);
         li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      } else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
+      } else {
+        // Fallback: if UL not found (should not happen if structure is correct), rebuild
+        buildSectionsUI();
+        attachAllEventListeners();
+        adjustAllInitialSizes();
+      }
       saveState();
     }
+
     function removeSentence(partLabel, sentenceId) {
-      const section = narrativeSections.find(s => s.part === partLabel); if (!section || !section.sentences) return;
+      const section = narrativeSections.find(s => s.part === partLabel);
+      if (!section || !section.sentences) return;
+
       const index = section.sentences.findIndex(s => s.id === sentenceId);
       if (index > -1) {
-        section.sentences.splice(index, 1); console.log(`Sentence removed data: ${sentenceId}`); const li = document.querySelector(`li[data-id="${sentenceId}"]`);
-        if (li) { li.remove(); console.log(`Sentence removed DOM: ${sentenceId}`); }
-        else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
+        section.sentences.splice(index, 1);
+        console.log(`Sentence data removed: ${sentenceId}`);
+        const li = document.querySelector(`li[data-id="${sentenceId}"]`);
+        if (li) { 
+            li.remove(); 
+            console.log(`Sentence DOM element removed: ${sentenceId}`);
+        } else { // Fallback if DOM element somehow not found
+            buildSectionsUI(); 
+            attachAllEventListeners();
+            adjustAllInitialSizes();
+        }
         saveState();
-      } else console.warn(`Sentence ID ${sentenceId} not found.`);
+      } else {
+        console.warn(`Sentence ID ${sentenceId} not found in section ${partLabel} data.`);
+      }
     }
+    
     function switchTab(sentenceId, tabIndex) {
-      const sentenceObj = findSentenceById(sentenceId); if (!sentenceObj || !sentenceObj.tabs) return; if (tabIndex < 0 || tabIndex >= sentenceObj.tabs.length) return;
-      sentenceObj.activeTabIndex = tabIndex; console.log(`Switched tab ${tabIndex} for ${sentenceId}`); const li = document.querySelector(`li[data-id="${sentenceId}"]`);
-      if (li) {
-        const tabButtons = li.querySelectorAll('.tabs-container .tab-button'); tabButtons.forEach((btn, index) => btn.classList.toggle('active', index === tabIndex));
-        const tabPanes = li.querySelectorAll('.tab-pane'); tabPanes.forEach((pane, index) => {
-          const isActive = index === tabIndex; pane.classList.toggle('active', isActive);
-          if (isActive) {
-            const tabContent = sentenceObj.tabs[index].text || ""; const tabValues = sentenceObj.tabValues[index] || {}; pane.innerHTML = buildInlineFields(tabContent, tabValues);
-            attachDropdownLogicForElement(pane); attachBlurListenersForElement(pane); attachInputSizingListenersForElement(pane); adjustAllInitialSizesForElement(pane);
-          }
-        });
-      } else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
-      saveState();
-    }
+        const sentenceObj = findSentenceById(sentenceId);
+        if (!sentenceObj || !sentenceObj.tabs) return;
+        if (tabIndex < 0 || tabIndex >= sentenceObj.tabs.length) return;
 
-    // --- Input Value Handling --- (attachBlurListeners, handleInlineFieldBlurDelegated, handleInlineFieldBlur, storeAllInlineValues - unchanged)
-    function attachBlurListeners() { // Attaches general blur listener for SAVING data
-      const container = document.getElementById('sectionContainer'); if (!container) return;
-      container.removeEventListener('blur', handleInlineFieldBlurDelegated, true); container.addEventListener('blur', handleInlineFieldBlurDelegated, true);
-    }
-    function attachBlurListenersForElement(element) { element.querySelectorAll('.inline-field[data-label]').forEach(field => { field.removeEventListener('blur', handleInlineFieldBlur); field.addEventListener('blur', handleInlineFieldBlur); }); }
-    function handleInlineFieldBlurDelegated(event) { if (event.target.matches('.inline-field[data-label]')) handleInlineFieldBlur(event); }
-    function handleInlineFieldBlur(event) { // Saves data on blur
-      const field = event.target; const label = field.dataset.label; const value = field.value; const li = field.closest('li[data-id]'); if (!li || !label) return;
-      const sentenceId = li.dataset.id; const sentenceObj = findSentenceById(sentenceId); if (!sentenceObj) return; const tabPane = field.closest('.tab-pane[data-tab-index]');
-      let valueChanged = false;
-      if (tabPane) { const tabIndex = parseInt(tabPane.dataset.tabIndex); if (!isNaN(tabIndex) && sentenceObj.tabValues?.[tabIndex]) { if (sentenceObj.tabValues[tabIndex][label] !== value) { sentenceObj.tabValues[tabIndex][label] = value; valueChanged = true; } } }
-      else if (sentenceObj.values) { if (sentenceObj.values[label] !== value) { sentenceObj.values[label] = value; valueChanged = true; } }
-      if (valueChanged) saveState();
-    }
-    function storeAllInlineValues() {
-      let changesMade = false; narrativeSections.forEach(section => {
-        if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
-          const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`); if (!li) return; initializeSentenceValues(sentenceObj);
-          if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-            sentenceObj.tabs.forEach((tab, tabIndex) => {
-              const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`); if (!tabPane) return; if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {};
-              tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => { const label = field.dataset.label; const newValue = field.value; if (sentenceObj.tabValues[tabIndex][label] !== newValue) { sentenceObj.tabValues[tabIndex][label] = newValue; changesMade = true; } });
+        sentenceObj.activeTabIndex = tabIndex;
+        console.log(`Switched to tab ${tabIndex} for sentence ${sentenceId}`);
+
+        const li = document.querySelector(`li[data-id="${sentenceId}"]`);
+        if (li) {
+            // Update tab button active states
+            const tabButtons = li.querySelectorAll('.tabs-container .tab-button');
+            tabButtons.forEach((btn, index) => btn.classList.toggle('active', index === tabIndex));
+
+            // Update tab pane active states and content
+            const tabPanes = li.querySelectorAll('.sentence-content .tab-pane');
+            tabPanes.forEach((pane, index) => {
+                const isActive = index === tabIndex;
+                pane.classList.toggle('active', isActive);
+                if (isActive) {
+                    // Rebuild content for the newly active tab
+                    const tabContent = sentenceObj.tabs[index].text || "";
+                    const tabValues = sentenceObj.tabValues[index] || {};
+                    pane.innerHTML = buildInlineFields(tabContent, tabValues);
+                    // Re-attach listeners and adjust sizes for the new content in the active tab
+                    attachAllEventListenersForElement(pane);
+                    adjustAllInitialSizesForElement(pane);
+                }
             });
-          } else { if (!sentenceObj.values) sentenceObj.values = {}; li.querySelectorAll(".inline-field[data-label]:not(.tab-pane .inline-field)").forEach(field => { const label = field.dataset.label; const newValue = field.value; if (sentenceObj.values[label] !== newValue) { sentenceObj.values[label] = newValue; changesMade = true; } }); }
-        });
-      }); return changesMade;
+        } else { // Fallback if sentence <li> not found
+            buildSectionsUI();
+            attachAllEventListeners();
+            adjustAllInitialSizes();
+        }
+        saveState();
     }
 
-    // --- HTML Building for Inline Fields --- (MODIFIED buildInlineFields)
+
+    // --- Input Value Handling (Saving on Blur) ---
+    function attachBlurListeners() {
+      const container = document.getElementById('sectionContainer');
+      if (!container) return;
+      // Use event delegation for blur on inline fields
+      container.removeEventListener('blur', handleInlineFieldBlurDelegated, true); // Remove previous if any
+      container.addEventListener('blur', handleInlineFieldBlurDelegated, true); // Capture phase
+    }
+    function attachBlurListenersForElement(element) {
+        // For dynamically added elements, attach directly if delegation isn't covering it
+        element.querySelectorAll('.inline-field[data-label]').forEach(field => {
+            field.removeEventListener('blur', handleInlineFieldBlur); // Prevent duplicates
+            field.addEventListener('blur', handleInlineFieldBlur);
+        });
+    }
+
+    function handleInlineFieldBlurDelegated(event) {
+      if (event.target.matches('.inline-field[data-label]')) {
+        handleInlineFieldBlur(event);
+      }
+    }
+    function handleInlineFieldBlur(event) {
+      const field = event.target;
+      const label = field.dataset.label;
+      const value = field.value;
+      const li = field.closest('li[data-id]');
+      if (!li || !label) return;
+
+      const sentenceId = li.dataset.id;
+      const sentenceObj = findSentenceById(sentenceId);
+      if (!sentenceObj) return;
+
+      const tabPane = field.closest('.tab-pane[data-tab-index]');
+      let valueChanged = false;
+
+      if (tabPane) { // Value is within a tab
+        const tabIndex = parseInt(tabPane.dataset.tabIndex);
+        if (!isNaN(tabIndex) && sentenceObj.tabValues?.[tabIndex]) {
+          if (sentenceObj.tabValues[tabIndex][label] !== value) {
+            sentenceObj.tabValues[tabIndex][label] = value;
+            valueChanged = true;
+          }
+        }
+      } else if (sentenceObj.values) { // Value is in a non-tabbed sentence
+        if (sentenceObj.values[label] !== value) {
+          sentenceObj.values[label] = value;
+          valueChanged = true;
+        }
+      }
+      if (valueChanged) {
+        console.log(`Value saved for ${sentenceId} - ${label}: ${value}`);
+        saveState();
+      }
+    }
+    
+    /** Stores all inline field values into the JS data structure. Called before generation. */
+    function storeAllInlineValues() {
+        let changesMade = false;
+        narrativeSections.forEach(section => {
+            if (!section.sentences) return;
+            section.sentences.forEach(sentenceObj => {
+                const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
+                if (!li) return; // Skip if DOM element not found
+
+                initializeSentenceValues(sentenceObj); // Ensure value objects exist
+
+                if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+                    sentenceObj.tabs.forEach((tab, tabIndex) => {
+                        const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
+                        if (!tabPane) return;
+                        if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {}; // Should be initialized already
+
+                        tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
+                            const label = field.dataset.label;
+                            const newValue = field.value;
+                            if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
+                                sentenceObj.tabValues[tabIndex][label] = newValue;
+                                changesMade = true;
+                            }
+                        });
+                    });
+                } else { // Non-tabbed sentence
+                    if (!sentenceObj.values) sentenceObj.values = {}; // Should be initialized already
+
+                    li.querySelectorAll(".sentence-content > .inline-field[data-label]").forEach(field => {
+                         // Ensure we only get direct children of sentence-content, not those inside tab-panes if any mix-up
+                        const label = field.dataset.label;
+                        const newValue = field.value;
+                        if (sentenceObj.values[label] !== newValue) {
+                            sentenceObj.values[label] = newValue;
+                            changesMade = true;
+                        }
+                    });
+                }
+            });
+        });
+        if (changesMade) console.log("Stored all inline values, changes detected.");
+        return changesMade;
+    }
+
+
+    // --- HTML Building for Inline Fields ---
     function buildInlineFields(textTemplate, valuesObject) {
-      if (!valuesObject) valuesObject = {}; const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, "");
+      if (!valuesObject) valuesObject = {}; // Ensure valuesObject is an object
+      const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, ""); // Remove <br> tags
+
       return cleanText.replace(placeholderRegex, (match, type, label, options) => {
-        const currentValue = valuesObject[label] || ""; let dropdownOptionsArray = [];
-        if (options) dropdownOptionsArray = options.split(",").map(x => x.trim()); else if (globalDropdownOptions[label]) dropdownOptionsArray = globalDropdownOptions[label];
+        const currentValue = valuesObject[label] || "";
+        let dropdownOptionsArray = [];
+
+        if (options) { // Options defined directly in template
+          dropdownOptionsArray = options.split(",").map(x => x.trim());
+        } else if (globalDropdownOptions[label]) { // Options from global config
+          dropdownOptionsArray = globalDropdownOptions[label];
+        }
+        // else: it's a text or number field, or a dropdown with no predefined options (less common)
+
         switch (type) {
           case "customDropdown":
             const listItems = dropdownOptionsArray.map(opt => {
               const isHidden = opt.startsWith(HIDDEN_ITEM_MARKER);
               const displayOpt = isHidden ? opt.substring(HIDDEN_ITEM_MARKER.length) : opt;
-              // Add data-hidden attribute if it starts with the marker
               const hiddenAttr = isHidden ? ' data-hidden="true"' : '';
               return `<li class="list-group-item"${hiddenAttr} title="${displayOpt}">${displayOpt}</li>`;
             }).join("");
@@ -932,75 +1411,197 @@
               <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>
               <ul class="suggestions">${listItems}</ul>
             </div>`;
-          case "text": return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
-          case "number": return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
-          case "dropdown": return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`; // Standard dropdown might need similar logic if used
-          default: console.warn(`Unknown type: ${type}`); return match;
+          case "text":
+            return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+          case "number":
+            return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+          case "dropdown": // This type might be legacy or needs specific handling if different from customDropdown
+             console.warn(`Standard 'dropdown' type encountered for [${label}]. Consider using 'customDropdown' for richer features or ensure specific handling is implemented if needed.`);
+            // Basic input for now, can be enhanced if standard dropdowns have unique behavior
+            return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>`;
+          default:
+            console.warn(`Unknown placeholder type: ${type} for label: ${label}`);
+            return match; // Return original match if type is unknown
         }
       });
     }
 
-    // --- Drag and Drop --- (makeSentencesDraggable, handleDragEnd - unchanged)
-    function makeSentencesDraggable() { const lists = document.querySelectorAll(".sentence-list"); lists.forEach(ul => { const existingSortable = Sortable.get(ul); if (existingSortable) existingSortable.destroy(); new Sortable(ul, { animation: 150, group: { name: "narrativeGroup", pull: true, put: true }, handle: ".drag-handle", ghostClass: "sortable-ghost", chosenClass: "sortable-chosen", dragClass: "sortable-drag", onEnd: handleDragEnd, }); }); }
-    function handleDragEnd(evt) {
-      const itemEl = evt.item; const sentenceId = itemEl.dataset.id; const toList = evt.to; const fromList = evt.from; const oldIndex = evt.oldDraggableIndex; const newIndex = evt.newDraggableIndex; const toPartLabel = toList.dataset.part; const fromPartLabel = fromList.dataset.part; console.log(`Sentence ${sentenceId} moved ${fromPartLabel}[${oldIndex}]->${toPartLabel}[${newIndex}]`); let movedSentence; const fromSection = narrativeSections.find(s => s.part === fromPartLabel);
-      if (fromSection?.sentences && oldIndex < fromSection.sentences.length) { movedSentence = fromSection.sentences.splice(oldIndex, 1)[0]; if (!movedSentence || movedSentence.id !== sentenceId) { console.error("Mismatch remove drag!"); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; } }
-      else { console.error(`Cannot find source ${fromPartLabel} or sentence at ${oldIndex}`); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; }
-      if (movedSentence) {
-        const toSection = narrativeSections.find(s => s.part === toPartLabel); if (toSection) { if (!toSection.sentences) toSection.sentences = []; toSection.sentences.splice(newIndex, 0, movedSentence); }
-        else { console.error(`Target section ${toPartLabel} not found.`); fromSection.sentences.splice(oldIndex, 0, movedSentence); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; }
-      }
-      saveState(); if (fromPartLabel !== toPartLabel) itemEl.dataset.part = toPartLabel;
-    }
-
-    // --- Custom Dropdown Logic --- (MODIFIED: Added filtering, hidden item handling)
-    function attachDropdownLogic() {
-      const container = document.getElementById('sectionContainer'); if (!container) return;
-      // Event delegation for efficiency
-      container.removeEventListener('focus', handleDropdownFocus, true); container.addEventListener('focus', handleDropdownFocus, true);
-      container.removeEventListener('input', handleDropdownInput, true); container.addEventListener('input', handleDropdownInput, true); // ADDED for filtering
-      container.removeEventListener('keydown', handleDropdownKeydown); container.addEventListener('keydown', handleDropdownKeydown);
-      container.removeEventListener('mousedown', handleDropdownSuggestionClick); container.addEventListener('mousedown', handleDropdownSuggestionClick);
-      container.removeEventListener('blur', handleDropdownBlur, true); container.addEventListener('blur', handleDropdownBlur, true);
-    }
-    function attachDropdownLogicForElement(element) { // Attach listeners to newly added elements
-      const dropdowns = element.matches('.custom-dropdown-input') ? [element.closest('.custom-dropdown')] : element.querySelectorAll(".custom-dropdown");
-      dropdowns.forEach(dropdown => {
-        const input = dropdown.querySelector(".custom-dropdown-input");
-        const suggestionBox = dropdown.querySelector(".suggestions");
-        if (!input || !suggestionBox) return;
-        input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect);
-        input.removeEventListener('input', handleDropdownInputDirect); input.addEventListener('input', handleDropdownInputDirect); // ADDED for filtering
-        input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect);
-        suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
-        input.removeEventListener('blur', handleDropdownBlurDirect); input.addEventListener('blur', handleDropdownBlurDirect);
+    // --- Drag and Drop ---
+    function makeSentencesDraggable() {
+      const lists = document.querySelectorAll(".sentence-list");
+      lists.forEach(ul => {
+        // Destroy existing Sortable instance if present, to avoid duplicates
+        const existingSortable = Sortable.get(ul);
+        if (existingSortable) {
+          existingSortable.destroy();
+        }
+        new Sortable(ul, {
+          animation: 150,
+          group: { name: "narrativeGroup", pull: true, put: true }, // Allow dragging between lists
+          handle: ".drag-handle", // Specify drag handle
+          ghostClass: "sortable-ghost",  // Class for the drop placeholder
+          chosenClass: "sortable-chosen", // Class for the chosen item
+          dragClass: "sortable-drag",    // Class for the dragging item
+          onEnd: handleDragEnd,
+        });
       });
     }
 
-    // --- Handlers for Dropdown ---
-    function handleDropdownFocus(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
+    function handleDragEnd(evt) {
+      const itemEl = evt.item; // The dragged element
+      const sentenceId = itemEl.dataset.id;
+      const toListEl = evt.to;   // List element where item was dropped
+      const fromListEl = evt.from; // List element from where item was dragged
+      const oldIndex = evt.oldDraggableIndex; // Original index in old list
+      const newIndex = evt.newDraggableIndex; // New index in new list
+
+      const toPartLabel = toListEl.dataset.part;
+      const fromPartLabel = fromListEl.dataset.part;
+
+      console.log(`Sentence ${sentenceId} moved from ${fromPartLabel}[${oldIndex}] to ${toPartLabel}[${newIndex}]`);
+
+      // Find the sentence object in our JavaScript data
+      const fromSection = narrativeSections.find(s => s.part === fromPartLabel);
+      if (!fromSection || !fromSection.sentences) { console.error("Source section data not found."); return; }
+      
+      // Remove sentence from old location in data
+      const [movedSentence] = fromSection.sentences.splice(oldIndex, 1);
+      if (!movedSentence || movedSentence.id !== sentenceId) {
+        console.error("Sentence data mismatch during drag operation. Rebuilding UI to prevent data corruption.");
+        // Critical error, rebuild UI from current (potentially slightly off) state to be safe
+        buildSectionsUI();
+        attachAllEventListeners();
+        adjustAllInitialSizes();
+        return;
+      }
+
+      // Add sentence to new location in data
+      const toSection = narrativeSections.find(s => s.part === toPartLabel);
+      if (!toSection) { 
+        console.error("Target section data not found. Reverting move.");
+        fromSection.sentences.splice(oldIndex, 0, movedSentence); // Put it back
+        // Rebuild UI as a fallback
+        buildSectionsUI();
+        attachAllEventListeners();
+        adjustAllInitialSizes();
+        return;
+      }
+      if (!toSection.sentences) toSection.sentences = [];
+      toSection.sentences.splice(newIndex, 0, movedSentence);
+      
+      // Update the dataset.part on the DOM element if it moved to a new section
+      if (fromPartLabel !== toPartLabel) {
+          itemEl.dataset.part = toPartLabel;
+      }
+
+      saveState(); // Save the new order/location
+      // No need to rebuild UI if SortableJS handles DOM update, unless cross-list styling changes.
+    }
+
+    // --- Custom Dropdown Logic ---
+    function attachDropdownLogic() {
+        const container = document.getElementById('sectionContainer');
+        if (!container) return;
+
+        // Focus: Show/filter suggestions
+        container.removeEventListener('focusin', handleDropdownFocusDelegated); // Use focusin for better delegation
+        container.addEventListener('focusin', handleDropdownFocusDelegated);
+
+        // Input: Filter suggestions dynamically
+        container.removeEventListener('input', handleDropdownInputDelegated);
+        container.addEventListener('input', handleDropdownInputDelegated);
+
+        // Keydown: Navigate suggestions, select, escape
+        container.removeEventListener('keydown', handleDropdownKeydownDelegated);
+        container.addEventListener('keydown', handleDropdownKeydownDelegated);
+        
+        // Mousedown on suggestion: Select item (use mousedown to fire before blur)
+        container.removeEventListener('mousedown', handleDropdownSuggestionClickDelegated);
+        container.addEventListener('mousedown', handleDropdownSuggestionClickDelegated);
+
+        // Blur: Hide suggestions (with delay)
+        container.removeEventListener('focusout', handleDropdownBlurDelegated); // Use focusout
+        container.addEventListener('focusout', handleDropdownBlurDelegated);
+    }
+
+    function attachDropdownLogicForElement(element) {
+        const dropdownInputs = element.matches('.custom-dropdown-input') ? [element] : element.querySelectorAll(".custom-dropdown-input");
+        dropdownInputs.forEach(input => {
+            const dropdownContainer = input.closest('.custom-dropdown');
+            if (!dropdownContainer) return;
+            const suggestionBox = dropdownContainer.querySelector(".suggestions");
+            if (!suggestionBox) return;
+
+            input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect);
+            input.removeEventListener('input', handleDropdownInputDirect); input.addEventListener('input', handleDropdownInputDirect);
+            input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect);
+            // Click/mousedown on suggestions is handled by delegation on suggestionBox or its parent
+            suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); // Attach to suggestionBox
+            suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
+            input.removeEventListener('blur', handleDropdownBlurDirect); input.addEventListener('blur', handleDropdownBlurDirect);
+        });
+    }
+
+    // Delegated handlers
+    function handleDropdownFocusDelegated(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
+    function handleDropdownInputDelegated(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
+    function handleDropdownKeydownDelegated(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event); }
+    function handleDropdownSuggestionClickDelegated(event) { 
+        if (event.target.matches('.custom-dropdown .suggestions li')) {
+            const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
+            if (input) {
+                selectDropdownItem(input, event.target);
+                hideDropdownSuggestions(input); // Hide after selection
+                // Manually trigger blur's save logic for the input field
+                handleInlineFieldBlur({ target: input }); 
+            }
+        }
+    }
+    function handleDropdownBlurDelegated(event) { 
+        if (event.target.matches('.custom-dropdown-input')) {
+            // Check if the relatedTarget (where focus went) is part of the suggestions
+            const dropdownContainer = event.target.closest('.custom-dropdown');
+            const suggestionBox = dropdownContainer?.querySelector('.suggestions');
+            if (suggestionBox && suggestionBox.contains(event.relatedTarget)) {
+                return; // Don't hide if focus moved to a suggestion
+            }
+            processDropdownBlur(event.target);
+        }
+    }
+
+    // Direct handlers (for dynamically added elements if delegation is tricky)
     function handleDropdownFocusDirect(event) { filterAndShowDropdownSuggestions(event.target); }
-
-    function handleDropdownInput(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
     function handleDropdownInputDirect(event) { filterAndShowDropdownSuggestions(event.target); }
-
-    function handleDropdownKeydown(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event); }
     function handleDropdownKeydownDirect(event) { processDropdownKeydown(event.target, event); }
+    function handleDropdownSuggestionClickDirect(event) { // Attached to suggestionBox
+        if (event.target.matches('li')) { // Check if a list item was clicked
+            const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
+            if (input) {
+                selectDropdownItem(input, event.target);
+                hideDropdownSuggestions(input);
+                handleInlineFieldBlur({ target: input });
+            }
+        }
+    }
+    function handleDropdownBlurDirect(event) { 
+        const dropdownContainer = event.target.closest('.custom-dropdown');
+        const suggestionBox = dropdownContainer?.querySelector('.suggestions');
+        if (suggestionBox && suggestionBox.contains(document.activeElement) && document.activeElement !== event.target) {
+             // If focus is now on a suggestion item, don't hide yet.
+             // The click on the suggestion will handle hiding.
+            return;
+        }
+        processDropdownBlur(event.target);
+    }
 
-    function handleDropdownSuggestionClick(event) { if (event.target.matches('.custom-dropdown .suggestions li')) { const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
-    function handleDropdownSuggestionClickDirect(event) { if (event.target.matches('li')) { const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
-
-    function handleDropdownBlur(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownBlur(event.target); }
-    function handleDropdownBlurDirect(event) { processDropdownBlur(event.target); }
-
-
-    /** Filters suggestions based on input, handles hidden items, positions and shows dropdown. (NEW/REVISED) */
     function filterAndShowDropdownSuggestions(inputElement) {
       const dropdownContainer = inputElement.closest('.custom-dropdown');
       const suggestionBox = dropdownContainer?.querySelector(".suggestions");
-      const liAncestor = inputElement.closest('li'); // Position relative to the LI
+      const liAncestor = inputElement.closest('li[data-id]'); // Position relative to the main sentence <li>
+
       if (!suggestionBox || !liAncestor) {
-        console.error("Cannot find suggestions box or list item for input:", inputElement);
+        // console.error("Cannot find suggestions box or list item for input:", inputElement);
+        if(suggestionBox) suggestionBox.style.display = "none"; // Hide if no ancestor
         return;
       }
 
@@ -1011,81 +1612,72 @@
       items.forEach(item => {
         const itemText = item.textContent.toLowerCase();
         const isHiddenByDefault = item.dataset.hidden === 'true';
-
-        // Determine visibility based on filter text
         let shouldShow = true;
         if (filterText) {
-          // If filtering, show if text matches (hidden status doesn't matter)
           shouldShow = itemText.includes(filterText);
         } else {
-          // If not filtering (just focused), hide items marked as hidden
           shouldShow = !isHiddenByDefault;
         }
-
         item.style.display = shouldShow ? "" : "none";
-        if (shouldShow) {
-          hasVisibleItems = true;
-        }
+        if (shouldShow) hasVisibleItems = true;
       });
 
-      // Only show the box if there are items to display
       if (hasVisibleItems) {
         positionDropdownSuggestions(inputElement, suggestionBox, liAncestor);
         suggestionBox.style.display = "block";
-        highlightDropdownItem(items.filter(li => li.style.display !== 'none'), -1); // Reset highlight on filter/show
+        highlightDropdownItem(items.filter(li => li.style.display !== 'none'), -1); // Reset highlight
       } else {
         suggestionBox.style.display = "none";
       }
     }
 
-    /** Positions the suggestions dropdown below its input field. (Extracted Logic) */
     function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
-      // Calculate position relative to the LI's top-left corner
-      const inputTopRelativeToLi = inputElement.offsetTop;
-      const inputLeftRelativeToLi = inputElement.offsetLeft;
-      const inputHeight = inputElement.offsetHeight;
-      const inputWidth = inputElement.offsetWidth;
+        const inputRect = inputElement.getBoundingClientRect();
+        const liRect = liAncestor.getBoundingClientRect();
 
-      suggestionBox.style.position = 'absolute'; // Position relative to LI (which has position:relative)
-      suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
-      suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
-      suggestionBox.style.minWidth = `${inputWidth}px`;
+        // Position relative to the viewport first, then adjust if needed
+        let top = inputRect.bottom + window.scrollY;
+        let left = inputRect.left + window.scrollX;
 
-      // Basic viewport boundary checks (can be enhanced)
-      // Defer calculation until after display:block ensures dimensions are accurate
-      requestAnimationFrame(() => {
-        const suggestionsRect = suggestionBox.getBoundingClientRect();
-        const liRect = liAncestor.getBoundingClientRect(); // Use LI for viewport context
+        suggestionBox.style.position = 'fixed'; // Use fixed for viewport positioning initially
+        suggestionBox.style.left = `${left}px`;
+        suggestionBox.style.top = `${top + 2}px`; // 2px gap below input
+        suggestionBox.style.minWidth = `${inputRect.width}px`;
+        suggestionBox.style.maxWidth = `350px`; // Max width constraint
 
-        // Adjust vertical position if overflows bottom
-        if (suggestionsRect.bottom > window.innerHeight) {
-          const spaceAbove = inputElement.getBoundingClientRect().top - liRect.top; // Space above input within LI
-          if (suggestionBox.offsetHeight < spaceAbove) { // Only flip if fits above
-            suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
-          }
-        }
+        // Use requestAnimationFrame to ensure styles are applied and dimensions are available
+        requestAnimationFrame(() => {
+            const suggestionsRect = suggestionBox.getBoundingClientRect();
 
-        // Adjust horizontal position if overflows right
-        if (suggestionsRect.right > window.innerWidth) {
-          const newLeft = window.innerWidth - suggestionsRect.width - 5; // 5px padding from edge
-          suggestionBox.style.left = `${Math.max(0, newLeft - liRect.left)}px`; // Relative to LI
-        }
+            // Adjust vertical position if overflows bottom
+            if (suggestionsRect.bottom > window.innerHeight) {
+                const spaceAbove = inputRect.top - window.scrollY; // Space above input in viewport
+                if (suggestionsRect.height < spaceAbove) { // Only flip if fits above
+                    suggestionBox.style.top = `${inputRect.top + window.scrollY - suggestionsRect.height - 2}px`;
+                } else { // If it doesn't fit above either, stick to bottom with max-height
+                    suggestionBox.style.top = `${top + 2}px`; // Revert to below
+                    suggestionBox.style.maxHeight = `${window.innerHeight - inputRect.bottom - 10}px`; // 10px buffer
+                }
+            }
 
-        // Prevent overflowing left edge
-        if (suggestionsRect.left < 0) {
-          suggestionBox.style.left = `${-liRect.left + 5}px`; // Relative to LI, 5px padding
-        }
-      });
+            // Adjust horizontal position if overflows right
+            if (suggestionsRect.right > window.innerWidth) {
+                suggestionBox.style.left = `${window.innerWidth - suggestionsRect.width - 5 + window.scrollX}px`; // 5px padding from edge
+            }
+
+            // Prevent overflowing left edge
+            if (suggestionsRect.left < 0) {
+                suggestionBox.style.left = `${5 + window.scrollX}px`; // 5px padding from edge
+            }
+        });
     }
 
-    /** Processes keydown events within the dropdown input (filtering handled by 'input' event). */
     function processDropdownKeydown(inputElement, event) {
       const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions");
       if (!suggestionBox || suggestionBox.style.display === 'none') return;
 
-      // Important: Get only VISIBLE items for navigation
       const visibleItems = Array.from(suggestionBox.querySelectorAll("li:not([style*='display: none'])"));
-      if (visibleItems.length === 0) return;
+      if (visibleItems.length === 0 && event.key !== 'Escape') return; // Allow Escape even if no items
 
       let focusedIndex = visibleItems.findIndex(item => item.classList.contains('highlight'));
 
@@ -1101,18 +1693,18 @@
           highlightDropdownItem(visibleItems, focusedIndex);
           break;
         case 'Enter':
-        case 'Tab':
+        case 'Tab': // Treat Tab like Enter for selection if an item is highlighted
           if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
             event.preventDefault();
             selectDropdownItem(inputElement, visibleItems[focusedIndex]);
-            hideDropdownSuggestions(inputElement); // Hide after selection
-          } else if (event.key === 'Enter') {
-            // If Enter is pressed but no item is highlighted, just close the dropdown
+            hideDropdownSuggestions(inputElement);
+            handleInlineFieldBlur({ target: inputElement }); // Ensure save
+          } else if (event.key === 'Enter') { // If Enter but no selection, just hide
             event.preventDefault();
             hideDropdownSuggestions(inputElement);
-            inputElement.blur(); // Optionally blur the input
+            // inputElement.blur(); // Optionally blur
           }
-          // Allow Tab to function normally if no item is selected
+          // Allow Tab to function normally if no item is highlighted
           break;
         case 'Escape':
           event.preventDefault();
@@ -1121,193 +1713,377 @@
       }
     }
 
-    /** Highlights a specific item in the VISIBLE list. */
     function highlightDropdownItem(visibleItems, index) {
-      // First remove highlight from ALL items (including hidden ones)
       const suggestionBox = visibleItems[0]?.closest('.suggestions');
-      if (suggestionBox) {
+      if (suggestionBox) { // Remove from all items in this specific dropdown
         suggestionBox.querySelectorAll("li").forEach(item => item.classList.remove("highlight"));
       }
-      // Then add highlight to the target visible item
       if (index >= 0 && index < visibleItems.length) {
         visibleItems[index].classList.add("highlight");
-        visibleItems[index].scrollIntoView({ block: 'nearest' });
+        visibleItems[index].scrollIntoView({ block: 'nearest', inline: 'nearest' });
       }
     }
 
-    /** Updates input value and title when an item is selected. */
     function selectDropdownItem(inputElement, selectedLi) {
       inputElement.value = selectedLi.textContent.trim();
-      inputElement.title = inputElement.value;
-      adjustInputWidth(inputElement);
-      // Trigger blur manually AFTER selection to ensure state is saved
-      // handleInlineFieldBlur({ target: inputElement }); // Already called in click handler, potentially redundant here but safe
+      inputElement.title = inputElement.value; // Update title attribute
+      adjustInputWidth(inputElement); // Adjust width based on new value
+      // The blur handler (handleInlineFieldBlur) will save the state.
+      // It's triggered by the click handler or after Enter/Tab.
     }
 
-    /** Hides the suggestions dropdown. */
     function hideDropdownSuggestions(inputElement) {
       const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions");
       if (suggestionBox) {
         suggestionBox.style.display = "none";
-        // Optionally reset highlight on hide
-        const items = Array.from(suggestionBox.querySelectorAll("li"));
-        highlightDropdownItem(items, -1); // Highlight none
+        highlightDropdownItem(Array.from(suggestionBox.querySelectorAll("li")), -1); // Clear highlight
       }
     }
-
-    /** Handles blur event for dropdown input, hiding suggestions with a delay. */
+    
     function processDropdownBlur(inputElement) {
-      // Use setTimeout to allow click events on suggestions to register before hiding
-      setTimeout(() => {
-        const dropdownContainer = inputElement.closest('.custom-dropdown');
-        const suggestionBox = dropdownContainer?.querySelector('.suggestions');
-        // Check if the focus has moved to an element *within* the suggestion box
-        const activeElement = document.activeElement;
-        const isFocusInsideSuggestions = suggestionBox && suggestionBox.contains(activeElement);
+        // Delay hiding to allow click on suggestion to register
+        setTimeout(() => {
+            // Check if focus has moved to an element *within the same custom dropdown's suggestions*
+            const dropdownContainer = inputElement.closest('.custom-dropdown');
+            const suggestionBox = dropdownContainer?.querySelector('.suggestions');
+            const activeElement = document.activeElement;
 
-        // If focus is not inside the suggestions box, hide it
-        if (!isFocusInsideSuggestions) {
-          hideDropdownSuggestions(inputElement);
-        }
-        // The main blur handler (handleInlineFieldBlur) will save the value
-      }, 150); // Delay ms
-    }
-
-
-    // --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
-    document.getElementById("generateBtn").addEventListener("click", async () => {
-    const finalTextArea = document.getElementById("finalText");
-
-    // First, ensure all inline field changes are captured
-    const changesDetected = storeAllInlineValues();
-    if (changesDetected) {
-        saveState();
-        console.log("Inline field values updated before generating.");
-    }
-
-    // --- Check for Pending Sentences ---
-    const addTextareas = document.querySelectorAll('.add-item-form textarea.auto-height-textarea');
-    let pendingSentences = [];
-
-    addTextareas.forEach(textarea => {
-        const text = textarea.value.trim();
-        if (text) {
-            const form = textarea.closest('.add-item-form');
-            const part = form?.dataset.part;
-            if (part) {
-                const sectionElement = document.querySelector(`.narrative-section[data-part="${part}"]`);
-                const sectionTitle = sectionElement?.querySelector('.section-title-main')?.innerText || part;
-                pendingSentences.push({ textarea, part, sectionTitle, text });
-            }
-        }
-    });
-
-    // --- Process Pending Sentences Sequentially ---
-    for (const pending of pendingSentences) {
-        await new Promise((resolve) => {
-            const modalEl = document.getElementById("confirmationModal");
-            if (!modalEl) {
-                console.error("Confirmation modal element not found!");
-                resolve(); // Prevent infinite wait if modal is missing
+            // If the new active element is a child of this suggestion box, don't hide.
+            // The click on the suggestion will handle selection and hiding.
+            if (suggestionBox && suggestionBox.contains(activeElement)) {
                 return;
             }
+            hideDropdownSuggestions(inputElement);
+            // The main blur handler (handleInlineFieldBlur) attached to the input will save its value.
+        }, 150); 
+    }
 
-            // Define the function to run when the modal is fully hidden
+
+    // --- Final Text Generation ---
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+      const finalTextArea = document.getElementById("finalText");
+      const changesDetected = storeAllInlineValues(); // Capture all current input values
+      if (changesDetected) {
+        saveState(); // Save if any values were updated
+        console.log("Inline field values updated before generating.");
+      }
+
+      // --- Check for Pending Sentences in "Add Sentence" textareas ---
+      const addTextareas = document.querySelectorAll('.add-item-form textarea.auto-height-textarea');
+      let pendingSentences = [];
+      addTextareas.forEach(textarea => {
+        const text = textarea.value.trim();
+        if (text) {
+          const form = textarea.closest('.add-item-form');
+          const part = form?.dataset.part;
+          if (part) {
+            const sectionElement = document.querySelector(`.narrative-section[data-part="${part}"]`);
+            const sectionTitle = sectionElement?.querySelector('.section-title-main')?.innerText || part;
+            pendingSentences.push({ textarea, part, sectionTitle, text });
+          }
+        }
+      });
+
+      // --- Process Pending Sentences Sequentially with Modals ---
+      for (const pending of pendingSentences) {
+        await new Promise((resolveOuter) => {
+            const modalEl = document.getElementById("confirmationModal");
+            if (!modalEl) { console.error("Confirmation modal element not found!"); resolveOuter(); return; }
+
             const onModalHidden = (event) => {
-                // Ensure it's the correct modal triggering the event
-                if (event.target === modalEl) {
-                    modalEl.removeEventListener('hidden.bs.modal', onModalHidden); // Clean up the listener
-                    resolve(); // NOW resolve the promise, allowing the loop to continue
+                if (event.target === modalEl) { // Ensure it's the correct modal
+                    modalEl.removeEventListener('hidden.bs.modal', onModalHidden);
+                    resolveOuter(); // Resolve the promise for this pending sentence
                 }
             };
-
-            // Attach the listener *before* showing the modal
             modalEl.addEventListener('hidden.bs.modal', onModalHidden);
 
-            // Define the actions for Yes/No clicks (they no longer resolve the promise directly)
             const handleYes = () => {
                 console.log(`Adding pending sentence to ${pending.part}: ${pending.text}`);
-                addSentence(pending.part, { text: pending.text });
+                addSentence(pending.part, { text: pending.text }); // This will saveState
                 pending.textarea.value = "";
                 adjustTextareaHeight(pending.textarea);
-                // The modal hide triggered by showConfirmationModal will eventually call onModalHidden
+                // Modal hide is handled by showConfirmationModal, which will trigger onModalHidden
             };
-
             const handleNo = () => {
                 console.log(`Discarding pending sentence from ${pending.part}.`);
                 pending.textarea.value = "";
                 adjustTextareaHeight(pending.textarea);
-                // The modal hide triggered by showConfirmationModal will eventually call onModalHidden
+                // Modal hide is handled by showConfirmationModal
             };
 
-            // Show the modal using your existing function
-            // It will handle calling bsModal.hide() internally, which triggers our listener
             showConfirmationModal(
                 "Unadded Sentence",
                 `You left text in the '${pending.sectionTitle}' section but didn't click Add:<br><br><em>"${pending.text}"</em><br><br>Do you want to add this sentence before generating?`,
                 "Choosing 'No' will discard this unadded text.",
-                handleYes, // Pass the handler function
-                handleNo   // Pass the handler function
+                handleYes,
+                handleNo
             );
         }); // End of await new Promise
-    } // End of for...of loop
+      } // End of for...of loop for pending sentences
 
-    // --- Original Generation Logic (runs after handling all pending sentences) ---
-    console.log("Proceeding to generate final text...");
-    const generatedText = generateFinalText();
-    const currentText = finalTextArea.value.trim();
+      // --- Original Generation Logic (runs after handling all pending sentences) ---
+      console.log("Proceeding to generate final text...");
+      const generatedText = generateFinalText();
+      const currentTextInOutput = finalTextArea.value.trim();
 
-    if (currentText && currentText !== generatedText.trim()) {
+      if (currentTextInOutput && currentTextInOutput !== generatedText.trim()) {
         showConfirmationModal(
-            "Overwrite Narrative?",
-            "Generating will overwrite the current Final Narrative.<br /><br /> Do you want to continue?",
-            "This cannot be undone.",
-            () => {
-                finalTextArea.value = generatedText;
-                console.log("Final text generated and displayed.");
-            },
-            () => {
-                console.log("Narrative generation cancelled by user.");
-            }
+          "Overwrite Narrative?",
+          "Generating will overwrite the current Final Narrative.<br /><br />Do you want to continue?",
+          "This cannot be undone.",
+          () => { finalTextArea.value = generatedText; console.log("Final text generated and displayed."); },
+          () => { console.log("Narrative generation cancelled by user."); }
         );
-    } else {
+      } else {
         finalTextArea.value = generatedText;
         console.log("Final text generated and displayed.");
-    }
-}); // End of generateBtn listener
+      }
+    });
+
     function generateFinalText() {
-      console.log("Generating final text..."); const includeSectionTitles = document.getElementById("toggleSectionTitles").checked; let finalOutput = ""; narrativeSections.forEach(section => {
-        let sectionText = ""; let sectionHasContent = false; if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
+      console.log("Generating final text...");
+      const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
+      let finalOutput = "";
+
+      narrativeSections.forEach(section => {
+        let sectionText = "";
+        let sectionHasContent = false;
+        if (!section.sentences) return;
+
+        section.sentences.forEach(sentenceObj => {
           let currentSentenceText = "";
-          if (sentenceObj.tabs?.length) { const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex]; if (!activeTab) return; const tabValues = sentenceObj.tabValues[sentenceObj.activeTabIndex] || {}; currentSentenceText = (activeTab.text || "").replace(placeholderRegex, (match, type, label) => (tabValues[label] || "").trim() || `[${label}]`); }
-          else { const values = sentenceObj.values || {}; currentSentenceText = (sentenceObj.text || "").replace(placeholderRegex, (match, type, label) => (values[label] || "").trim() || `[${label}]`); }
-          currentSentenceText = currentSentenceText.replace(/<br\s*\/?>/gi, "").replace(/\s+/g, ' ').trim(); if (currentSentenceText) { sectionText += currentSentenceText + " "; sectionHasContent = true; }
+          // Determine if it's a tabbed sentence or regular
+          if (sentenceObj.tabs?.length) {
+            const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex];
+            if (!activeTab) return; // Skip if no active tab somehow
+            const tabValues = sentenceObj.tabValues[sentenceObj.activeTabIndex] || {};
+            currentSentenceText = (activeTab.text || "").replace(placeholderRegex, (match, type, label) => {
+              return (tabValues[label] || "").trim() || `[${label}]`; // Use placeholder if value is empty
+            });
+          } else { // Regular sentence
+            const values = sentenceObj.values || {};
+            currentSentenceText = (sentenceObj.text || "").replace(placeholderRegex, (match, type, label) => {
+              return (values[label] || "").trim() || `[${label}]`; // Use placeholder if value is empty
+            });
+          }
+          // Clean up and add to section text
+          currentSentenceText = currentSentenceText.replace(/<br\s*\/?>/gi, "").replace(/\s+/g, ' ').trim();
+          if (currentSentenceText) {
+            sectionText += currentSentenceText + " ";
+            sectionHasContent = true;
+          }
         });
-        if (sectionHasContent) { if (section.includeTitle && includeSectionTitles) finalOutput += section.part + ":\n"; finalOutput += sectionText.trim() + "\n\n"; }
-      }); console.log("Final text generated."); return finalOutput.trim();
+
+        if (sectionHasContent) {
+          if (section.includeTitle && includeSectionTitles) {
+            finalOutput += section.part + (section.subpart ? ` (${section.subpart})` : "") + ":\n";
+          }
+          finalOutput += sectionText.trim() + "\n\n";
+        }
+      });
+      console.log("Final text generated.");
+      return finalOutput.trim();
     }
 
-    // --- Utility Functions --- (findSentenceById - unchanged)
-    function findSentenceById(id) { for (const sec of narrativeSections) { if (!sec.sentences) continue; const sentence = sec.sentences.find(s => s.id === id); if (sentence) return sentence; } console.warn(`Sentence ID ${id} not found.`); return null; }
+    // --- Utility Functions ---
+    function findSentenceById(id) {
+      for (const sec of narrativeSections) {
+        if (!sec.sentences) continue;
+        const sentence = sec.sentences.find(s => s.id === id);
+        if (sentence) return sentence;
+      }
+      console.warn(`Sentence with ID ${id} not found in any section.`);
+      return null;
+    }
 
-    // --- Button Event Listeners --- (copyBtn, newRunBtn, toggleSectionTitles - unchanged)
-    document.getElementById("copyBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const textToCopy = finalTextArea.value.trim(); if (!textToCopy) { showConfirmationModal("Copy", "Nothing to copy!", "", () => { }, () => { }, true); return; } navigator.clipboard.writeText(textToCopy).then(() => { console.log("Copied."); showConfirmationModal("Copied to the clipboard", "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?", "Paste narrative first, this can not be undone!", () => resetToCurrentConfigDefaults(), () => { }); }).catch(err => { console.error("Copy failed: ", err); showConfirmationModal("Copy Failed", "Could not copy.", "", () => { }, () => { }, true); }); });
-    // New Run button listener is attached in attachHeaderListeners
+    // --- Button Event Listeners ---
+    document.getElementById("copyBtn").addEventListener("click", () => {
+      const finalTextArea = document.getElementById("finalText");
+      const textToCopy = finalTextArea.value.trim();
+      if (!textToCopy) {
+        showConfirmationModal("Copy", "Nothing to copy!", "", () => {}, () => {}, true);
+        return;
+      }
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        console.log("Text copied to clipboard.");
+        showConfirmationModal("Copied to Clipboard", 
+          "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run (clearing current work)?", 
+          "Paste your narrative first if needed. This action cannot be undone.", 
+          () => resetToCurrentConfigDefaults(), // Yes, start new run
+          () => {} // No, do nothing else
+        );
+      }).catch(err => {
+        console.error("Copy to clipboard failed: ", err);
+        showConfirmationModal("Copy Failed", "Could not copy text to clipboard. Your browser might not support this feature or has restrictions.", "", () => {}, () => {}, true);
+      });
+    });
+    // New Run button listener is in attachHeaderListeners
+    // toggleSectionTitles listener is implicit via checkbox state check during generation
 
-    // --- Input Auto-Sizing --- (adjustInputWidth, adjustTextareaHeight, handlers, adjustAllInitialSizes... - unchanged)
-    function attachInputSizingListeners() { const container = document.getElementById('sectionContainer'); if (container) { container.removeEventListener('input', handleAutoSizingInput); container.addEventListener('input', handleAutoSizingInput); } }
-    function attachInputSizingListenersForElement(element) { element.querySelectorAll('.inline-field, .auto-height-textarea').forEach(input => { input.removeEventListener('input', handleAutoSizingInputDirect); input.addEventListener('input', handleAutoSizingInputDirect); }); }
-    function handleAutoSizingInput(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
-    function handleAutoSizingInputDirect(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
-    function adjustTextareaHeight(textarea) { if (!textarea) return; textarea.style.height = 'auto'; const newHeight = Math.max(textarea.scrollHeight, parseFloat(getComputedStyle(textarea).minHeight) || 0); textarea.style.height = `${newHeight}px`; }
-    function adjustInputWidth(input) { if (!input || !widthMeasurerSpan) return; const inputStyle = window.getComputedStyle(input); const isCustomDropdown = input.classList.contains('custom-dropdown-input'); const minWidth = parseFloat(inputStyle.minWidth) || (isCustomDropdown ? 80 : MIN_INLINE_WIDTH); widthMeasurerSpan.style.font = inputStyle.font; widthMeasurerSpan.textContent = input.placeholder || ' '; const placeholderWidth = widthMeasurerSpan.scrollWidth; widthMeasurerSpan.textContent = input.value || ' '; const valueWidth = widthMeasurerSpan.scrollWidth; const requiredContentWidth = Math.max(valueWidth, placeholderWidth) + 3; const parentLi = input.closest('li'); let parentWidth = parentLi?.clientWidth || window.innerWidth; parentWidth = parentWidth * 0.9; let maxWidth = parentWidth * (MAX_INLINE_WIDTH_PERCENT / 100); maxWidth = Math.max(maxWidth, minWidth * 1.5); const newWidth = Math.min(maxWidth, Math.max(minWidth, requiredContentWidth)); input.style.width = `${newWidth}px`; }
-    function adjustAllInitialSizes() { document.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); document.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
-    function adjustAllInitialSizesForElement(element) { element.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); element.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
+    // --- Input Auto-Sizing ---
+    function attachInputSizingListeners() {
+        const container = document.getElementById('sectionContainer');
+        if (container) {
+            // Use event delegation for efficiency
+            container.removeEventListener('input', handleAutoSizingInputDelegated);
+            container.addEventListener('input', handleAutoSizingInputDelegated);
+        }
+    }
+    function attachInputSizingListenersForElement(element) {
+        element.querySelectorAll('.inline-field, .auto-height-textarea').forEach(input => {
+            input.removeEventListener('input', handleAutoSizingInputDirect); // Prevent duplicates
+            input.addEventListener('input', handleAutoSizingInputDirect);
+        });
+    }
 
-    // --- Modal Dialog --- (showConfirmationModal - unchanged)
-    function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo, singleButton = false) { const modalEl = document.getElementById("confirmationModal"); if (!modalEl) return; const modalLabel = modalEl.querySelector("#confirmationModalLabel"); const modalBody = modalEl.querySelector("#confirmationModalBody"); const modalDisclaimer = modalEl.querySelector("#confirmationDisclaimer"); const yesBtn = modalEl.querySelector("#confirmYesBtn"); const noBtn = modalEl.querySelector("#confirmNoBtn"); if (!modalLabel || !modalBody || !modalDisclaimer || !yesBtn || !noBtn) { console.error("Modal elements not found!"); return; } const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl); modalLabel.textContent = title || "Confirmation"; modalBody.innerHTML = message || ""; modalDisclaimer.textContent = disclaimer || ""; yesBtn.style.display = singleButton ? 'none' : 'inline-block'; noBtn.textContent = singleButton ? 'OK' : 'No'; yesBtn.onclick = () => { bsModal.hide(); if (callbackYes && typeof callbackYes === 'function') callbackYes(); }; noBtn.onclick = () => { bsModal.hide(); if (callbackNo && typeof callbackNo === 'function') callbackNo(); }; bsModal.show(); }
+    function handleAutoSizingInputDelegated(event) {
+        if (event.target.matches('.inline-field')) adjustInputWidth(event.target);
+        else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target);
+    }
+    function handleAutoSizingInputDirect(event) { // For dynamically added elements
+        if (event.target.matches('.inline-field')) adjustInputWidth(event.target);
+        else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target);
+    }
+    
+    function adjustTextareaHeight(textarea) {
+      if (!textarea) return;
+      textarea.style.height = 'auto'; // Temporarily shrink to get scrollHeight
+      const newHeight = Math.max(textarea.scrollHeight, parseFloat(getComputedStyle(textarea).minHeight) || 0);
+      textarea.style.height = `${newHeight}px`;
+    }
+
+    function adjustInputWidth(input) {
+      if (!input || !widthMeasurerSpan) return;
+      const inputStyle = window.getComputedStyle(input);
+      const isCustomDropdown = input.classList.contains('custom-dropdown-input');
+      // Use a slightly larger base min-width for custom dropdowns to accommodate potential dropdown arrows or icons if added later
+      const minWidth = parseFloat(inputStyle.minWidth) || (isCustomDropdown ? 80 : MIN_INLINE_WIDTH); 
+
+      widthMeasurerSpan.style.font = inputStyle.font;
+      widthMeasurerSpan.textContent = input.placeholder || ' '; // Measure placeholder width
+      const placeholderWidth = widthMeasurerSpan.scrollWidth;
+      widthMeasurerSpan.textContent = input.value || ' '; // Measure value width
+      const valueWidth = widthMeasurerSpan.scrollWidth;
+      
+      // Add a small buffer (e.g., 2-5px) to prevent text from touching the edge
+      const contentWidthBuffer = 5; 
+      const requiredContentWidth = Math.max(valueWidth, placeholderWidth) + contentWidthBuffer;
+      
+      const parentLi = input.closest('li[data-id]'); // Get parent list item
+      let parentWidth = parentLi?.clientWidth || window.innerWidth; // Fallback to window width
+      // Reduce available parent width slightly to account for padding/margins on the LI or controls
+      parentWidth = parentWidth * 0.9; 
+
+      let maxWidth = parentWidth * (MAX_INLINE_WIDTH_PERCENT / 100);
+      maxWidth = Math.max(maxWidth, minWidth * 1.5); // Ensure max width is at least 1.5x min width
+
+      const newWidth = Math.min(maxWidth, Math.max(minWidth, requiredContentWidth));
+      input.style.width = `${newWidth}px`;
+    }
+
+    function adjustAllInitialSizes() {
+      document.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input));
+      document.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea));
+    }
+    function adjustAllInitialSizesForElement(element) {
+        element.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input));
+        element.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea));
+    }
+
+
+    // --- Modal Dialog ---
+    function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo, singleButton = false) {
+      const modalEl = document.getElementById("confirmationModal");
+      if (!modalEl) { console.error("Confirmation modal element not found!"); return; }
+
+      const modalLabel = modalEl.querySelector("#confirmationModalLabel");
+      const modalBody = modalEl.querySelector("#confirmationModalBody");
+      const modalDisclaimer = modalEl.querySelector("#confirmationDisclaimer");
+      const yesBtn = modalEl.querySelector("#confirmYesBtn");
+      const noBtn = modalEl.querySelector("#confirmNoBtn");
+
+      if (!modalLabel || !modalBody || !modalDisclaimer || !yesBtn || !noBtn) {
+        console.error("One or more modal sub-elements not found!");
+        return;
+      }
+      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+      modalLabel.textContent = title || "Confirmation";
+      modalBody.innerHTML = message || ""; // Use innerHTML to allow for <br> etc.
+      modalDisclaimer.textContent = disclaimer || "";
+
+      yesBtn.style.display = singleButton ? 'none' : 'inline-block';
+      noBtn.textContent = singleButton ? 'OK' : 'No';
+
+      // Remove previous listeners before adding new ones to prevent multiple calls
+      const newYesBtn = yesBtn.cloneNode(true);
+      yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+      const newNoBtn = noBtn.cloneNode(true);
+      noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+      
+      newYesBtn.style.display = singleButton ? 'none' : 'inline-block';
+      newNoBtn.textContent = singleButton ? 'OK' : 'No';
+
+
+      newYesBtn.addEventListener('click', () => {
+        bsModal.hide();
+        if (callbackYes && typeof callbackYes === 'function') callbackYes();
+      });
+      newNoBtn.addEventListener('click', () => {
+        bsModal.hide();
+        if (callbackNo && typeof callbackNo === 'function') callbackNo();
+      });
+      bsModal.show();
+    }
+    
+    // Dark Mode Toggle
+    const darkToggle = document.getElementById('darkModeToggle');
+    darkToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        darkToggle.innerHTML = document.body.classList.contains('dark-mode') 
+            ? '<i class="bi bi-sun-fill"></i>' 
+            : '<i class="bi bi-moon-fill"></i>';
+        // Optionally save dark mode preference to localStorage
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    });
+
+    // Apply saved dark mode preference on load
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        darkToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+    }
+
+
+    // Bug Report Tab & Modal
+    const bugTab = document.getElementById('bugReportTab');
+    const bugReportModalEl = document.getElementById('bugReportModal');
+    let bugReportModalInstance; // To store modal instance
+
+    if (bugTab && bugReportModalEl) {
+        bugReportModalInstance = new bootstrap.Modal(bugReportModalEl);
+        bugTab.addEventListener('click', () => {
+            bugReportModalInstance.show();
+        });
+    }
+    
+    const submitBugBtn = document.getElementById('submitBug');
+    if (submitBugBtn && bugReportModalInstance) {
+        submitBugBtn.addEventListener('click', () => {
+            const desc = document.getElementById('bugDescription').value;
+            if (desc.trim()) {
+                console.log('Bug report submitted:', desc);
+                 // Replace with actual submission logic (e.g., mailto link, API call)
+                showConfirmationModal("Bug Report", "Thank you for your feedback! (This is a demo, no data was sent).", "", ()=>{}, ()=>{}, true);
+                document.getElementById('bugDescription').value = ""; // Clear textarea
+                bugReportModalInstance.hide();
+            } else {
+                showConfirmationModal("Bug Report", "Please describe the issue before submitting.", "", ()=>{}, ()=>{}, true);
+            }
+        });
+    }
+
   </script>
 
 </body>
-
 </html>
