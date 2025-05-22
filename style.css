@@ -1,0 +1,581 @@
+html,
+    body {
+      overscroll-behavior: none;
+    }
+
+    body {
+      padding: 1rem;
+    }
+
+    /* Header Styles */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem !important;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+    }
+
+    #jsonFileInputGroup {
+      min-width: 250px;
+    }
+
+    .toggle-newrun-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    .form-check-label {
+      cursor: pointer;
+      user-select: none;
+    }
+
+
+    /* Sections */
+    .narrative-section {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: .25rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: .5rem;
+      font-weight: 600;
+    }
+
+    .section-header .section-subpart {
+      font-size: 0.85em;
+      color: #6c757d;
+      margin-left: 0.25em;
+      font-weight: normal;
+    }
+
+    .section-title-wrapper[data-bs-toggle="tooltip"] {
+      cursor: help;
+      display: inline-block;
+    }
+
+    .sentence-list {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 0;
+    }
+
+    .sentence-list li {
+      background-color: #fff;
+      margin-bottom: .5rem;
+      border: 1px solid #dee2e6;
+      border-radius: .25rem;
+      position: relative;
+      padding: 0.75rem 2rem;
+      /* Adjusted padding to make space for controls if they were larger */
+    }
+
+    .sentence-content {
+      line-height: 1.8;
+    }
+
+    /* Drag handle for reordering */
+    .drag-handle {
+      position: absolute;
+      left: .5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: move;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+
+    /* --- Sentence Controls ------------------------------------------------ */
+    .sentence-controls {
+      position: absolute;
+      top: 4px;
+      /* Adjust as needed for vertical alignment */
+      right: 4px;
+      /* Adjust as needed for horizontal alignment */
+      display: flex;
+      align-items: center;
+      /* Ensures buttons align nicely if heights vary slightly */
+    }
+
+    .sentence-controls .btn {
+      border: 1px solid #ced4da;
+      /* Base border for all buttons in the group */
+      background-color: #fff;
+      /* Default background */
+      color: #212529;
+      /* Default text color */
+      padding: 0.25rem 0.5rem;
+      /* Consistent with btn-sm */
+      margin-left: -1px;
+      /* Key for overlapping borders */
+      border-radius: 0;
+      /* Middle buttons have no radius */
+      line-height: 1.5;
+      /* Bootstrap's default for .btn */
+      vertical-align: middle;
+      /* Helps with alignment, especially with icons */
+      box-shadow: none;
+      /* Remove any default browser or Bootstrap shadows */
+      margin-top: -4px;
+    }
+
+    .sentence-controls .btn:hover,
+    .sentence-controls .btn:focus {
+      /* You might want to define a subtle hover/focus style that doesn't break the group visually */
+      /* For example, a slight brightness change or outline if needed */
+      /* box-shadow: 0 0 0 .2rem rgba(0,123,255,.25); /* Example focus shadow, adjust as needed */
+    }
+
+
+    .sentence-controls .btn:first-child {
+      margin-left: 0;
+      /* No negative margin for the first button */
+      border-bottom-left-radius: .25rem;
+      /* Rounded bottom-left corner */
+    }
+
+    .sentence-controls .btn:last-child {
+      margin-right: -4px;
+      border-top-right-radius: .25rem;
+      /* Rounded top-right corner */
+    }
+
+    /* Styling for the Edit button */
+    .sentence-controls .edit-sentence-btn {
+      background-color: #ffc107;
+      /* Bootstrap warning yellow */
+      border-color: #ffc107;
+      /* Match border to background for seamless look */
+      color: #000;
+      /* Dark text for yellow background for better contrast */
+    }
+
+    .sentence-controls .edit-sentence-btn:hover {
+      background-color: #e0a800;
+      /* Darker yellow for hover */
+      border-color: #d39e00;
+      color: #000;
+    }
+
+    /* Styling for the Lock button */
+    .sentence-controls .lock-sentence-btn {
+      /* Uses default background (#fff) and border (#ced4da) from .sentence-controls .btn */
+      /* Text color will be #212529 */
+    }
+
+    .sentence-controls .lock-sentence-btn:hover {
+      background-color: #e9ecef;
+      /* Slight grey for hover, adjust as needed */
+    }
+
+
+    /* Ensure the primary color for the locked icon is applied */
+    .sentence-controls .lock-sentence-btn i.bi-lock-fill.text-primary {
+      color: #0d6efd !important;
+      /* Bootstrap's primary blue, or your preferred color */
+    }
+
+    /* Styling for the Remove button */
+    .sentence-controls .remove-sentence-btn {
+      background-color: #dc3545;
+      /* Bootstrap danger red */
+      border-color: #dc3545;
+      /* Match border to background */
+      color: #fff;
+    }
+
+    .sentence-controls .remove-sentence-btn:hover {
+      background-color: #c82333;
+      /* Darker red for hover */
+      border-color: #bd2130;
+    }
+
+    /* --- End Sentence Controls --- */
+
+
+    /* Add item form and group */
+    .add-item-form {
+      width: 100%;
+      position: relative;
+      margin-top: .5rem;
+    }
+
+    .add-item-group {
+      display: flex;
+      align-items: flex-start;
+      gap: .5rem;
+      width: 100%;
+    }
+
+    .add-item-form textarea.auto-height-textarea {
+      flex: 1;
+      padding: .25rem .5rem;
+      font-size: .875rem;
+      line-height: 1.5;
+      border-radius: .2rem;
+      border: 1px solid #ced4da;
+      resize: none;
+      overflow-y: hidden;
+      min-height: calc(1.5em + .5rem + 2px);
+      box-sizing: border-box;
+    }
+
+    .add-item-form textarea.auto-height-textarea:focus {
+      border-color: #86b7fe;
+      outline: 0;
+      box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+    }
+
+
+    /* Suggestions box for autocomplete (Add Sentence) */
+    .suggestions-box {
+      position: absolute;
+      top: 100%;
+      margin-top: 2px;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: .25rem;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+    }
+
+    .suggestions-box ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .suggestions-box li {
+      padding: .5rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .suggestions-box li:last-child {
+      border-bottom: none;
+    }
+
+    .suggestions-box li:hover,
+    .suggestions-box li.highlight {
+      background-color: #e9ecef;
+    }
+
+
+    /* Inline fields: input and static display */
+    .inline-field {
+      display: inline-block;
+      width: auto;
+      min-width: 50px;
+      max-width: 80%;
+      margin: 0 .25rem;
+      vertical-align: baseline;
+      font: inherit;
+      font-size: 1em;
+      border: none;
+      border-bottom: 1px dotted #777;
+      background-color: transparent;
+      padding: 0 .25rem;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .inline-field::placeholder {
+      text-align: center;
+      opacity: 0.6;
+    }
+
+    .inline-field:focus {
+      outline: none;
+      border-bottom-color: #0d6efd;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    /* Custom dropdown container */
+    .custom-dropdown {
+      display: contents;
+      /* Allows input to flow inline with text but container can be positioned */
+    }
+
+    /* Input within custom dropdown */
+    .custom-dropdown .inline-field.custom-dropdown-input {
+      min-width: 80px;
+      /* Ensure it has a minimum width */
+      display: inline-block;
+      /* Ensure it behaves like other inline fields */
+    }
+
+    /* Suggestions list specifically for custom dropdowns */
+    .custom-dropdown .suggestions {
+      position: absolute;
+      /* Positioned relative to its closest positioned ancestor (the li) */
+      z-index: 1000;
+      display: none;
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: .25rem;
+      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+      width: auto;
+      /* Auto width based on content */
+      max-width: 350px;
+      /* Prevent it from becoming too wide */
+      max-height: 200px;
+      overflow-y: auto;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      /* Reset margin */
+    }
+
+    .custom-dropdown .suggestions ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .custom-dropdown .suggestions li {
+      padding: .5rem 1rem;
+      /* Consistent padding */
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      /* Separator */
+      margin: 0;
+      /* Reset margin */
+      padding: .5rem .75rem;
+      /* Adjusted padding */
+      white-space: normal;
+      /* Allow text to wrap if needed */
+      overflow: visible;
+      /* Ensure content isn't clipped */
+      text-overflow: clip;
+      line-height: 1.4;
+    }
+
+    .custom-dropdown .suggestions li:last-child {
+      border-bottom: none;
+    }
+
+    .custom-dropdown .suggestions li:hover,
+    .custom-dropdown .suggestions li.highlight {
+      background-color: #e9ecef;
+    }
+
+
+    /* Tabs */
+    .has-tabs {
+      margin-top: 2rem;
+      /* Space for tabs above */
+    }
+
+    li.has-tabs:first-child {
+      margin-top: 1.6rem;
+      /* Slightly less if it's the very first item */
+    }
+
+    .tabs-container {
+      position: absolute;
+      top: -1.7rem;
+      /* Position above the sentence content */
+      left: 2.5rem;
+      /* Align with sentence content, past drag handle */
+      display: flex;
+      gap: 0.25rem;
+      /* Space between tab buttons */
+    }
+
+    .tab-button {
+      padding: 2px 8px;
+      /* Small padding */
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: .25rem .25rem 0 0;
+      /* Rounded top corners */
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+      top: 1px;
+      /* Align with top border of li */
+      border-bottom: none;
+      /* No bottom border for inactive tab */
+      color: #000;
+    }
+
+    .tab-button.active {
+      background-color: #fff;
+      /* Match li background */
+      border-bottom-color: #fff;
+      /* Make bottom border "disappear" */
+      z-index: 2;
+      /* Bring active tab to front */
+      font-weight: 500;
+    }
+
+    .tab-pane {
+      display: none;
+      /* Hide inactive panes */
+    }
+
+    .tab-pane.active {
+      display: block;
+      /* Show active pane */
+    }
+
+    /* License and buttons */
+    #license {
+      font-size: 0.9rem;
+    }
+
+    #license a {
+      font-weight: bold;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    #license a:hover {
+      text-decoration: underline;
+    }
+
+    #license img.cc-icon {
+      height: 1em !important;
+      margin-left: 3px;
+      vertical-align: baseline;
+    }
+
+    #newRunBtn {
+      font-variant: small-caps;
+    }
+
+    /* Hidden span for measuring input width */
+    #width-measurer {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+      white-space: pre;
+      visibility: hidden;
+      font: inherit;
+      /* Ensure it matches the input's font */
+      font-size: 1em;
+      /* Ensure it matches the input's font size */
+      padding: 0 .25rem;
+      /* Match input padding */
+      border: none;
+      /* No border */
+      display: inline-block;
+      /* For scrollWidth calculation */
+    }
+
+    body.dark-mode {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .narrative-section
+    {
+      background-color: #1e1e1e;
+      border-color: #333;
+    }
+
+    body.dark-mode .sentence-list li {
+      background-color: #2a2a2a;
+      border-color: #444;
+    }
+
+    body.dark-mode textarea,
+    body.dark-mode .inline-field,
+    body.dark-mode .form-control {
+      background-color: #2a2a2a !important;
+      /* Important to override Bootstrap */
+      color: #e0e0e0 !important;
+      border-color: #666 !important;
+    }
+
+    body.dark-mode .alert,
+    body.dark-mode .input-group .form-control {
+      /* Ensure input group elements are styled */
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+      border-color: #444;
+    }
+
+    /* Tabs in Dark Mode */
+    body.dark-mode .tabs-container .tab-button {
+      background-color: #2a2a2a;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .tabs-container .tab-button.active {
+      background-color: #444;
+      /* Or a slightly lighter shade of #1e1e1e */
+      color: #fff;
+    }
+
+    /* Bug report (fix icon & position) */
+    #bugReportTab {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      transform: none;
+      /* Remove any transform if not needed */
+      border-radius: 4px;
+      padding: 8px 12px;
+    }
+
+    #bugReportTab i {
+      margin-right: 4px;
+    }
+
+    body.dark-mode .modal-content {
+      background-color: #2a2a2a !important;
+      color: #e0e0e0;
+    }
+
+    body.darkmode .text-muted {
+      color: #b0b0b0 !important;
+    }
+
+    /* Dark mode toggle (floating) */
+    #darkModeToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      /* Ensure it's above other content */
+    }
+
+    body.dark-mode *::placeholder {
+      /* modern browser */
+      color: rgb(230,230,230);
+    }
