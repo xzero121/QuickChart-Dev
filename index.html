@@ -24,7 +24,15 @@
           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
         <span style="display:none;">QuickChart</span>
       </h1>
-      <h3 class="m-0 fst-italic text-danger">Beta Version</h3>
+      <div class="d-flex align-items-center">
+        <button id="bugReportBtn" class="btn btn-outline-primary me-3" title="Report an issue">
+          <i class="bi bi-bug-fill"></i>
+        </button>
+        <h3 class="m-0 fst-italic text-danger">Beta Version</h3>
+        <button id="darkModeToggle" class="btn btn-outline-secondary ms-3" title="Toggle dark/light mode">
+          <i class="bi bi-moon-fill"></i>
+        </button>
+      </div>
       <div class="header-right">
         <div class="input-group" id="jsonFileInputGroup" style="max-width: 400px;">
           <input type="text" id="jsonFileInput" class="form-control form-control-sm"
@@ -44,10 +52,6 @@
         </div>
       </div>
     </div>
-    <button id="darkModeToggle" class="btn btn-outline-secondary">
-      <i class="bi bi-moon-fill"></i>
-    </button>
-
 
     <div id="sectionContainer">
     </div>
@@ -105,10 +109,6 @@
     </div>
   </div>
 
-  <div id="bugReportTab" class="btn btn-primary">
-    <i class="bi bi-bug-fill"></i>
-  </div>
-
   <div class="modal fade" id="bugReportModal" tabindex="-1" aria-labelledby="bugReportModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -148,6 +148,7 @@
     let sentenceIdCounter = 1;
     let widthMeasurerSpan; // Ref to hidden span for width calc
     let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
+    let activeDropdowns = []; // Track visible dropdown suggestion boxes
 
     // --- Fuse.js Options ---
     const fuseOptions = {
@@ -179,6 +180,7 @@
 
       attachHeaderListeners();
       initializeDarkMode(); // Add dark mode initialization
+      initializeBugReport(); // Initialize bug report functionality
 
       try {
         await loadConfiguration(DEFAULT_CONFIG_NAME, true);
@@ -392,12 +394,10 @@
       narrativeSections.forEach(sec =>
         sec.sentences?.forEach(s => { 
           if (lockedSentenceData.has(s.id)) {
+            const savedData = lockedSentenceData.get(s.id);
             s.locked = true;
             
             // Restore text and values
-            const savedData = lockedSentenceData.get(s.id);
-            
-            // Specifically restore the text content
             if (savedData.text) {
               s.text = savedData.text;
             }
@@ -697,8 +697,18 @@
         // Get the content div that contains the sentence text
         const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
         const contentDiv = li.querySelector('.sentence-content');
+        
+        // Check if already in edit mode
+        if (contentDiv.classList.contains('editing')) {
+          console.log('Sentence is already in edit mode');
+          return;
+        }
+        
         const originalHTML = contentDiv.innerHTML;
         const currentText = sentenceObj.text || "";
+        
+        // Mark as being edited
+        contentDiv.classList.add('editing');
         
         // Create an editable textarea
         const textarea = document.createElement('textarea');
@@ -734,21 +744,21 @@
           const newText = textarea.value.trim();
           if (newText !== currentText) {
             sentenceObj.text = newText;
-            saveState();
-            
-            // Rebuild only this sentence's content
-            contentDiv.innerHTML = buildInlineFields(sentenceObj.text, sentenceObj.values);
+            contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {});
             attachAllEventListenersForElement(contentDiv);
             adjustAllInitialSizesForElement(contentDiv);
+            saveState();
           } else {
-            // If no changes, just restore original content
             contentDiv.innerHTML = originalHTML;
           }
+          // Remove editing class
+          contentDiv.classList.remove('editing');
         });
         
         // Cancel editing
         cancelBtn.addEventListener('click', () => {
           contentDiv.innerHTML = originalHTML;
+          contentDiv.classList.remove('editing');
         });
       });
       return btn;
@@ -1308,41 +1318,61 @@
 
     function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
       const inputRect = inputElement.getBoundingClientRect();
-      const liRect = liAncestor.getBoundingClientRect();
-
-      // Position relative to the viewport first, then adjust if needed
-      let top = inputRect.bottom + window.scrollY;
-      let left = inputRect.left + window.scrollX;
-
-      suggestionBox.style.position = 'fixed'; // Use fixed for viewport positioning initially
-      suggestionBox.style.left = `${left}px`;
-      suggestionBox.style.top = `${top + 2}px`; // 2px gap below input
+      
+      // Position relative to the viewport
+      suggestionBox.style.position = 'fixed'; // Use fixed positioning for viewport coordinates
+      suggestionBox.style.left = `${inputRect.left}px`;
+      suggestionBox.style.top = `${inputRect.bottom + 2}px`; // 2px gap below input
       suggestionBox.style.minWidth = `${inputRect.width}px`;
       suggestionBox.style.maxWidth = `350px`; // Max width constraint
+      suggestionBox.style.zIndex = '1000'; // Ensure it appears above other content
+
+      // Store reference to the input element on the suggestion box for repositioning during scroll
+      suggestionBox.dataset.linkedInputId = inputElement.id || '';
+      
+      // If input doesn't have an ID, create one so we can reference it later
+      if (!inputElement.id) {
+        inputElement.id = 'dropdown-input-' + Math.random().toString(36).substring(2, 10);
+        suggestionBox.dataset.linkedInputId = inputElement.id;
+      }
+      
+      // Add this dropdown to the active dropdowns collection if it's not already tracked
+      if (suggestionBox.style.display !== 'none' && !activeDropdowns.includes(suggestionBox)) {
+        activeDropdowns.push(suggestionBox);
+        
+        // Ensure scroll listener is attached if this is the first visible dropdown
+        if (activeDropdowns.length === 1) {
+          window.addEventListener('scroll', handleScrollForDropdowns, { passive: true });
+        }
+      }
 
       // Use requestAnimationFrame to ensure styles are applied and dimensions are available
       requestAnimationFrame(() => {
         const suggestionsRect = suggestionBox.getBoundingClientRect();
-
-        // Adjust vertical position if overflows bottom
+        
+        // Check if dropdown extends beyond viewport bottom
         if (suggestionsRect.bottom > window.innerHeight) {
-          const spaceAbove = inputRect.top - window.scrollY; // Space above input in viewport
-          if (suggestionsRect.height < spaceAbove) { // Only flip if fits above
-            suggestionBox.style.top = `${inputRect.top + window.scrollY - suggestionsRect.height - 2}px`;
-          } else { // If it doesn't fit above either, stick to bottom with max-height
-            suggestionBox.style.top = `${top + 2}px`; // Revert to below
-            suggestionBox.style.maxHeight = `${window.innerHeight - inputRect.bottom - 10}px`; // 10px buffer
+          const spaceAbove = inputRect.top; // Space above input in viewport
+          
+          if (suggestionsRect.height < spaceAbove) { 
+            // If it fits above the input, position it above
+            suggestionBox.style.top = `${inputRect.top - suggestionsRect.height - 2}px`;
+          } else {
+            // Otherwise, position at bottom with a max-height constraint
+            const maxHeight = window.innerHeight - inputRect.bottom - 10; // 10px from bottom of viewport
+            suggestionBox.style.maxHeight = `${maxHeight}px`;
+            suggestionBox.style.overflowY = 'auto';
           }
         }
 
-        // Adjust horizontal position if overflows right
+        // Check if dropdown extends beyond viewport right edge
         if (suggestionsRect.right > window.innerWidth) {
-          suggestionBox.style.left = `${window.innerWidth - suggestionsRect.width - 5 + window.scrollX}px`; // 5px padding from edge
+          suggestionBox.style.left = `${window.innerWidth - suggestionsRect.width - 5}px`; // 5px padding from right edge
         }
 
-        // Prevent overflowing left edge
+        // Check if dropdown extends beyond viewport left edge
         if (suggestionsRect.left < 0) {
-          suggestionBox.style.left = `${5 + window.scrollX}px`; // 5px padding from edge
+          suggestionBox.style.left = '5px'; // 5px padding from left edge
         }
       });
     }
@@ -1412,6 +1442,17 @@
       if (suggestionBox) {
         suggestionBox.style.display = "none";
         highlightDropdownItem(Array.from(suggestionBox.querySelectorAll("li")), -1); // Clear highlight
+        
+        // Remove from active dropdowns when hidden
+        const index = activeDropdowns.indexOf(suggestionBox);
+        if (index !== -1) {
+          activeDropdowns.splice(index, 1);
+          
+          // Remove scroll listener if no active dropdowns remain
+          if (activeDropdowns.length === 0) {
+            window.removeEventListener('scroll', handleScrollForDropdowns);
+          }
+        }
       }
     }
 
@@ -1431,6 +1472,37 @@
         hideDropdownSuggestions(inputElement);
         // The main blur handler (handleInlineFieldBlur) attached to the input will save its value.
       }, 150);
+    }
+
+    function handleScrollForDropdowns() {
+      // If no active dropdowns, remove the scroll listener
+      if (activeDropdowns.length === 0) {
+        window.removeEventListener('scroll', handleScrollForDropdowns);
+        return;
+      }
+      
+      // Process each active dropdown
+      activeDropdowns.forEach((suggestionBox, index) => {
+        // Skip if dropdown is no longer in DOM or is hidden
+        if (!document.body.contains(suggestionBox) || suggestionBox.style.display === 'none') {
+          activeDropdowns.splice(index, 1);
+          return;
+        }
+        
+        // Get the linked input element
+        const inputId = suggestionBox.dataset.linkedInputId;
+        if (!inputId) return;
+        
+        const inputElement = document.getElementById(inputId);
+        if (!inputElement) return;
+        
+        // Get the li ancestor for context
+        const liAncestor = inputElement.closest('li[data-id]');
+        if (!liAncestor) return;
+        
+        // Reposition the dropdown based on new scroll position
+        positionDropdownSuggestions(inputElement, suggestionBox, liAncestor);
+      });
     }
 
 
@@ -1712,52 +1784,6 @@
       bsModal.show();
     }
 
-    // Dark Mode Toggle
-    const darkToggle = document.getElementById('darkModeToggle');
-    darkToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      darkToggle.innerHTML = document.body.classList.contains('dark-mode')
-        ? '<i class="bi bi-sun-fill"></i>'
-        : '<i class="bi bi-moon-fill"></i>';
-      // Optionally save dark mode preference to localStorage
-      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-    });
-
-    // Apply saved dark mode preference on load
-    if (localStorage.getItem('darkMode') === 'true') {
-      document.body.classList.add('dark-mode');
-      darkToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
-    }
-
-
-    // Bug Report Tab & Modal
-    const bugTab = document.getElementById('bugReportTab');
-    const bugReportModalEl = document.getElementById('bugReportModal');
-    let bugReportModalInstance; // To store modal instance
-
-    if (bugTab && bugReportModalEl) {
-      bugReportModalInstance = new bootstrap.Modal(bugReportModalEl);
-      bugTab.addEventListener('click', () => {
-        bugReportModalInstance.show();
-      });
-    }
-
-    const submitBugBtn = document.getElementById('submitBug');
-    if (submitBugBtn && bugReportModalInstance) {
-      submitBugBtn.addEventListener('click', () => {
-        const desc = document.getElementById('bugDescription').value;
-        if (desc.trim()) {
-          console.log('Bug report submitted:', desc);
-          // Replace with actual submission logic (e.g., mailto link, API call)
-          showConfirmationModal("Bug Report", "Thank you for your feedback! (This is a demo, no data was sent).", "", () => { }, () => { }, true);
-          document.getElementById('bugDescription').value = ""; // Clear textarea
-          bugReportModalInstance.hide();
-        } else {
-          showConfirmationModal("Bug Report", "Please describe the issue before submitting.", "", () => { }, () => { }, true);
-        }
-      });
-    }
-
     // Add the initializeDarkMode function
     function initializeDarkMode() {
       console.log("Initializing dark mode...");
@@ -1800,6 +1826,49 @@
       });
       
       console.log("Dark mode initialization complete.");
+    }
+
+    // Bug Report initialization function
+    function initializeBugReport() {
+      console.log("Initializing bug report functionality...");
+      const bugReportBtn = document.getElementById('bugReportBtn');
+      const bugReportModalEl = document.getElementById('bugReportModal');
+      
+      if (!bugReportBtn || !bugReportModalEl) {
+        console.error("Bug report button or modal not found!");
+        return;
+      }
+      
+      // Update the icon to use the solid version
+      if (bugReportBtn.querySelector('i')) {
+        bugReportBtn.querySelector('i').className = 'bi bi-bug-fill';
+      }
+      
+      const bugReportModal = new bootstrap.Modal(bugReportModalEl);
+      
+      // Add click event to show the modal
+      bugReportBtn.addEventListener('click', () => {
+        bugReportModal.show();
+      });
+      
+      // Setup submit button functionality
+      const submitBugBtn = document.getElementById('submitBug');
+      if (submitBugBtn) {
+        submitBugBtn.addEventListener('click', () => {
+          const desc = document.getElementById('bugDescription').value;
+          if (desc.trim()) {
+            console.log('Bug report submitted:', desc);
+            // Replace with actual submission logic (e.g., mailto link, API call)
+            showConfirmationModal("Bug Report", "Thank you for your feedback! (This is a demo, no data was sent).", "", () => { }, () => { }, true);
+            document.getElementById('bugDescription').value = ""; // Clear textarea
+            bugReportModal.hide();
+          } else {
+            showConfirmationModal("Bug Report", "Please describe the issue before submitting.", "", () => { }, () => { }, true);
+          }
+        });
+      }
+      
+      console.log("Bug report functionality initialized.");
     }
   </script>
 
