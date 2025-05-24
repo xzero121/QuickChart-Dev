@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - QuickChart</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <style>
+    .policy-header {
+      color: #6c757d; /* Bootstrap's text-muted color */
+      font-weight: 500;
+    }
+
+    .policy-header, .section-title {
+      color: #000;
+    }
+    
+    .policy-divider {
+      border-top: 1px solid #dee2e6;
+    }
+    
+    [data-bs-theme="dark"] .policy-header, [data-bs-theme="dark"] .section-title {
+      color: #eee; /* Lighter shade for dark mode */
+    }
+    
+    [data-bs-theme="dark"] .policy-divider {
+      border-top: 1px solid #495057;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-4 header-bar">
+      <h1 class="m-0">
+        <img src="QuickChartLogoWide.svg" alt="QuickChart" class="img-fluid"
+          style="max-width: 200px; height: auto; vertical-align: middle; margin-right: 0.5em;"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <span style="display:none;">QuickChart</span>
+      </h1>
+      <div class="header-controls">
+        <a href="index.html" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-left"></i> Back to App
+        </a>
+        <button id="darkModeToggle" class="btn btn-outline-secondary">
+          <i class="bi bi-moon-fill"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="narrative-section">
+      <div class="section-header d-flex justify-content-between align-items-center">
+        <span class="section-title-wrapper">
+          <h2 class="section-title m-0">Privacy Policy</h2>
+        </span>
+        <span class="text-muted small fw-bold">Effective Date: May 23, 2025</span>
+      </div>
+
+      <div class="p-3">
+        <hr class="policy-divider">
+
+        <p>Welcome to QuickChart. This Privacy Policy describes how QuickChart ("we," "our," or "us") collects, uses, and discloses information gathered from users ("you") through the QuickChart web application ("Application"). By using the Application, you consent to the terms described in this policy.</p>
+
+        <h4 class="mt-4 policy-header">Information We Collect</h4>
+        <p>We collect only aggregated, non-personally identifiable information related to specific fields, such as facility names and similar general, non-sensitive information. We do not collect or store personally identifiable information (PII) or Protected Health Information (PHI).</p>
+
+        <h4 class="mt-4 policy-header">How We Use Your Information</h4>
+        <p>The aggregated data collected is used exclusively to enhance and improve the lists and suggestions provided to users within the Application. This helps streamline the user experience and improve efficiency in creating narratives.</p>
+
+        <h4 class="mt-4 policy-header">Data Storage and Security</h4>
+        <p>All aggregated data collected is stored securely using industry-standard methods and practices to prevent unauthorized access or disclosure. No individual user can be identified from the aggregated data we collect.</p>
+
+        <h4 class="mt-4 policy-header">Information Sharing</h4>
+        <p>We do not share, sell, or disclose the aggregated data collected to third parties except as required by law.</p>
+
+        <h4 class="mt-4 policy-header">Cookies and Local Storage</h4>
+        <p>The Application utilizes local browser storage (localStorage or sessionStorage) to save your settings and narrative content for convenience. This data remains exclusively on your device and is never transmitted or collected by QuickChart.</p>
+
+        <h4 class="mt-4 policy-header">User Rights</h4>
+        <p>As we do not collect personally identifiable information, we do not provide access, correction, or deletion rights related to individual user data.</p>
+
+        <h4 class="mt-4 policy-header">Changes to This Privacy Policy</h4>
+        <p>We reserve the right to update this Privacy Policy periodically. Users will be notified of any significant changes through updates posted within the Application.</p>
+
+        <h4 class="mt-4 policy-header">Contact Us</h4>
+        <p>For any questions or concerns regarding this Privacy Policy, please contact us at <a href="mailto:bbrown216@protonmail.com">bbrown216@protonmail.com</a>.</p>
+      </div>
+    </div>
+
+    <div id="disclaimer" class="alert alert-secondary py-1 text-center small" role="alert">
+      <strong>Disclaimer:</strong> Data is stored in your browser's local storage. Clearing browser data will remove
+      saved narrative. No information is sent to a server.
+    </div>
+    <div id="license" class="alert alert-light py-1 text-center small" role="alert"
+      xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
+      <a property="dct:title" rel="cc:attributionURL" href="https://xzero121.github.io/QuickChart/">QuickChart</a> by
+      <span property="cc:attributionName">B. Brown, EMT-B</span> is licensed under
+      <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/?ref=chooser-v1" target="_blank"
+        rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-ND 4.0
+        <img class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"
+          alt="CC icon"><img class="cc-icon"
+          src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt="BY icon"><img
+          class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1"
+          alt="NC icon"><img class="cc-icon"
+          src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1" alt="ND icon">
+      </a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize dark mode
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      
+      if (darkModeToggle) {
+        // Check localStorage for user preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Apply initial theme based on user preference
+        if (isDarkMode) {
+          document.documentElement.setAttribute('data-bs-theme', 'dark');
+          darkModeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        } else {
+          document.documentElement.setAttribute('data-bs-theme', 'light');
+          darkModeToggle.innerHTML = '<i class="bi bi-moon-fill"></i>';
+        }
+        
+        // Add event listener for toggle button
+        darkModeToggle.addEventListener('click', () => {
+          const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          
+          // Update theme attribute
+          document.documentElement.setAttribute('data-bs-theme', newTheme);
+          
+          // Update button icon
+          darkModeToggle.innerHTML = newTheme === 'dark' 
+            ? '<i class="bi bi-sun-fill"></i>' 
+            : '<i class="bi bi-moon-fill"></i>';
+          
+          // Save preference to localStorage
+          localStorage.setItem('darkMode', newTheme === 'dark');
+          
+          console.log(`Theme switched to: ${newTheme}`);
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>
