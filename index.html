@@ -132,7 +132,7 @@
   <script>
     // --- Constants ---
     const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
-    const LOCAL_STORAGE_KEY = 'quickChartState_v2';
+    const LOCAL_STORAGE_KEY = 'QuickChart-Beta';
     const MIN_INLINE_WIDTH = 50; // Min width for inline fields (px)
     const MAX_INLINE_WIDTH_PERCENT = 80; // Max width relative to parent (%)
     const DEFAULT_CONFIG_NAME = 'default'; // Default config file name
@@ -1286,14 +1286,13 @@
       processDropdownBlur(event.target);
     }
 
+        /** Filters suggestions based on input, handles hidden items, positions and shows dropdown. (NEW/REVISED) */
     function filterAndShowDropdownSuggestions(inputElement) {
       const dropdownContainer = inputElement.closest('.custom-dropdown');
       const suggestionBox = dropdownContainer?.querySelector(".suggestions");
-      const liAncestor = inputElement.closest('li[data-id]'); // Position relative to the main sentence <li>
-
+      const liAncestor = inputElement.closest('li'); // Position relative to the LI
       if (!suggestionBox || !liAncestor) {
-        // console.error("Cannot find suggestions box or list item for input:", inputElement);
-        if (suggestionBox) suggestionBox.style.display = "none"; // Hide if no ancestor
+        console.error("Cannot find suggestions box or list item for input:", inputElement);
         return;
       }
 
@@ -1304,20 +1303,28 @@
       items.forEach(item => {
         const itemText = item.textContent.toLowerCase();
         const isHiddenByDefault = item.dataset.hidden === 'true';
+
+        // Determine visibility based on filter text
         let shouldShow = true;
         if (filterText) {
+          // If filtering, show if text matches (hidden status doesn't matter)
           shouldShow = itemText.includes(filterText);
         } else {
+          // If not filtering (just focused), hide items marked as hidden
           shouldShow = !isHiddenByDefault;
         }
+
         item.style.display = shouldShow ? "" : "none";
-        if (shouldShow) hasVisibleItems = true;
+        if (shouldShow) {
+          hasVisibleItems = true;
+        }
       });
 
+      // Only show the box if there are items to display
       if (hasVisibleItems) {
         positionDropdownSuggestions(inputElement, suggestionBox, liAncestor);
         suggestionBox.style.display = "block";
-        highlightDropdownItem(items.filter(li => li.style.display !== 'none'), -1); // Reset highlight
+        highlightDropdownItem(items.filter(li => li.style.display !== 'none'), -1); // Reset highlight on filter/show
       } else {
         suggestionBox.style.display = "none";
       }
@@ -1517,22 +1524,193 @@
     document.getElementById("generateBtn").addEventListener("click", async () => {
       const finalTextArea = document.getElementById("finalText");
       const changesDetected = storeAllInlineValues(); // Capture all current input values
-      if (changesDetected) {
-        saveState(); // Only save if changes detected
+      
+      // Fix: Re-implement overwrite confirmation when the final text area has content
+      if (finalTextArea.value.trim() !== "") {
+        showConfirmationModal(
+          "Generate Text",
+          "This will overwrite the current text in the final narrative area. Continue?",
+          "",
+          () => generateAndDisplayText(finalTextArea), // Yes callback
+          () => {} // No callback (do nothing)
+        );
+      } else {
+        // If textarea is empty, generate immediately without confirmation
+        generateAndDisplayText(finalTextArea);
       }
+    });
+    
+    /**
+     * Generates and displays the final text
+     * @param {HTMLElement} finalTextArea - The text area to display the text in
+     */
+    function generateAndDisplayText(finalTextArea) {
+      try {
+        const [finalText, hasLockedSentences, lockedSectionsInfo] = generateFinalTextWithLockInfo();
+        finalTextArea.value = finalText;
+        
+        // If there are locked sentences, show an indicator
+        const copyLockedInfoEl = document.getElementById('copyLockedInfo') || createCopyLockedInfoElement();
+        if (hasLockedSentences) {
+          copyLockedInfoEl.innerHTML = `<i class="bi bi-lock-fill text-primary"></i> ${lockedSectionsInfo.length} section(s) contain locked content`;
+          copyLockedInfoEl.style.display = 'block';
+          copyLockedInfoEl.title = `Sections with locked content: ${lockedSectionsInfo.join(', ')}`;
+        } else {
+          copyLockedInfoEl.style.display = 'none';
+        }
+        
+        // Check for empty placeholders and update warning
+        const hasEmptyFields = checkForEmptyPlaceholders();
+        showPlaceholderWarning(hasEmptyFields);
+      } catch (error) {
+        console.error("Error generating final text:", error);
+        showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => {}, () => {}, true);
+      }
+    }
+    
+    /**
+     * Creates an info element for displaying locked sentence information
+     */
+    function createCopyLockedInfoElement() {
+      const infoEl = document.createElement('div');
+      infoEl.id = 'copyLockedInfo';
+      infoEl.classList.add('copy-locked-info', 'text-muted', 'small', 'mt-2');
       
-      // Check for empty placeholder values before generating
-      const hasEmptyFields = checkForEmptyPlaceholders();
-      showPlaceholderWarning(hasEmptyFields);
+      // Insert after final text area
+      const finalTextArea = document.getElementById('finalText');
+      finalTextArea.parentNode.insertBefore(infoEl, finalTextArea.nextSibling);
       
-      let finalText = "";
+      return infoEl;
+    }
+    
+    /**
+     * Generates the final text with information about locked sentences
+     * @returns {Array} [finalText, hasLockedSentences, lockedSectionsInfo]
+     */
+    function generateFinalTextWithLockInfo() {
+      let finalTextParts = [];
+      let hasLockedSentences = false;
+      let lockedSectionsInfo = [];
+      
+      // Fix: Get the state of the "Include Section Titles" checkbox
+      const includeSectionTitles = document.getElementById("toggleSectionTitles")?.checked || false;
+      
       narrativeSections.forEach(section => {
-        if (section.sentences && section.sentences.length > 0) {
-          finalText += renderSectionText(section);
+        if (!section.sentences || section.sentences.length === 0) return;
+        
+        let sectionHasLockedSentence = false;
+        let sectionText = '';
+        
+        section.sentences.forEach(sentenceObj => {
+          if (sentenceObj.locked) {
+            sectionHasLockedSentence = true;
+            hasLockedSentences = true;
+          }
+          
+          let processedText;
+          if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+            // For tabbed sentences, use the active tab's text
+            const activeTabIndex = sentenceObj.activeTabIndex || 0;
+            if (activeTabIndex < sentenceObj.tabs.length) {
+              const tabText = sentenceObj.tabs[activeTabIndex].text || "";
+              const tabValues = sentenceObj.tabValues?.[activeTabIndex] || {};
+              processedText = processSentence(tabText, tabValues);
+            } else {
+              processedText = "";
+            }
+          } else {
+            // For non-tabbed sentences
+            processedText = processSentence(sentenceObj.text || "", sentenceObj.values || {});
+          }
+          
+          if (processedText.trim()) {
+            sectionText += processedText.trim() + " ";
+          }
+        });
+        
+        if (sectionText.trim()) {
+          // Include section titles when checkbox is checked
+          if (includeSectionTitles) {
+            finalTextParts.push(`${section.part}:\n${sectionText.trim()}`);
+          } else {
+            finalTextParts.push(sectionText.trim());
+          }
+          
+          if (sectionHasLockedSentence) {
+            lockedSectionsInfo.push(section.part);
+          }
         }
       });
       
-      finalTextArea.value = finalText;
+      return [finalTextParts.join("\n\n"), hasLockedSentences, lockedSectionsInfo];
+    }
+    
+    /**
+     * Process a sentence by replacing placeholders with values
+     * Fix: Show [placeholder] when values are empty or missing
+     */
+    function processSentence(text, values) {
+      if (!text) return "";
+      if (!values) values = {};
+      
+      return text.replace(placeholderRegex, (match, type, label) => {
+        const value = values[label];
+        // Fix: Return [label] if value is empty, null, undefined, or just whitespace
+        return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
+      });
+    }
+
+    // --- Button Event Listeners ---
+    document.getElementById("copyBtn").addEventListener("click", () => {
+      const finalTextArea = document.getElementById("finalText");
+      const textToCopy = finalTextArea.value.trim();
+      if (!textToCopy) {
+        showConfirmationModal("Copy", "Nothing to copy!", "", () => { }, () => { }, true);
+        return;
+      }
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        console.log("Text copied to clipboard.");
+        showConfirmationModal("Copied to Clipboard",
+          "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
+          // Fix: Use HTML for disclaimer to properly render the <br> tag
+          "<span>Paste your narrative first,</span><br><span>unlocked sentences will be reset to their default values.</span>",
+          () => {
+            // When user confirms "Yes" to start a new run:
+            resetToCurrentConfigDefaults(); // Reset sections to defaults (existing code)
+            
+            // Clear the final text area
+            finalTextArea.value = "";
+            
+            // Hide placeholder warning if present
+            const warningContainer = document.getElementById("placeholderWarningContainer");
+            if (warningContainer) {
+              warningContainer.style.display = "none";
+              finalTextArea.classList.remove("has-empty-placeholders");
+            }
+            
+            // Hide locked content indicator if present
+            const lockedInfoEl = document.getElementById('copyLockedInfo');
+            if (lockedInfoEl) {
+              lockedInfoEl.style.display = "none";
+            }
+            
+            console.log("Final narrative area cleared after copy and confirmation.");
+          },
+          () => {
+            // When user chooses "No" (don't start a new run)
+            // Optional: we could add a subtle indicator that copy was successful
+            const copyBtn = document.getElementById("copyBtn");
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="bi bi-clipboard-check-fill"></i> Copied!';
+            setTimeout(() => {
+              copyBtn.innerHTML = originalText;
+            }, 2000);
+          }
+        );
+      }).catch(err => {
+        console.error("Copy to clipboard failed: ", err);
+        showConfirmationModal("Copy Failed", "Could not copy text to clipboard. Your browser might not support this feature or has restrictions.", "", () => { }, () => { }, true);
+      });
     });
 
     /**
@@ -1597,7 +1775,7 @@
       const warningContainer = document.createElement("div");
       warningContainer.id = "placeholderWarningContainer";
       warningContainer.classList.add("placeholder-warning");
-      warningContainer.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Warning: Some placeholder values remain empty';
+      warningContainer.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Warning: Some placeholder values remain!';
       
       // Insert before the textarea
       finalTextContainer.insertBefore(warningContainer, finalTextArea);
@@ -1681,30 +1859,6 @@
       console.warn(`Sentence with ID ${id} not found in any section.`);
       return null;
     }
-
-    // --- Button Event Listeners ---
-    document.getElementById("copyBtn").addEventListener("click", () => {
-      const finalTextArea = document.getElementById("finalText");
-      const textToCopy = finalTextArea.value.trim();
-      if (!textToCopy) {
-        showConfirmationModal("Copy", "Nothing to copy!", "", () => { }, () => { }, true);
-        return;
-      }
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        console.log("Text copied to clipboard.");
-        showConfirmationModal("Copied to Clipboard",
-          "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run (clearing current work)?",
-          "Paste your narrative first if needed. This action cannot be undone.",
-          () => resetToCurrentConfigDefaults(), // Yes, start new run
-          () => { } // No, do nothing else
-        );
-      }).catch(err => {
-        console.error("Copy to clipboard failed: ", err);
-        showConfirmationModal("Copy Failed", "Could not copy text to clipboard. Your browser might not support this feature or has restrictions.", "", () => { }, () => { }, true);
-      });
-    });
-    // New Run button listener is in attachHeaderListeners
-    // toggleSectionTitles listener is implicit via checkbox state check during generation
 
     // --- Input Auto-Sizing ---
     function attachInputSizingListeners() {
@@ -1796,7 +1950,9 @@
 
       modalLabel.textContent = title || "Confirmation";
       modalBody.innerHTML = message || ""; // Use innerHTML to allow for <br> etc.
-      modalDisclaimer.textContent = disclaimer || "";
+      
+      // Fix: Use innerHTML for disclaimer to properly render HTML content if needed
+      modalDisclaimer.innerHTML = disclaimer || "";
 
       yesBtn.style.display = singleButton ? 'none' : 'inline-block';
       noBtn.textContent = singleButton ? 'OK' : 'No';
@@ -1809,7 +1965,6 @@
 
       newYesBtn.style.display = singleButton ? 'none' : 'inline-block';
       newNoBtn.textContent = singleButton ? 'OK' : 'No';
-
 
       newYesBtn.addEventListener('click', () => {
         bsModal.hide();
@@ -1895,13 +2050,38 @@
         submitBugBtn.addEventListener('click', () => {
           const desc = document.getElementById('bugDescription').value;
           if (desc.trim()) {
-            console.log('Bug report submitted:', desc);
-            // Replace with actual submission logic (e.g., mailto link, API call)
-            showConfirmationModal("Bug Report", "Thank you for your feedback! (This is a demo, no data was sent).", "", () => { }, () => { }, true);
-            document.getElementById('bugDescription').value = ""; // Clear textarea
+            // Encode the bug description for URL
+            const encodedDescription = encodeURIComponent(desc.trim());
+            
+            // Construct the Google Forms URL with the bug report
+            const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfiovEazZnz0HhEULNqjiyrbC6CyhPi0MVd7qWeJvKUTWoBIA/formResponse?submit=Submit&usp=pp_url&entry.1588653800=${encodedDescription}`;
+            
+            // Open the form in a new tab
+            window.open(formUrl, '_blank');
+            
+            // Clear the textarea and hide the modal
+            document.getElementById('bugDescription').value = '';
             bugReportModal.hide();
+            
+            // Show confirmation message
+            showConfirmationModal(
+              "Bug Report Submitted",
+              "Thank you for your bug report! A new tab has opened with the Google Form. Please submit it to complete your report.",
+              "",
+              () => {},
+              () => {},
+              true
+            );
           } else {
-            showConfirmationModal("Bug Report", "Please describe the issue before submitting.", "", () => { }, () => { }, true);
+            // Show error if description is empty
+            showConfirmationModal(
+              "Bug Report",
+              "Please enter a description of the bug before submitting.",
+              "",
+              () => {},
+              () => {},
+              true
+            );
           }
         });
       }
