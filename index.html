@@ -159,8 +159,91 @@
       ignoreLocation: true
     };
 
+    // --- Functions ---
+    // initializeTooltips();
+    // initializeApp();
+    // attachAllEventListeners();
+    // attachAllEventListenersForElement();
+    // attachHeaderListeners();
+    // loadConfiguration();
+    // loadState();
+    // saveState();
+    // resetToCurrentConfigDefaults();
+    // assignInitialIDs();
+    // initializedarkMode();
+    // findHighestSentenceId();
+    // initializeSentenceValues();
+    // shortPlaceholderString();
+    // expandedPlaceholderString();
+    // buildSectionsUI();
+    // createSectionElement();
+    // createSentenceElement();
+    // createTabsContainer();
+    // createTabPaneElement();
+    // createRemoveButton();
+    // createEditButton();
+    // createLockButton();
+    // createAddSentenceForm();
+    // handleSuggestionsInput();
+    // addSentence();
+    // removeSentence();
+    // switchTab();
+    // attachBlurListeners();
+    // attachBlurListnersForElement();
+    // handleInlineFieldBlurDelegated();
+    // handleInlineFieldBlur();
+    // storeAllInlineValues();
+    // buildInlineFields();
+    // makeSentencesDraggable();
+    // handleDragEnd();
+    // attachDropdownLogic();
+    // attachDropdownLogicForElement();
+    // handleDropdownFocusDelegated();
+    // handleDropdownInputDelegated();
+    // handleDropdownKeydownDelegated();
+    // handleDropdownSuggestionClick();
+    // handleDropdownBlurDelegated();
+    // handleDropdownFocusDirect();
+    // handleDropdownInputDirect();
+    // handleDropdownKeydownDirect();
+    // handleDropdownSuggestionClickDirect();
+    // handleDropdownBlurDirect();
+    // filterAndShowDropdownSuggestions();
+    // positionDropdownSuggestions();
+    // processDropdownKeydown();
+    // highlightDropdownItem();
+    // selectDropdownItem();
+    // hideDropdownSuggestions();
+    // processDropdownBlur();
+    // handleScrollForDropdown();
+    // generateAndDisplayText();
+    // createCopyLockedInfoElement();
+    // generateFiunalTextWithLockInfo();
+    // processSentence();
+    // checkForEmptyPlaceholders();
+    // showPlaceholderWarning();
+    // createWarningElement();
+    // attachPlaceholderWarningListeners();
+    // debounce();
+    // renderSectionText();
+    // FindSentenceById();
+    // attachInputSizingListeners();
+    // attachInputSizingListenersForElement();
+    // handleAutoSizingInputDelegated();
+    // HandleAutoSizingInputDirect();
+    // adjustTextAreaHeight();
+    // adjustInputWidth();
+    // adjustAllInitialSizes();
+    // adjustAllInitialSizesForElement();
+    // showConfirmationModal();
+    // initializeDarkMode();
+    // initializeBugReport();
+
+
     // --- Initialization ---
-    document.addEventListener("DOMContentLoaded", initializeApp);
+    document.addEventListener('DOMContentLoaded', function () {
+      initializeApp();
+    });
 
     function initializeTooltips() {
       const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -183,17 +266,24 @@
       initializeBugReport(); // Initialize bug report functionality
 
       try {
-        await loadConfiguration(DEFAULT_CONFIG_NAME, true);
+        const savedConfigName = localStorage.getItem("QuickChart-Beta-Config");
+        if (!savedConfigName) {
+          console.warn("No saved configuration name found. Using default.");
+          await loadConfiguration(DEFAULT_CONFIG_NAME, true);
+        } else {
+          console.log(`Loaded saved configuration name: ${savedConfigName}`);
+          await loadConfiguration(savedConfigName, true);
+        }
         loadState();
         buildSectionsUI();
         initializeTooltips();
         attachAllEventListeners(); // Consolidated event listener attachment
         adjustAllInitialSizes();
-        
+
         // Check for empty placeholders initially
         const hasEmptyFields = checkForEmptyPlaceholders();
         showPlaceholderWarning(hasEmptyFields);
-        
+
         console.log("QuickChart Initialized Successfully.");
       } catch (err) {
         console.error("Failed to initialize QuickChart:", err);
@@ -222,6 +312,7 @@
       const fileInput = document.getElementById('jsonFileInput');
       const newRunBtn = document.getElementById('newRunBtn');
 
+      // Attach event listeners to the load button and file input
       if (loadBtn && fileInput) {
         loadBtn.addEventListener('click', () => {
           const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
@@ -246,6 +337,7 @@
         });
       } else { console.error("Load button or file input not found."); }
 
+      // Attach event listener to the new run button
       if (newRunBtn) {
         newRunBtn.addEventListener('click', () => {
           showConfirmationModal(
@@ -261,6 +353,7 @@
 
     async function loadConfiguration(configName, isInitialLoad = false) {
       const filename = `${configName.toLowerCase()}.json`;
+
       console.log(`Attempting to load configuration: ${filename}`);
       try {
         const response = await fetch(filename);
@@ -268,6 +361,16 @@
           throw new Error(`Configuration file '${filename}' not found or could not be loaded (Status: ${response.status})`);
         }
         const data = await response.json();
+
+        // Save the loaded config name to localStorage
+        if (!isInitialLoad) {
+          try {
+            localStorage.setItem("QuickChart-Beta-Config", configName);
+          } catch (e) {
+            console.error("Failed to save config name.", e);
+          }
+        }
+
 
         rawCommonSentences = data.commonSentences || [];
         globalDropdownOptions = data.globalDropdownOptions || {};
@@ -304,11 +407,11 @@
       if (savedState) {
         try {
           let loadedState = JSON.parse(savedState);
-          
+
           // If there was previously saved state, merge locked sentences with defaults
           // to ensure locked status persists through refresh
           const lockedSentenceMap = new Map();
-          
+
           // First, identify all locked sentences from the loaded state
           loadedState.forEach(section => {
             if (!section.sentences) return;
@@ -324,14 +427,14 @@
               }
             });
           });
-          
+
           // Set narrative sections to loaded state
           narrativeSections = loadedState;
-          
+
           // Ensure locked state is preserved even if IDs get reassigned
           if (lockedSentenceMap.size > 0) {
             assignInitialIDs(narrativeSections);
-            
+
             // Re-apply locked status and content to matching sentences
             narrativeSections.forEach(section => {
               if (!section.sentences) return;
@@ -351,7 +454,7 @@
               });
             });
           }
-          
+
           console.log("Working state loaded from localStorage with locked sentences preserved.");
         } catch (e) {
           console.error("Failed to parse saved state, using defaults from loaded config.", e);
@@ -379,7 +482,7 @@
       // Store locked sentences with their values before reset
       const lockedSentenceData = new Map();
       narrativeSections.forEach(sec =>
-        sec.sentences?.forEach(s => { 
+        sec.sentences?.forEach(s => {
           if (s.locked) {
             // Store complete sentence data including text and all values
             lockedSentenceData.set(s.id, {
@@ -398,28 +501,28 @@
 
       // Re-apply locks and restore their values
       narrativeSections.forEach(sec =>
-        sec.sentences?.forEach(s => { 
+        sec.sentences?.forEach(s => {
           if (lockedSentenceData.has(s.id)) {
             const savedData = lockedSentenceData.get(s.id);
             s.locked = true;
-            
+
             // Restore text and values
             if (savedData.text) {
               s.text = savedData.text;
             }
-            
+
             // For non-tabbed sentences
             if (savedData.values && Object.keys(savedData.values).length > 0) {
               s.values = savedData.values;
             }
-            
+
             // For tabbed sentences
             if (s.tabs && savedData.tabValues && savedData.tabValues.length > 0) {
               s.tabValues = savedData.tabValues;
               // Only restore activeTabIndex if it's valid for this sentence
-              if (typeof savedData.activeTabIndex === 'number' && 
-                  savedData.activeTabIndex >= 0 && 
-                  savedData.activeTabIndex < s.tabs.length) {
+              if (typeof savedData.activeTabIndex === 'number' &&
+                savedData.activeTabIndex >= 0 &&
+                savedData.activeTabIndex < s.tabs.length) {
                 s.activeTabIndex = savedData.activeTabIndex;
               }
             }
@@ -428,7 +531,7 @@
       );
 
       saveState(); // Save this state so it persists across refreshes
-      
+
       if (rebuildUI) {
         buildSectionsUI();
         attachAllEventListeners();
@@ -459,15 +562,15 @@
     function initializeDarkMode() {
       console.log("Initializing dark mode...");
       const darkModeToggle = document.getElementById('darkModeToggle');
-      
+
       if (!darkModeToggle) {
         console.error("Dark mode toggle button not found!");
         return;
       }
-      
+
       // Check localStorage for user preference
       const isDarkMode = localStorage.getItem('darkMode') === 'true';
-      
+
       // Apply initial theme based on user preference
       if (isDarkMode) {
         document.documentElement.setAttribute('data-bs-theme', 'dark');
@@ -476,26 +579,26 @@
         document.documentElement.setAttribute('data-bs-theme', 'light');
         darkModeToggle.innerHTML = '<i class="bi bi-moon-fill"></i>';
       }
-      
+
       // Add event listener for toggle button
       darkModeToggle.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-bs-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
+
         // Update theme attribute
         document.documentElement.setAttribute('data-bs-theme', newTheme);
-        
+
         // Update button icon
-        darkModeToggle.innerHTML = newTheme === 'dark' 
-          ? '<i class="bi bi-sun-fill"></i>' 
+        darkModeToggle.innerHTML = newTheme === 'dark'
+          ? '<i class="bi bi-sun-fill"></i>'
           : '<i class="bi bi-moon-fill"></i>';
-        
+
         // Save preference to localStorage
         localStorage.setItem('darkMode', newTheme === 'dark');
-        
+
         console.log(`Theme switched to: ${newTheme}`);
       });
-      
+
       console.log("Dark mode initialization complete");
     }
 
@@ -700,52 +803,52 @@
           showConfirmationModal("Edit Tabbed Sentence", "Text for tabbed sentences should be edited in the JSON configuration file.", "", () => { }, () => { }, true);
           return;
         }
-        
+
         // Get the content div that contains the sentence text
         const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
         const contentDiv = li.querySelector('.sentence-content');
-        
+
         // Check if already in edit mode
         if (contentDiv.classList.contains('editing')) {
           console.log('Sentence is already in edit mode');
           return;
         }
-        
+
         const originalHTML = contentDiv.innerHTML;
         const currentText = sentenceObj.text || "";
-        
+
         // Mark as being edited
         contentDiv.classList.add('editing');
-        
+
         // Create an editable textarea
         const textarea = document.createElement('textarea');
         textarea.classList.add('form-control', 'sentence-edit-textarea', 'auto-height-textarea');
         textarea.value = currentText;
-        
+
         // Replace content with textarea
         contentDiv.innerHTML = '';
         contentDiv.appendChild(textarea);
-        
+
         // Add save and cancel buttons
         const buttonsDiv = document.createElement('div');
         buttonsDiv.classList.add('edit-buttons', 'mt-2');
-        
+
         const saveBtn = document.createElement('button');
         saveBtn.classList.add('btn', 'btn-sm', 'btn-primary', 'me-2');
         saveBtn.innerHTML = 'Save';
-        
+
         const cancelBtn = document.createElement('button');
         cancelBtn.classList.add('btn', 'btn-sm', 'btn-secondary');
         cancelBtn.innerHTML = 'Cancel';
-        
+
         buttonsDiv.appendChild(saveBtn);
         buttonsDiv.appendChild(cancelBtn);
         contentDiv.appendChild(buttonsDiv);
-        
+
         // Auto-adjust textarea height
         adjustTextareaHeight(textarea);
         textarea.focus();
-        
+
         // Save changes
         saveBtn.addEventListener('click', () => {
           const newText = textarea.value.trim();
@@ -761,7 +864,7 @@
           // Remove editing class
           contentDiv.classList.remove('editing');
         });
-        
+
         // Cancel editing
         cancelBtn.addEventListener('click', () => {
           contentDiv.innerHTML = originalHTML;
@@ -1235,9 +1338,15 @@
     }
 
     // Delegated handlers
-    function handleDropdownFocusDelegated(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
-    function handleDropdownInputDelegated(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
-    function handleDropdownKeydownDelegated(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event); }
+    function handleDropdownFocusDelegated(event) {
+      if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target);
+    }
+    function handleDropdownInputDelegated(event) {
+      if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target);
+    }
+    function handleDropdownKeydownDelegated(event) {
+      if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event);
+    }
     function handleDropdownSuggestionClickDelegated(event) {
       if (event.target.matches('.custom-dropdown .suggestions li')) {
         const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
@@ -1262,9 +1371,15 @@
     }
 
     // Direct handlers (for dynamically added elements if delegation is tricky)
-    function handleDropdownFocusDirect(event) { filterAndShowDropdownSuggestions(event.target); }
-    function handleDropdownInputDirect(event) { filterAndShowDropdownSuggestions(event.target); }
-    function handleDropdownKeydownDirect(event) { processDropdownKeydown(event.target, event); }
+    function handleDropdownFocusDirect(event) {
+      filterAndShowDropdownSuggestions(event.target);
+    }
+    function handleDropdownInputDirect(event) {
+      filterAndShowDropdownSuggestions(event.target);
+    }
+    function handleDropdownKeydownDirect(event) {
+      processDropdownKeydown(event.target, event);
+    }
     function handleDropdownSuggestionClickDirect(event) { // Attached to suggestionBox
       if (event.target.matches('li')) { // Check if a list item was clicked
         const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
@@ -1286,7 +1401,7 @@
       processDropdownBlur(event.target);
     }
 
-        /** Filters suggestions based on input, handles hidden items, positions and shows dropdown. (NEW/REVISED) */
+    /** Filters suggestions based on input, handles hidden items, positions and shows dropdown. (NEW/REVISED) */
     function filterAndShowDropdownSuggestions(inputElement) {
       const dropdownContainer = inputElement.closest('.custom-dropdown');
       const suggestionBox = dropdownContainer?.querySelector(".suggestions");
@@ -1332,7 +1447,7 @@
 
     function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
       const inputRect = inputElement.getBoundingClientRect();
-      
+
       // Position relative to the viewport
       suggestionBox.style.position = 'fixed'; // Use fixed positioning for viewport coordinates
       suggestionBox.style.left = `${inputRect.left}px`;
@@ -1343,17 +1458,17 @@
 
       // Store reference to the input element on the suggestion box for repositioning during scroll
       suggestionBox.dataset.linkedInputId = inputElement.id || '';
-      
+
       // If input doesn't have an ID, create one so we can reference it later
       if (!inputElement.id) {
         inputElement.id = 'dropdown-input-' + Math.random().toString(36).substring(2, 10);
         suggestionBox.dataset.linkedInputId = inputElement.id;
       }
-      
+
       // Add this dropdown to the active dropdowns collection if it's not already tracked
       if (suggestionBox.style.display !== 'none' && !activeDropdowns.includes(suggestionBox)) {
         activeDropdowns.push(suggestionBox);
-        
+
         // Ensure scroll listener is attached if this is the first visible dropdown
         if (activeDropdowns.length === 1) {
           window.addEventListener('scroll', handleScrollForDropdowns, { passive: true });
@@ -1363,12 +1478,12 @@
       // Use requestAnimationFrame to ensure styles are applied and dimensions are available
       requestAnimationFrame(() => {
         const suggestionsRect = suggestionBox.getBoundingClientRect();
-        
+
         // Check if dropdown extends beyond viewport bottom
         if (suggestionsRect.bottom > window.innerHeight) {
           const spaceAbove = inputRect.top; // Space above input in viewport
-          
-          if (suggestionsRect.height < spaceAbove) { 
+
+          if (suggestionsRect.height < spaceAbove) {
             // If it fits above the input, position it above
             suggestionBox.style.top = `${inputRect.top - suggestionsRect.height - 2}px`;
           } else {
@@ -1456,12 +1571,12 @@
       if (suggestionBox) {
         suggestionBox.style.display = "none";
         highlightDropdownItem(Array.from(suggestionBox.querySelectorAll("li")), -1); // Clear highlight
-        
+
         // Remove from active dropdowns when hidden
         const index = activeDropdowns.indexOf(suggestionBox);
         if (index !== -1) {
           activeDropdowns.splice(index, 1);
-          
+
           // Remove scroll listener if no active dropdowns remain
           if (activeDropdowns.length === 0) {
             window.removeEventListener('scroll', handleScrollForDropdowns);
@@ -1494,7 +1609,7 @@
         window.removeEventListener('scroll', handleScrollForDropdowns);
         return;
       }
-      
+
       // Process each active dropdown
       activeDropdowns.forEach((suggestionBox, index) => {
         // Skip if dropdown is no longer in DOM or is hidden
@@ -1502,18 +1617,18 @@
           activeDropdowns.splice(index, 1);
           return;
         }
-        
+
         // Get the linked input element
         const inputId = suggestionBox.dataset.linkedInputId;
         if (!inputId) return;
-        
+
         const inputElement = document.getElementById(inputId);
         if (!inputElement) return;
-        
+
         // Get the li ancestor for context
         const liAncestor = inputElement.closest('li[data-id]');
         if (!liAncestor) return;
-        
+
         // Reposition the dropdown based on new scroll position
         positionDropdownSuggestions(inputElement, suggestionBox, liAncestor);
       });
@@ -1524,7 +1639,7 @@
     document.getElementById("generateBtn").addEventListener("click", async () => {
       const finalTextArea = document.getElementById("finalText");
       const changesDetected = storeAllInlineValues(); // Capture all current input values
-      
+
       // Fix: Re-implement overwrite confirmation when the final text area has content
       if (finalTextArea.value.trim() !== "") {
         showConfirmationModal(
@@ -1532,14 +1647,14 @@
           "This will overwrite the current text in the final narrative area. Continue?",
           "",
           () => generateAndDisplayText(finalTextArea), // Yes callback
-          () => {} // No callback (do nothing)
+          () => { } // No callback (do nothing)
         );
       } else {
         // If textarea is empty, generate immediately without confirmation
         generateAndDisplayText(finalTextArea);
       }
     });
-    
+
     /**
      * Generates and displays the final text
      * @param {HTMLElement} finalTextArea - The text area to display the text in
@@ -1548,7 +1663,7 @@
       try {
         const [finalText, hasLockedSentences, lockedSectionsInfo] = generateFinalTextWithLockInfo();
         finalTextArea.value = finalText;
-        
+
         // If there are locked sentences, show an indicator
         const copyLockedInfoEl = document.getElementById('copyLockedInfo') || createCopyLockedInfoElement();
         if (hasLockedSentences) {
@@ -1558,16 +1673,16 @@
         } else {
           copyLockedInfoEl.style.display = 'none';
         }
-        
+
         // Check for empty placeholders and update warning
         const hasEmptyFields = checkForEmptyPlaceholders();
         showPlaceholderWarning(hasEmptyFields);
       } catch (error) {
         console.error("Error generating final text:", error);
-        showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => {}, () => {}, true);
+        showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => { }, () => { }, true);
       }
     }
-    
+
     /**
      * Creates an info element for displaying locked sentence information
      */
@@ -1575,14 +1690,14 @@
       const infoEl = document.createElement('div');
       infoEl.id = 'copyLockedInfo';
       infoEl.classList.add('copy-locked-info', 'text-muted', 'small', 'mt-2');
-      
+
       // Insert after final text area
       const finalTextArea = document.getElementById('finalText');
       finalTextArea.parentNode.insertBefore(infoEl, finalTextArea.nextSibling);
-      
+
       return infoEl;
     }
-    
+
     /**
      * Generates the final text with information about locked sentences
      * @returns {Array} [finalText, hasLockedSentences, lockedSectionsInfo]
@@ -1591,22 +1706,22 @@
       let finalTextParts = [];
       let hasLockedSentences = false;
       let lockedSectionsInfo = [];
-      
+
       // Fix: Get the state of the "Include Section Titles" checkbox
       const includeSectionTitles = document.getElementById("toggleSectionTitles")?.checked || false;
-      
+
       narrativeSections.forEach(section => {
         if (!section.sentences || section.sentences.length === 0) return;
-        
+
         let sectionHasLockedSentence = false;
         let sectionText = '';
-        
+
         section.sentences.forEach(sentenceObj => {
           if (sentenceObj.locked) {
             sectionHasLockedSentence = true;
             hasLockedSentences = true;
           }
-          
+
           let processedText;
           if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
             // For tabbed sentences, use the active tab's text
@@ -1622,12 +1737,12 @@
             // For non-tabbed sentences
             processedText = processSentence(sentenceObj.text || "", sentenceObj.values || {});
           }
-          
+
           if (processedText.trim()) {
             sectionText += processedText.trim() + " ";
           }
         });
-        
+
         if (sectionText.trim()) {
           // Include section titles when checkbox is checked
           if (includeSectionTitles) {
@@ -1635,16 +1750,16 @@
           } else {
             finalTextParts.push(sectionText.trim());
           }
-          
+
           if (sectionHasLockedSentence) {
             lockedSectionsInfo.push(section.part);
           }
         }
       });
-      
+
       return [finalTextParts.join("\n\n"), hasLockedSentences, lockedSectionsInfo];
     }
-    
+
     /**
      * Process a sentence by replacing placeholders with values
      * Fix: Show [placeholder] when values are empty or missing
@@ -1652,7 +1767,7 @@
     function processSentence(text, values) {
       if (!text) return "";
       if (!values) values = {};
-      
+
       return text.replace(placeholderRegex, (match, type, label) => {
         const value = values[label];
         // Fix: Return [label] if value is empty, null, undefined, or just whitespace
@@ -1677,23 +1792,23 @@
           () => {
             // When user confirms "Yes" to start a new run:
             resetToCurrentConfigDefaults(); // Reset sections to defaults (existing code)
-            
+
             // Clear the final text area
             finalTextArea.value = "";
-            
+
             // Hide placeholder warning if present
             const warningContainer = document.getElementById("placeholderWarningContainer");
             if (warningContainer) {
               warningContainer.style.display = "none";
               finalTextArea.classList.remove("has-empty-placeholders");
             }
-            
+
             // Hide locked content indicator if present
             const lockedInfoEl = document.getElementById('copyLockedInfo');
             if (lockedInfoEl) {
               lockedInfoEl.style.display = "none";
             }
-            
+
             console.log("Final narrative area cleared after copy and confirmation.");
           },
           () => {
@@ -1719,10 +1834,10 @@
      */
     function checkForEmptyPlaceholders() {
       let hasEmptyFields = false;
-      
+
       narrativeSections.forEach(section => {
         if (!section.sentences) return;
-        
+
         section.sentences.forEach(sentenceObj => {
           // Check for empty values in regular sentences
           if (!sentenceObj.tabs) {
@@ -1743,7 +1858,7 @@
           }
         });
       });
-      
+
       return hasEmptyFields;
     }
 
@@ -1754,7 +1869,7 @@
     function showPlaceholderWarning(show) {
       const finalTextArea = document.getElementById("finalText");
       const warningContainer = document.getElementById("placeholderWarningContainer") || createWarningElement();
-      
+
       if (show) {
         finalTextArea.classList.add("has-empty-placeholders");
         warningContainer.style.display = "block";
@@ -1771,12 +1886,12 @@
     function createWarningElement() {
       const finalTextArea = document.getElementById("finalText");
       const finalTextContainer = finalTextArea.parentElement;
-      
+
       const warningContainer = document.createElement("div");
       warningContainer.id = "placeholderWarningContainer";
-      warningContainer.classList.add("placeholder-warning");
+      warningContainer.classList.add("placeholder-warning", "text-danger");
       warningContainer.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Warning: Some placeholder values remain!';
-      
+
       // Insert before the textarea
       finalTextContainer.insertBefore(warningContainer, finalTextArea);
       return warningContainer;
@@ -1788,7 +1903,7 @@
     function attachPlaceholderWarningListeners() {
       const container = document.getElementById('sectionContainer');
       if (!container) return;
-      
+
       // Use event delegation for all inline field changes
       container.addEventListener('input', debounce(() => {
         storeAllInlineValues();
@@ -1802,7 +1917,7 @@
      */
     function debounce(func, wait) {
       let timeout;
-      return function() {
+      return function () {
         const context = this;
         const args = arguments;
         clearTimeout(timeout);
@@ -1950,7 +2065,7 @@
 
       modalLabel.textContent = title || "Confirmation";
       modalBody.innerHTML = message || ""; // Use innerHTML to allow for <br> etc.
-      
+
       // Fix: Use innerHTML for disclaimer to properly render HTML content if needed
       modalDisclaimer.innerHTML = disclaimer || "";
 
@@ -1981,15 +2096,15 @@
     function initializeDarkMode() {
       console.log("Initializing dark mode...");
       const darkModeToggle = document.getElementById('darkModeToggle');
-      
+
       if (!darkModeToggle) {
         console.error("Dark mode toggle button not found!");
         return;
       }
-      
+
       // Check localStorage for saved preference
       const isDarkMode = localStorage.getItem('darkMode') === 'true';
-      
+
       // Apply initial theme
       if (isDarkMode) {
         document.documentElement.setAttribute('data-bs-theme', 'dark');
@@ -1998,26 +2113,26 @@
         document.documentElement.setAttribute('data-bs-theme', 'light');
         darkModeToggle.innerHTML = '<i class="bi bi-moon-fill"></i>';
       }
-      
+
       // Add click event listener to toggle button
       darkModeToggle.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-bs-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
+
         // Update theme attribute
         document.documentElement.setAttribute('data-bs-theme', newTheme);
-        
+
         // Update button icon
-        darkModeToggle.innerHTML = newTheme === 'dark' 
-          ? '<i class="bi bi-sun-fill"></i>' 
+        darkModeToggle.innerHTML = newTheme === 'dark'
+          ? '<i class="bi bi-sun-fill"></i>'
           : '<i class="bi bi-moon-fill"></i>';
-        
+
         // Save preference to localStorage
         localStorage.setItem('darkMode', newTheme === 'dark');
-        
+
         console.log(`Theme switched to: ${newTheme}`);
       });
-      
+
       console.log("Dark mode initialization complete.");
     }
 
@@ -2026,24 +2141,24 @@
       console.log("Initializing bug report functionality...");
       const bugReportBtn = document.getElementById('bugReportBtn');
       const bugReportModalEl = document.getElementById('bugReportModal');
-      
+
       if (!bugReportBtn || !bugReportModalEl) {
         console.error("Bug report button or modal not found!");
         return;
       }
-      
+
       // Update the icon to use the solid version
       if (bugReportBtn.querySelector('i')) {
         bugReportBtn.querySelector('i').className = 'bi bi-bug-fill';
       }
-      
+
       const bugReportModal = new bootstrap.Modal(bugReportModalEl);
-      
+
       // Add click event to show the modal
       bugReportBtn.addEventListener('click', () => {
         bugReportModal.show();
       });
-      
+
       // Setup submit button functionality
       const submitBugBtn = document.getElementById('submitBug');
       if (submitBugBtn) {
@@ -2052,24 +2167,24 @@
           if (desc.trim()) {
             // Encode the bug description for URL
             const encodedDescription = encodeURIComponent(desc.trim());
-            
+
             // Construct the Google Forms URL with the bug report
             const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfiovEazZnz0HhEULNqjiyrbC6CyhPi0MVd7qWeJvKUTWoBIA/formResponse?submit=Submit&usp=pp_url&entry.1588653800=${encodedDescription}`;
-            
+
             // Open the form in a new tab
             window.open(formUrl, '_blank');
-            
+
             // Clear the textarea and hide the modal
             document.getElementById('bugDescription').value = '';
             bugReportModal.hide();
-            
+
             // Show confirmation message
             showConfirmationModal(
               "Bug Report Submitted",
               "Thank you for your bug report!",
               "",
-              () => {},
-              () => {},
+              () => { },
+              () => { },
               true
             );
           } else {
@@ -2078,219 +2193,17 @@
               "Bug Report",
               "Please enter a description of the bug before submitting.",
               "",
-              () => {},
-              () => {},
+              () => { },
+              () => { },
               true
             );
           }
         });
       }
-      
+
       console.log("Bug report functionality initialized.");
     }
-
-    // Add these functions after the bug report initialization and before the closing script tag
-
-    /**
-     * Saves the current template configuration to localStorage
-     * @param {string} templateName - Name of the template to save
-     * @param {Object} configData - The configuration data to save
-     */
-    function saveTemplateToMemory(templateName, configData) {
-      try {
-        const templateData = {
-          name: templateName,
-          config: configData,
-          savedAt: new Date().toISOString()
-        };
-        localStorage.setItem('savedTemplate', JSON.stringify(templateData));
-        localStorage.setItem('lastLoadedTemplate', templateName);
-        console.log(`Template "${templateName}" saved to memory.`);
-      } catch (error) {
-        console.error('Failed to save template to memory:', error);
-      }
-    }
-
-    /**
-     * Loads a previously saved template from localStorage
-     * @returns {Object|null} The saved template data or null if none exists
-     */
-    function loadTemplateFromMemory() {
-      try {
-        const savedData = localStorage.getItem('savedTemplate');
-        if (savedData) {
-          const templateData = JSON.parse(savedData);
-          console.log(`Loading template "${templateData.name}" from memory.`);
-          return templateData;
-        }
-      } catch (error) {
-        console.error('Failed to load template from memory:', error);
-      }
-      return null;
-    }
-
-    /**
-     * Updates the JsonFileInput field to show the loaded template name
-     * @param {string} templateName - Name of the template to display
-     */
-    function updateJsonFileInputDisplay(templateName) {
-      const jsonFileInput = document.getElementById('jsonFileInput');
-      if (jsonFileInput) {
-        // Create a display value that shows the template name
-        jsonFileInput.value = templateName;
-        jsonFileInput.title = `Loaded template: ${templateName}`;
-        
-        // Add a visual indicator that this is a loaded template
-        jsonFileInput.style.fontStyle = 'italic';
-        jsonFileInput.style.color = '#28a745'; // Bootstrap success color
-      }
-    }
-
-    /**
-     * Clears the template from memory and resets the display
-     */
-    function clearTemplateFromMemory() {
-      localStorage.removeItem('savedTemplate');
-      localStorage.removeItem('lastLoadedTemplate');
-      const jsonFileInput = document.getElementById('jsonFileInput');
-      if (jsonFileInput) {
-        jsonFileInput.value = '';
-        jsonFileInput.title = '';
-        jsonFileInput.style.fontStyle = 'normal';
-        jsonFileInput.style.color = '';
-      }
-      console.log('Template cleared from memory.');
-    }
-
-    /**
-     * Enhanced initialization function that checks for previously loaded templates
-     */
-    function initializeTemplateSystem() {
-      console.log("Initializing template system...");
-      
-      // Check if there's a previously loaded template
-      const savedTemplate = loadTemplateFromMemory();
-      if (savedTemplate && savedTemplate.config) {
-        console.log(`Found previously loaded template: ${savedTemplate.name}`);
-        
-        // Load the saved configuration
-        narrativeSections = savedTemplate.config.narrativeSections || defaultNarrativeSections;
-        config = savedTemplate.config.config || defaultConfig;
-        
-        // Update the display
-        updateJsonFileInputDisplay(savedTemplate.name);
-        
-        // Rebuild the UI with the loaded configuration
-        buildUI();
-        saveState(); // Save the loaded state
-        
-        console.log(`Template "${savedTemplate.name}" loaded automatically on page load.`);
-      } else {
-        console.log("No previously loaded template found, using default configuration.");
-      }
-      
-      // Enhance the existing load button functionality
-      const loadBtn = document.getElementById('loadBtn');
-      if (loadBtn) {
-        const originalLoadHandler = loadBtn.onclick;
-        loadBtn.onclick = function(event) {
-          // Get the file input
-          const jsonFileInput = document.getElementById('jsonFileInput');
-          const file = jsonFileInput?.files?.[0];
-          
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              try {
-                const jsonData = JSON.parse(e.target.result);
-                
-                // Save to memory before loading
-                const templateName = file.name.replace(/\.[^/.]+$/, ""); // Remove file extension
-                saveTemplateToMemory(templateName, jsonData);
-                
-                // Update display
-                updateJsonFileInputDisplay(templateName);
-                
-                // Execute original load functionality
-                if (originalLoadHandler) {
-                  originalLoadHandler.call(this, event);
-                }
-                
-                console.log(`Template "${templateName}" loaded and saved to memory.`);
-              } catch (error) {
-                console.error('Failed to parse JSON file:', error);
-                showConfirmationModal(
-                  "Load Error",
-                  "Failed to parse the JSON file. Please check that it contains valid JSON.",
-                  "",
-                  () => {},
-                  () => {},
-                  true
-                );
-              }
-            };
-            reader.readAsText(file);
-          }
-        };
-      }
-      
-      // Add a clear template button functionality if it exists
-      const clearTemplateBtn = document.getElementById('clearTemplateBtn');
-      if (clearTemplateBtn) {
-        clearTemplateBtn.addEventListener('click', () => {
-          showConfirmationModal(
-            "Clear Template",
-            "This will clear the loaded template and reset to default configuration. Continue?",
-            "",
-            () => {
-              clearTemplateFromMemory();
-              
-              // Reset to default configuration
-              narrativeSections = JSON.parse(JSON.stringify(defaultNarrativeSections));
-              config = JSON.parse(JSON.stringify(defaultConfig));
-              
-              // Rebuild UI
-              buildUI();
-              saveState();
-              
-              console.log("Template cleared and reset to default configuration.");
-            },
-            () => {}
-          );
-        });
-      }
-      
-      console.log("Template system initialization complete.");
-    }
-
-    // Add template system initialization to the main initialization sequence
-    // This should be called early in your initialization process
-    document.addEventListener('DOMContentLoaded', function() {
-      // Call this after your basic initialization but before buildUI()
-      initializeTemplateSystem();
-    });
-
   </script>
-
-  <style>
-    .placeholder-warning {
-      color: #dc3545;
-      font-size: 0.875rem;
-      padding: 0.25rem 0;
-      display: none;
-      margin-bottom: 0.5rem;
-    }
-
-    .placeholder-warning i {
-      margin-right: 0.25rem;
-    }
-
-    .has-empty-placeholders {
-      border-color: #dc3545 !important;
-      box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
-    }
-  </style>
-
 </body>
 
 </html>
