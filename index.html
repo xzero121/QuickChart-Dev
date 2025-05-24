@@ -2066,7 +2066,7 @@
             // Show confirmation message
             showConfirmationModal(
               "Bug Report Submitted",
-              "Thank you for your bug report! A new tab has opened with the Google Form. Please submit it to complete your report.",
+              "Thank you for your bug report!",
               "",
               () => {},
               () => {},
@@ -2088,6 +2088,188 @@
       
       console.log("Bug report functionality initialized.");
     }
+
+    // Add these functions after the bug report initialization and before the closing script tag
+
+    /**
+     * Saves the current template configuration to localStorage
+     * @param {string} templateName - Name of the template to save
+     * @param {Object} configData - The configuration data to save
+     */
+    function saveTemplateToMemory(templateName, configData) {
+      try {
+        const templateData = {
+          name: templateName,
+          config: configData,
+          savedAt: new Date().toISOString()
+        };
+        localStorage.setItem('savedTemplate', JSON.stringify(templateData));
+        localStorage.setItem('lastLoadedTemplate', templateName);
+        console.log(`Template "${templateName}" saved to memory.`);
+      } catch (error) {
+        console.error('Failed to save template to memory:', error);
+      }
+    }
+
+    /**
+     * Loads a previously saved template from localStorage
+     * @returns {Object|null} The saved template data or null if none exists
+     */
+    function loadTemplateFromMemory() {
+      try {
+        const savedData = localStorage.getItem('savedTemplate');
+        if (savedData) {
+          const templateData = JSON.parse(savedData);
+          console.log(`Loading template "${templateData.name}" from memory.`);
+          return templateData;
+        }
+      } catch (error) {
+        console.error('Failed to load template from memory:', error);
+      }
+      return null;
+    }
+
+    /**
+     * Updates the JsonFileInput field to show the loaded template name
+     * @param {string} templateName - Name of the template to display
+     */
+    function updateJsonFileInputDisplay(templateName) {
+      const jsonFileInput = document.getElementById('jsonFileInput');
+      if (jsonFileInput) {
+        // Create a display value that shows the template name
+        jsonFileInput.value = templateName;
+        jsonFileInput.title = `Loaded template: ${templateName}`;
+        
+        // Add a visual indicator that this is a loaded template
+        jsonFileInput.style.fontStyle = 'italic';
+        jsonFileInput.style.color = '#28a745'; // Bootstrap success color
+      }
+    }
+
+    /**
+     * Clears the template from memory and resets the display
+     */
+    function clearTemplateFromMemory() {
+      localStorage.removeItem('savedTemplate');
+      localStorage.removeItem('lastLoadedTemplate');
+      const jsonFileInput = document.getElementById('jsonFileInput');
+      if (jsonFileInput) {
+        jsonFileInput.value = '';
+        jsonFileInput.title = '';
+        jsonFileInput.style.fontStyle = 'normal';
+        jsonFileInput.style.color = '';
+      }
+      console.log('Template cleared from memory.');
+    }
+
+    /**
+     * Enhanced initialization function that checks for previously loaded templates
+     */
+    function initializeTemplateSystem() {
+      console.log("Initializing template system...");
+      
+      // Check if there's a previously loaded template
+      const savedTemplate = loadTemplateFromMemory();
+      if (savedTemplate && savedTemplate.config) {
+        console.log(`Found previously loaded template: ${savedTemplate.name}`);
+        
+        // Load the saved configuration
+        narrativeSections = savedTemplate.config.narrativeSections || defaultNarrativeSections;
+        config = savedTemplate.config.config || defaultConfig;
+        
+        // Update the display
+        updateJsonFileInputDisplay(savedTemplate.name);
+        
+        // Rebuild the UI with the loaded configuration
+        buildUI();
+        saveState(); // Save the loaded state
+        
+        console.log(`Template "${savedTemplate.name}" loaded automatically on page load.`);
+      } else {
+        console.log("No previously loaded template found, using default configuration.");
+      }
+      
+      // Enhance the existing load button functionality
+      const loadBtn = document.getElementById('loadBtn');
+      if (loadBtn) {
+        const originalLoadHandler = loadBtn.onclick;
+        loadBtn.onclick = function(event) {
+          // Get the file input
+          const jsonFileInput = document.getElementById('jsonFileInput');
+          const file = jsonFileInput?.files?.[0];
+          
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              try {
+                const jsonData = JSON.parse(e.target.result);
+                
+                // Save to memory before loading
+                const templateName = file.name.replace(/\.[^/.]+$/, ""); // Remove file extension
+                saveTemplateToMemory(templateName, jsonData);
+                
+                // Update display
+                updateJsonFileInputDisplay(templateName);
+                
+                // Execute original load functionality
+                if (originalLoadHandler) {
+                  originalLoadHandler.call(this, event);
+                }
+                
+                console.log(`Template "${templateName}" loaded and saved to memory.`);
+              } catch (error) {
+                console.error('Failed to parse JSON file:', error);
+                showConfirmationModal(
+                  "Load Error",
+                  "Failed to parse the JSON file. Please check that it contains valid JSON.",
+                  "",
+                  () => {},
+                  () => {},
+                  true
+                );
+              }
+            };
+            reader.readAsText(file);
+          }
+        };
+      }
+      
+      // Add a clear template button functionality if it exists
+      const clearTemplateBtn = document.getElementById('clearTemplateBtn');
+      if (clearTemplateBtn) {
+        clearTemplateBtn.addEventListener('click', () => {
+          showConfirmationModal(
+            "Clear Template",
+            "This will clear the loaded template and reset to default configuration. Continue?",
+            "",
+            () => {
+              clearTemplateFromMemory();
+              
+              // Reset to default configuration
+              narrativeSections = JSON.parse(JSON.stringify(defaultNarrativeSections));
+              config = JSON.parse(JSON.stringify(defaultConfig));
+              
+              // Rebuild UI
+              buildUI();
+              saveState();
+              
+              console.log("Template cleared and reset to default configuration.");
+            },
+            () => {}
+          );
+        });
+      }
+      
+      console.log("Template system initialization complete.");
+    }
+
+    // Add template system initialization to the main initialization sequence
+    // This should be called early in your initialization process
+    document.addEventListener('DOMContentLoaded', function() {
+      // Call this after your basic initialization but before buildUI()
+      initializeTemplateSystem();
+    });
+
   </script>
 
   <style>
