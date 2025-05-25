@@ -189,7 +189,7 @@
     // removeSentence();
     // switchTab();
     // attachBlurListeners();
-    // attachBlurListnersForElement();
+    // attachBlurListenersForElement();
     // handleInlineFieldBlurDelegated();
     // handleInlineFieldBlur();
     // storeAllInlineValues();
@@ -223,7 +223,6 @@
     // checkForEmptyPlaceholders();
     // showPlaceholderWarning();
     // createWarningElement();
-    // attachPlaceholderWarningListeners();
     // debounce();
     // renderSectionText();
     // FindSentenceById();
@@ -296,7 +295,6 @@
       attachInputSizingListeners();
       attachBlurListeners();
       attachDropdownLogic();
-      attachPlaceholderWarningListeners(); // Add this line
     }
 
     function attachAllEventListenersForElement(element) {
@@ -1895,21 +1893,6 @@
       // Insert before the textarea
       finalTextContainer.insertBefore(warningContainer, finalTextArea);
       return warningContainer;
-    }
-
-    /**
-     * Update the warning state whenever input fields change
-     */
-    function attachPlaceholderWarningListeners() {
-      const container = document.getElementById('sectionContainer');
-      if (!container) return;
-
-      // Use event delegation for all inline field changes
-      container.addEventListener('input', debounce(() => {
-        storeAllInlineValues();
-        const hasEmptyFields = checkForEmptyPlaceholders();
-        showPlaceholderWarning(hasEmptyFields);
-      }, 300));
     }
 
     /**
