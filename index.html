@@ -1217,6 +1217,11 @@
       if (!valuesObject) valuesObject = {}; // Ensure valuesObject is an object
       const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, ""); // Remove <br> tags
 
+      // If there are no placeholders in the text, return the clean text as-is
+      if (!placeholderRegex.test(cleanText)) {
+        return cleanText;
+      }
+
       return cleanText.replace(placeholderRegex, (match, type, label, options) => {
         const currentValue = valuesObject[label] || "";
         let dropdownOptionsArray = [];
@@ -1239,7 +1244,9 @@
             return `
             <div class="custom-dropdown">
               <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>
-              <ul class="suggestions">${listItems}</ul>
+              <div class="suggestions">
+                <ul class="list-group">${listItems}</ul>
+              </div>
             </div>`;
           case "text":
             return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
@@ -1895,6 +1902,21 @@
       });
 
       return hasEmptyFields;
+    }
+
+    /**
+     * Checks if the final generated narrative contains any empty placeholders (shown as [placeholder])
+     * Returns true if empty placeholders are found, false otherwise
+     */
+    function checkForEmptyPlaceholders() {
+      const finalTextArea = document.getElementById("finalText");
+      const finalText = finalTextArea.value || "";
+      
+      // Check for [placeholder] patterns in the final text (not template placeholders)
+      const emptyPlaceholderRegex = /\[[^\]]+\]/g;
+      const matches = finalText.match(emptyPlaceholderRegex);
+      
+      return matches && matches.length > 0;
     }
 
     /**
