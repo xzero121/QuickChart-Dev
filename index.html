@@ -797,11 +797,6 @@
       btn.innerHTML = '<i class="bi bi-pencil-fill"></i>';
       btn.setAttribute('aria-label', 'Edit sentence text');
       btn.addEventListener('click', () => {
-        if (sentenceObj.tabs) {
-          showConfirmationModal("Edit Tabbed Sentence", "Text for tabbed sentences should be edited in the JSON configuration file.", "", () => { }, () => { }, true);
-          return;
-        }
-
         // Get the content div that contains the sentence text
         const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
         const contentDiv = li.querySelector('.sentence-content');
@@ -812,8 +807,19 @@
           return;
         }
 
+        let currentText, activeTabIndex, isTabbed;
+
+        // Determine if this is a tabbed sentence and get the appropriate text
+        if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+          isTabbed = true;
+          activeTabIndex = sentenceObj.activeTabIndex || 0;
+          currentText = sentenceObj.tabs[activeTabIndex].text || "";
+        } else {
+          isTabbed = false;
+          currentText = sentenceObj.text || "";
+        }
+
         const originalHTML = contentDiv.innerHTML;
-        const currentText = sentenceObj.text || "";
 
         // Mark as being edited
         contentDiv.classList.add('editing');
@@ -851,8 +857,22 @@
         saveBtn.addEventListener('click', () => {
           const newText = textarea.value.trim();
           if (newText !== currentText) {
-            sentenceObj.text = newText;
-            contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {});
+            if (isTabbed) {
+              // Update the specific tab's text
+              sentenceObj.tabs[activeTabIndex].text = newText;
+              // Rebuild the content to show updated tabs
+              contentDiv.innerHTML = '';
+              if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+                sentenceObj.tabs.forEach((tab, i) => {
+                  contentDiv.appendChild(createTabPaneElement(sentenceObj, i));
+                });
+              }
+            } else {
+              // Update regular sentence text
+              sentenceObj.text = newText;
+              contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {});
+            }
+            
             attachAllEventListenersForElement(contentDiv);
             adjustAllInitialSizesForElement(contentDiv);
             saveState();
@@ -1041,10 +1061,27 @@
       if (!sentenceObj || !sentenceObj.tabs) return;
       if (tabIndex < 0 || tabIndex >= sentenceObj.tabs.length) return;
 
+      const li = document.querySelector(`li[data-id="${sentenceId}"]`);
+      if (!li) return;
+
+      // Check if currently in edit mode - prevent tab switching
+      const contentDiv = li.querySelector('.sentence-content');
+      if (contentDiv && contentDiv.classList.contains('editing')) {
+        console.log('Cannot switch tabs while editing. Please save or cancel your changes first.');
+        showConfirmationModal(
+          "Edit in Progress", 
+          "Please save or cancel your current changes before switching tabs.", 
+          "", 
+          () => { }, 
+          () => { }, 
+          true
+        );
+        return;
+      }
+
       sentenceObj.activeTabIndex = tabIndex;
       console.log(`Switched to tab ${tabIndex} for sentence ${sentenceId}`);
 
-      const li = document.querySelector(`li[data-id="${sentenceId}"]`);
       if (li) {
         // Update tab button active states
         const tabButtons = li.querySelectorAll('.tabs-container .tab-button');
