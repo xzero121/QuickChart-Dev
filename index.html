@@ -535,7 +535,18 @@
         attachAllEventListeners();
         adjustAllInitialSizes();
       }
+      
+      // Clear the final text area and warnings
       document.getElementById("finalText").value = "";
+      
+      // Clear the placeholder warning
+      showPlaceholderWarning(false);
+      
+      // Clear the locked sentences info
+      const copyLockedInfoEl = document.getElementById('copyLockedInfo');
+      if (copyLockedInfoEl) {
+        copyLockedInfoEl.style.display = 'none';
+      }
     }
 
     // --- ID and Value Initialization ---
@@ -1835,37 +1846,18 @@
           // Fix: Use HTML for disclaimer to properly render the <br> tag
           "<span>Paste your narrative first,</span><br><span>unlocked sentences will be reset to their default values.</span>",
           () => {
-            // When user confirms "Yes" to start a new run:
-            resetToCurrentConfigDefaults(); // Reset sections to defaults (existing code)
-
-            // Clear the final text area
-            finalTextArea.value = "";
-
-            // Hide placeholder warning if present
-            const warningContainer = document.getElementById("placeholderWarningContainer");
-            if (warningContainer) {
-              warningContainer.style.display = "none";
-              finalTextArea.classList.remove("has-empty-placeholders");
-            }
-
-            // Hide locked content indicator if present
-            const lockedInfoEl = document.getElementById('copyLockedInfo');
-            if (lockedInfoEl) {
-              lockedInfoEl.style.display = "none";
-            }
-
             console.log("Final narrative area cleared after copy and confirmation.");
+            // Clear the final text area
+            finalTextArea.value = '';
+            // Clear the placeholder warning
+            showPlaceholderWarning(false);
+            // Clear the locked sentences info
+            const copyLockedInfoEl = document.getElementById('copyLockedInfo');
+            if (copyLockedInfoEl) {
+              copyLockedInfoEl.style.display = 'none';
+            }
           },
-          () => {
-            // When user chooses "No" (don't start a new run)
-            // Optional: we could add a subtle indicator that copy was successful
-            const copyBtn = document.getElementById("copyBtn");
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="bi bi-clipboard-check-fill"></i> Copied!';
-            setTimeout(() => {
-              copyBtn.innerHTML = originalText;
-            }, 2000);
-          }
+          () => { }
         );
       }).catch(err => {
         console.error("Copy to clipboard failed: ", err);
