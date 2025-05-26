@@ -1698,55 +1698,13 @@
     });
 
     /**
-     * Generates and displays the final text
-     * @param {HTMLElement} finalTextArea - The text area to display the text in
-     */
-    function generateAndDisplayText(finalTextArea) {
-      try {
-        const [finalText, hasLockedSentences, lockedSectionsInfo] = generateFinalTextWithLockInfo();
-        finalTextArea.value = finalText;
-
-        // If there are locked sentences, show an indicator
-        const copyLockedInfoEl = document.getElementById('copyLockedInfo') || createCopyLockedInfoElement();
-        if (hasLockedSentences) {
-          copyLockedInfoEl.innerHTML = `<i class="bi bi-lock-fill text-primary"></i> ${lockedSectionsInfo.length} section(s) contain locked content`;
-          copyLockedInfoEl.style.display = 'block';
-          copyLockedInfoEl.title = `Sections with locked content: ${lockedSectionsInfo.join(', ')}`;
-        } else {
-          copyLockedInfoEl.style.display = 'none';
-        }
-
-        // Check for empty placeholders and update warning
-        const hasEmptyFields = checkForEmptyPlaceholders();
-        showPlaceholderWarning(hasEmptyFields);
-      } catch (error) {
-        console.error("Error generating final text:", error);
-        showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => { }, () => { }, true);
-      }
-    }
-
-    /**
-     * Creates an info element for displaying locked sentence information
-     */
-    function createCopyLockedInfoElement() {
-      const infoEl = document.createElement('div');
-      infoEl.id = 'copyLockedInfo';
-      infoEl.classList.add('copy-locked-info', 'text-muted', 'small', 'mt-2');
-
-      // Insert after final text area
-      const finalTextArea = document.getElementById('finalText');
-      finalTextArea.parentNode.insertBefore(infoEl, finalTextArea.nextSibling);
-
-      return infoEl;
-    }
-
-    /**
      * Generates the final text with information about locked sentences
-     * @returns {Array} [finalText, hasLockedSentences, lockedSectionsInfo]
+     * @returns {Array} [finalText, hasLockedSentences, lockedSectionsInfo, lockedSentencesCount]
      */
     function generateFinalTextWithLockInfo() {
       let finalTextParts = [];
       let hasLockedSentences = false;
+      let lockedSentencesCount = 0;
       let lockedSectionsInfo = [];
 
       // Fix: Get the state of the "Include Section Titles" checkbox
@@ -1762,6 +1720,7 @@
           if (sentenceObj.locked) {
             sectionHasLockedSentence = true;
             hasLockedSentences = true;
+            lockedSentencesCount++;
           }
 
           let processedText;
@@ -1799,7 +1758,51 @@
         }
       });
 
-      return [finalTextParts.join("\n\n"), hasLockedSentences, lockedSectionsInfo];
+      return [finalTextParts.join("\n\n"), hasLockedSentences, lockedSectionsInfo, lockedSentencesCount];
+    }
+
+    /**
+     * Generates and displays the final text
+     * @param {HTMLElement} finalTextArea - The text area to display the text in
+     */
+    function generateAndDisplayText(finalTextArea) {
+      try {
+        const [finalText, hasLockedSentences, lockedSectionsInfo, lockedSentencesCount] = generateFinalTextWithLockInfo();
+        finalTextArea.value = finalText;
+
+        // If there are locked sentences, show an indicator
+        const copyLockedInfoEl = document.getElementById('copyLockedInfo') || createCopyLockedInfoElement();
+        if (hasLockedSentences) {
+          const sentenceText = lockedSentencesCount === 1 ? 'sentence' : 'sentences';
+          copyLockedInfoEl.innerHTML = `<i class="bi bi-lock-fill text-primary"></i> ${lockedSentencesCount} locked ${sentenceText}`;
+          copyLockedInfoEl.style.display = 'block';
+          copyLockedInfoEl.title = `Sections with locked content: ${lockedSectionsInfo.join(', ')}`;
+        } else {
+          copyLockedInfoEl.style.display = 'none';
+        }
+
+        // Check for empty placeholders and update warning
+        const hasEmptyFields = checkForEmptyPlaceholders();
+        showPlaceholderWarning(hasEmptyFields);
+      } catch (error) {
+        console.error("Error generating final text:", error);
+        showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => { }, () => { }, true);
+      }
+    }
+
+    /**
+     * Creates an info element for displaying locked sentence information
+     */
+    function createCopyLockedInfoElement() {
+      const infoEl = document.createElement('div');
+      infoEl.id = 'copyLockedInfo';
+      infoEl.classList.add('copy-locked-info', 'text-muted', 'small', 'mt-2');
+
+      // Insert after final text area
+      const finalTextArea = document.getElementById('finalText');
+      finalTextArea.parentNode.insertBefore(infoEl, finalTextArea.nextSibling);
+
+      return infoEl;
     }
 
     /**
