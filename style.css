@@ -664,17 +664,22 @@ html,
     }
 
     /* Fixed dark mode styling for dropdowns */
-    [data-bs-theme="dark"] .custom-dropdown .suggestions {
+    [data-bs-theme="dark"] .custom-dropdown .suggestions,
+    [data-bs-theme="dark"] .suggestions-box li:hover,
+    [data-bs-theme="dark"] .suggestions-box {
       background-color: #666 !important;
     }
 
     [data-bs-theme="dark"] .custom-dropdown .suggestions li,
-    [data-bs-theme="dark"] .custom-dropdown .suggestions {
+    [data-bs-theme="dark"] .custom-dropdown .suggestions,
+    [data-bs-theme="dark"] .suggestions-box li,
+    [data-bs-theme="dark"] .suggestions-box {
       border-color: #666 !important;
     }
 
     [data-bs-theme="dark"] .custom-dropdown .suggestions li:hover,
-    [data-bs-theme="dark"] .custom-dropdown .suggestions li.highlight {
+    [data-bs-theme="dark"] .custom-dropdown .suggestions li.highlight,
+    [data-bs-theme="dark"] .suggestions-box li {
       background-color: #333 !important;
     }
 
