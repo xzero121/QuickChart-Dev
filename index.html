@@ -1860,6 +1860,8 @@
             console.log("Final narrative area cleared after copy and confirmation.");
             // Clear the final text area
             finalTextArea.value = '';
+            // Reset all sentences to current config defaults
+            resetToCurrentConfigDefaults(); 
             // Clear the placeholder warning
             showPlaceholderWarning(false);
             // Clear the locked sentences info
