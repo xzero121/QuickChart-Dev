@@ -230,12 +230,11 @@
     // attachInputSizingListenersForElement();
     // handleAutoSizingInputDelegated();
     // HandleAutoSizingInputDirect();
-    // adjustTextAreaHeight();
+    // adjustTextareaHeight();
     // adjustInputWidth();
     // adjustAllInitialSizes();
     // adjustAllInitialSizesForElement();
     // showConfirmationModal();
-    // initializeDarkMode();
     // initializeBugReport();
 
 
@@ -1912,20 +1911,23 @@
       return hasEmptyFields;
     }
 
+    // Duplicated function, kept for reference
+    
     /**
      * Checks if the final generated narrative contains any empty placeholders (shown as [placeholder])
      * Returns true if empty placeholders are found, false otherwise
      */
-    function checkForEmptyPlaceholders() {
-      const finalTextArea = document.getElementById("finalText");
-      const finalText = finalTextArea.value || "";
+    // function checkForEmptyPlaceholders() {
+    //   const finalTextArea = document.getElementById("finalText");
+    //   const finalText = finalTextArea.value || "";
       
-      // Check for [placeholder] patterns in the final text (not template placeholders)
-      const emptyPlaceholderRegex = /\[[^\]]+\]/g;
-      const matches = finalText.match(emptyPlaceholderRegex);
+    //   // Check for [placeholder] patterns in the final text (not template placeholders)
+    //   const emptyPlaceholderRegex = /\[[^\]]+\]/g;
+    //   const matches = finalText.match(emptyPlaceholderRegex);
       
-      return matches && matches.length > 0;
-    }
+    //   return matches && matches.length > 0;
+    // }
+
 
     /**
      * Shows or hides the placeholder warning
@@ -2140,50 +2142,6 @@
         if (callbackNo && typeof callbackNo === 'function') callbackNo();
       });
       bsModal.show();
-    }
-
-    // Add the initializeDarkMode function
-    function initializeDarkMode() {
-      console.log("Initializing dark mode...");
-      const darkModeToggle = document.getElementById('darkModeToggle');
-
-      if (!darkModeToggle) {
-        console.error("Dark mode toggle button not found!");
-        return;
-      }
-
-      // Check localStorage for saved preference
-      const isDarkMode = localStorage.getItem('darkMode') === 'true';
-
-      // Apply initial theme
-      if (isDarkMode) {
-        document.documentElement.setAttribute('data-bs-theme', 'dark');
-        darkModeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
-      } else {
-        document.documentElement.setAttribute('data-bs-theme', 'light');
-        darkModeToggle.innerHTML = '<i class="bi bi-moon-fill"></i>';
-      }
-
-      // Add click event listener to toggle button
-      darkModeToggle.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-        // Update theme attribute
-        document.documentElement.setAttribute('data-bs-theme', newTheme);
-
-        // Update button icon
-        darkModeToggle.innerHTML = newTheme === 'dark'
-          ? '<i class="bi bi-sun-fill"></i>'
-          : '<i class="bi bi-moon-fill"></i>';
-
-        // Save preference to localStorage
-        localStorage.setItem('darkMode', newTheme === 'dark');
-
-        console.log(`Theme switched to: ${newTheme}`);
-      });
-
-      console.log("Dark mode initialization complete.");
     }
 
     // Bug Report initialization function
