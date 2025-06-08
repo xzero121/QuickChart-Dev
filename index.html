@@ -534,13 +534,13 @@
         attachAllEventListeners();
         adjustAllInitialSizes();
       }
-      
+
       // Clear the final text area and warnings
       document.getElementById("finalText").value = "";
-      
+
       // Clear the placeholder warning
       showPlaceholderWarning(false);
-      
+
       // Clear the locked sentences info
       const copyLockedInfoEl = document.getElementById('copyLockedInfo');
       if (copyLockedInfoEl) {
@@ -882,7 +882,7 @@
               sentenceObj.text = newText;
               contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {});
             }
-            
+
             attachAllEventListenersForElement(contentDiv);
             adjustAllInitialSizesForElement(contentDiv);
             saveState();
@@ -1090,11 +1090,11 @@
       if (contentDiv && contentDiv.classList.contains('editing')) {
         console.log('Cannot switch tabs while editing. Please save or cancel your changes first.');
         showConfirmationModal(
-          "Edit in Progress", 
-          "Please save or cancel your current changes before switching tabs.", 
-          "", 
-          () => { }, 
-          () => { }, 
+          "Edit in Progress",
+          "Please save or cancel your current changes before switching tabs.",
+          "",
+          () => { },
+          () => { },
           true
         );
         return;
@@ -1791,6 +1791,9 @@
         const [finalText, hasLockedSentences, lockedSectionsInfo, lockedSentencesCount] = generateFinalTextWithLockInfo();
         finalTextArea.value = finalText;
 
+        // Track Receiving Facility values in the background
+        trackReceivingFacilities();
+
         // If there are locked sentences, show an indicator
         const copyLockedInfoEl = document.getElementById('copyLockedInfo') || createCopyLockedInfoElement();
         if (hasLockedSentences) {
@@ -1808,6 +1811,82 @@
       } catch (error) {
         console.error("Error generating final text:", error);
         showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => { }, () => { }, true);
+      }
+    }
+
+    /**
+     * Tracks and sends Receiving Facility values to the API
+     */
+    function trackReceivingFacilities() {
+      const receivingFacilities = new Set(); // Use Set to automatically handle duplicates
+      
+      // Search through all narrative sections for Receiving Facility values
+      narrativeSections.forEach(section => {
+        if (!section.sentences) return;
+        
+        section.sentences.forEach(sentenceObj => {
+          // Handle tabbed sentences
+          if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+            sentenceObj.tabValues.forEach((tabValues, tabIndex) => {
+              if (tabValues && tabValues['Receiving Facility']) {
+                const facilityValue = tabValues['Receiving Facility'].trim();
+                if (facilityValue && facilityValue !== '[Receiving Facility]') {
+                  receivingFacilities.add(facilityValue);
+                }
+              }
+            });
+          } 
+          // Handle non-tabbed sentences
+          else if (sentenceObj.values && sentenceObj.values['Receiving Facility']) {
+            const facilityValue = sentenceObj.values['Receiving Facility'].trim();
+            if (facilityValue && facilityValue !== '[Receiving Facility]') {
+              receivingFacilities.add(facilityValue);
+            }
+          }
+        });
+      });
+      
+      // Send each unique facility value to the API
+      receivingFacilities.forEach(facility => {
+        sendFacilityToAPI(facility);
+      });
+      
+      if (receivingFacilities.size > 0) {
+        console.log(`Tracked ${receivingFacilities.size} unique receiving facilities:`, Array.from(receivingFacilities));
+      }
+    }
+
+    /**
+     * Sends a receiving facility value to the API
+     * @param {string} facilityName - The name of the receiving facility
+     */
+    async function sendFacilityToAPI(facilityName) {
+      try {
+        const payload = {
+          type: 'receiving_facility',
+          facility_name: facilityName,
+          timestamp: new Date().toISOString(),
+          user_agent: navigator.userAgent,
+          config_name: currentConfigName
+        };
+        
+        const response = await fetch('https://api.bbrown.access.ly/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log(`Successfully tracked facility: ${facilityName}`, result);
+        } else {
+          console.warn(`Failed to track facility: ${facilityName}. Status: ${response.status}`);
+        }
+      } catch (error) {
+        // Fail silently for tracking - don't interrupt user experience
+        console.warn(`Error tracking facility "${facilityName}":`, error);
       }
     }
 
@@ -1860,7 +1939,7 @@
             // Clear the final text area
             finalTextArea.value = '';
             // Reset all sentences to current config defaults
-            resetToCurrentConfigDefaults(); 
+            resetToCurrentConfigDefaults();
             // Clear the placeholder warning
             showPlaceholderWarning(false);
             // Clear the locked sentences info
@@ -1912,7 +1991,7 @@
     }
 
     // Duplicated function, kept for reference
-    
+
     /**
      * Checks if the final generated narrative contains any empty placeholders (shown as [placeholder])
      * Returns true if empty placeholders are found, false otherwise
@@ -1920,11 +1999,11 @@
     // function checkForEmptyPlaceholders() {
     //   const finalTextArea = document.getElementById("finalText");
     //   const finalText = finalTextArea.value || "";
-      
+
     //   // Check for [placeholder] patterns in the final text (not template placeholders)
     //   const emptyPlaceholderRegex = /\[[^\]]+\]/g;
     //   const matches = finalText.match(emptyPlaceholderRegex);
-      
+
     //   return matches && matches.length > 0;
     // }
 
