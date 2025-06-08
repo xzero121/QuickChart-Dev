@@ -38,7 +38,8 @@
       "*A. VanTassell, EMT-B",
       "*R. Dobbins, EMT-B",
       "*T. Anderson, EMT-B",
-      "*S. Park, EMT-B"
+      "*S. Park, EMT-B",
+      "*A. Gubler, Paramedic"
     ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
