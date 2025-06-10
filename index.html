@@ -278,10 +278,7 @@
         attachAllEventListeners(); // Consolidated event listener attachment
         adjustAllInitialSizes();
 
-        // Check for empty placeholders initially
-        const hasEmptyFields = checkForEmptyPlaceholders();
-        showPlaceholderWarning(hasEmptyFields);
-
+        // Remove initial placeholder check - only check when generating text
         console.log("QuickChart Initialized Successfully.");
       } catch (err) {
         console.error("Failed to initialize QuickChart:", err);
@@ -538,7 +535,7 @@
       // Clear the final text area and warnings
       document.getElementById("finalText").value = "";
 
-      // Clear the placeholder warning
+      // Clear the placeholder warning without checking
       showPlaceholderWarning(false);
 
       // Clear the locked sentences info
@@ -1181,9 +1178,17 @@
           valueChanged = true;
         }
       }
+      
+      // Remove empty field highlighting when value is entered
+      if (value && value.trim() !== '') {
+        field.classList.remove('empty-field');
+      }
+      
       if (valueChanged) {
         console.log(`Value saved for ${sentenceId} - ${label}: ${value}`);
         saveState();
+        
+        // Remove placeholder check on blur - only check when generating text
       }
     }
 
@@ -1805,7 +1810,7 @@
           copyLockedInfoEl.style.display = 'none';
         }
 
-        // Check for empty placeholders and update warning
+        // Only check for empty placeholders when generating text
         const hasEmptyFields = checkForEmptyPlaceholders();
         showPlaceholderWarning(hasEmptyFields);
       } catch (error) {
@@ -1957,7 +1962,7 @@
     });
 
     /**
-     * Checks for empty placeholder values in all sentences
+     * Checks for empty placeholder values in all sentences by examining actual placeholders in text
      * @returns {boolean} True if any empty placeholder values are found
      */
     function checkForEmptyPlaceholders() {
@@ -1969,20 +1974,36 @@
         section.sentences.forEach(sentenceObj => {
           // Check for empty values in regular sentences
           if (!sentenceObj.tabs) {
-            Object.keys(sentenceObj.values || {}).forEach(key => {
-              if (!sentenceObj.values[key] || sentenceObj.values[key].trim() === '') {
+            const text = sentenceObj.text || "";
+            const values = sentenceObj.values || {};
+            
+            // Find all placeholders in the text
+            const placeholderMatches = [...text.matchAll(placeholderRegex)];
+            placeholderMatches.forEach(match => {
+              const label = match[2]; // The label is the second capture group
+              const value = values[label];
+              if (!value || value.trim() === '') {
                 hasEmptyFields = true;
               }
             });
           } else {
-            // Check for empty values in tabbed sentences
-            sentenceObj.tabValues.forEach((tabValueObj, tabIndex) => {
-              Object.keys(tabValueObj || {}).forEach(key => {
-                if (!tabValueObj[key] || tabValueObj[key].trim() === '') {
+            // For tabbed sentences, only check the ACTIVE tab
+            const activeTabIndex = sentenceObj.activeTabIndex || 0;
+            if (activeTabIndex < sentenceObj.tabs.length) {
+              const activeTab = sentenceObj.tabs[activeTabIndex];
+              const text = activeTab.text || "";
+              const tabValues = sentenceObj.tabValues[activeTabIndex] || {};
+              
+              // Find all placeholders in the active tab's text
+              const placeholderMatches = [...text.matchAll(placeholderRegex)];
+              placeholderMatches.forEach(match => {
+                const label = match[2]; // The label is the second capture group
+                const value = tabValues[label];
+                if (!value || value.trim() === '') {
                   hasEmptyFields = true;
                 }
               });
-            });
+            }
           }
         });
       });
@@ -1990,26 +2011,75 @@
       return hasEmptyFields;
     }
 
-    // Duplicated function, kept for reference
-
     /**
-     * Checks if the final generated narrative contains any empty placeholders (shown as [placeholder])
-     * Returns true if empty placeholders are found, false otherwise
+     * Highlights empty placeholder fields in the UI
+     * @param {boolean} highlight Whether to add or remove highlighting
      */
-    // function checkForEmptyPlaceholders() {
-    //   const finalTextArea = document.getElementById("finalText");
-    //   const finalText = finalTextArea.value || "";
+    function highlightEmptyFields(highlight = true) {
+      // Remove existing highlights first
+      document.querySelectorAll('.inline-field.empty-field').forEach(field => {
+        field.classList.remove('empty-field');
+      });
 
-    //   // Check for [placeholder] patterns in the final text (not template placeholders)
-    //   const emptyPlaceholderRegex = /\[[^\]]+\]/g;
-    //   const matches = finalText.match(emptyPlaceholderRegex);
+      if (!highlight) return;
 
-    //   return matches && matches.length > 0;
-    // }
+      narrativeSections.forEach(section => {
+        if (!section.sentences) return;
 
+        section.sentences.forEach(sentenceObj => {
+          const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
+          if (!li) return;
+
+          // Check for empty values in regular sentences
+          if (!sentenceObj.tabs) {
+            const text = sentenceObj.text || "";
+            const values = sentenceObj.values || {};
+            
+            // Find all placeholders in the text
+            const placeholderMatches = [...text.matchAll(placeholderRegex)];
+            placeholderMatches.forEach(match => {
+              const label = match[2]; // The label is the second capture group
+              const value = values[label];
+              if (!value || value.trim() === '') {
+                // Find and highlight the corresponding input field
+                const field = li.querySelector(`.inline-field[data-label="${label}"]:not(.tab-pane .inline-field)`);
+                if (field) {
+                  field.classList.add('empty-field');
+                }
+              }
+            });
+          } else {
+            // For tabbed sentences, only check the ACTIVE tab
+            const activeTabIndex = sentenceObj.activeTabIndex || 0;
+            if (activeTabIndex < sentenceObj.tabs.length) {
+              const activeTab = sentenceObj.tabs[activeTabIndex];
+              const text = activeTab.text || "";
+              const tabValues = sentenceObj.tabValues[activeTabIndex] || {};
+              
+              // Find all placeholders in the active tab's text
+              const placeholderMatches = [...text.matchAll(placeholderRegex)];
+              placeholderMatches.forEach(match => {
+                const label = match[2]; // The label is the second capture group
+                const value = tabValues[label];
+                if (!value || value.trim() === '') {
+                  // Find and highlight the corresponding input field in the active tab
+                  const tabPane = li.querySelector(`.tab-pane[data-tab-index="${activeTabIndex}"]`);
+                  if (tabPane) {
+                    const field = tabPane.querySelector(`.inline-field[data-label="${label}"]`);
+                    if (field) {
+                      field.classList.add('empty-field');
+                    }
+                  }
+                }
+              });
+            }
+          }
+        });
+      });
+    }
 
     /**
-     * Shows or hides the placeholder warning
+     * Shows or hides the placeholder warning and highlights empty fields
      * @param {boolean} show Whether to show the warning
      */
     function showPlaceholderWarning(show) {
@@ -2019,9 +2089,11 @@
       if (show) {
         finalTextArea.classList.add("has-empty-placeholders");
         warningContainer.style.display = "block";
+        highlightEmptyFields(true);
       } else {
         finalTextArea.classList.remove("has-empty-placeholders");
         warningContainer.style.display = "none";
+        highlightEmptyFields(false);
       }
     }
 
