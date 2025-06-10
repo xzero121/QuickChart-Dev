@@ -93,7 +93,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="d-flex align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="confirmationLockToggle" 
+                    title="Toggle: Reset locked sentences" style="display: none;">
+              <i class="bi bi-lock-fill"></i>
+            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
         </div>
         <div class="modal-body" id="confirmationModalBody">
         </div>
@@ -339,7 +345,9 @@
             `This will discard changes and reset to the defaults for the '${currentConfigName}' configuration. Continue?`,
             "",
             () => resetToCurrentConfigDefaults(), // This will rebuild UI and reattach listeners
-            () => { } // User cancelled
+            () => { }, // User cancelled
+            false, // Not single button
+            true // Show lock toggle
           );
         });
       } else { console.error("New Run button not found."); }
@@ -1953,7 +1961,9 @@
               copyLockedInfoEl.style.display = 'none';
             }
           },
-          () => { }
+          () => { },
+          false, // Not single button
+          true // Show lock toggle
         );
       }).catch(err => {
         console.error("Copy to clipboard failed: ", err);
@@ -2250,7 +2260,7 @@
 
 
     // --- Modal Dialog ---
-    function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo, singleButton = false) {
+    function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo, singleButton = false, showLockToggle = false) {
       const modalEl = document.getElementById("confirmationModal");
       if (!modalEl) { console.error("Confirmation modal element not found!"); return; }
 
@@ -2259,8 +2269,9 @@
       const modalDisclaimer = modalEl.querySelector("#confirmationDisclaimer");
       const yesBtn = modalEl.querySelector("#confirmYesBtn");
       const noBtn = modalEl.querySelector("#confirmNoBtn");
+      const lockToggleBtn = modalEl.querySelector("#confirmationLockToggle");
 
-      if (!modalLabel || !modalBody || !modalDisclaimer || !yesBtn || !noBtn) {
+      if (!modalLabel || !modalBody || !modalDisclaimer || !yesBtn || !noBtn || !lockToggleBtn) {
         console.error("One or more modal sub-elements not found!");
         return;
       }
@@ -2275,24 +2286,84 @@
       yesBtn.style.display = singleButton ? 'none' : 'inline-block';
       noBtn.textContent = singleButton ? 'OK' : 'No';
 
+      // Show/hide lock toggle button based on parameter
+      lockToggleBtn.style.display = showLockToggle ? 'inline-block' : 'none';
+      
+      // Initialize lock toggle state (locked by default)
+      let unlockLockedSentences = false;
+      if (showLockToggle) {
+        lockToggleBtn.innerHTML = '<i class="bi bi-lock-fill"></i>';
+        lockToggleBtn.title = 'Click to also reset locked sentences';
+        lockToggleBtn.classList.remove('btn-warning');
+        lockToggleBtn.classList.add('btn-outline-secondary');
+      }
+
       // Remove previous listeners before adding new ones to prevent multiple calls
       const newYesBtn = yesBtn.cloneNode(true);
       yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
       const newNoBtn = noBtn.cloneNode(true);
       noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+      const newLockToggleBtn = lockToggleBtn.cloneNode(true);
+      lockToggleBtn.parentNode.replaceChild(newLockToggleBtn, lockToggleBtn);
 
       newYesBtn.style.display = singleButton ? 'none' : 'inline-block';
       newNoBtn.textContent = singleButton ? 'OK' : 'No';
+      newLockToggleBtn.style.display = showLockToggle ? 'inline-block' : 'none';
+
+      // Lock toggle functionality
+      if (showLockToggle) {
+        newLockToggleBtn.innerHTML = '<i class="bi bi-lock-fill"></i>';
+        newLockToggleBtn.title = 'Click to also reset locked sentences';
+        newLockToggleBtn.classList.remove('btn-warning');
+        newLockToggleBtn.classList.add('btn-outline-secondary');
+
+        newLockToggleBtn.addEventListener('click', () => {
+          unlockLockedSentences = !unlockLockedSentences;
+          if (unlockLockedSentences) {
+            newLockToggleBtn.innerHTML = '<i class="bi bi-unlock-fill"></i>';
+            newLockToggleBtn.title = 'Will reset locked sentences';
+            newLockToggleBtn.classList.remove('btn-outline-secondary');
+            newLockToggleBtn.classList.add('btn-danger');
+          } else {
+            newLockToggleBtn.innerHTML = '<i class="bi bi-lock-fill"></i>';
+            newLockToggleBtn.title = 'Click to also reset locked sentences';
+            newLockToggleBtn.classList.remove('btn-danger');
+            newLockToggleBtn.classList.add('btn-outline-secondary');
+          }
+        });
+      }
 
       newYesBtn.addEventListener('click', () => {
         bsModal.hide();
-        if (callbackYes && typeof callbackYes === 'function') callbackYes();
+        if (callbackYes && typeof callbackYes === 'function') {
+          // If unlock toggle was enabled and activated, unlock all sentences first
+          if (showLockToggle && unlockLockedSentences) {
+            unlockAllSentences();
+          }
+          callbackYes();
+        }
       });
       newNoBtn.addEventListener('click', () => {
         bsModal.hide();
         if (callbackNo && typeof callbackNo === 'function') callbackNo();
       });
       bsModal.show();
+    }
+
+    // Function to unlock all locked sentences
+    function unlockAllSentences() {
+      let unlockedCount = 0;
+      narrativeSections.forEach(section => {
+        if (!section.sentences) return;
+        section.sentences.forEach(sentenceObj => {
+          if (sentenceObj.locked) {
+            sentenceObj.locked = false;
+            unlockedCount++;
+          }
+        });
+      });
+      console.log(`Unlocked ${unlockedCount} sentences`);
+      saveState(); // Save the unlocked state
     }
 
     // Bug Report initialization function
