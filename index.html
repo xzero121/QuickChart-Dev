@@ -22,8 +22,7 @@
         <img src="QuickChartLogoWide.svg" alt="QuickChart" class="img-fluid"
           style="max-width: 200px; height: auto; vertical-align: middle; margin-right: 0.5em;"
           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-        <span style="display:none;">QuickChart</span>
-      </h1>
+        <span style="display:none;">QuickChart</h1>
       <div class="d-flex align-items-center">
         <button id="bugReportBtn" class="btn btn-outline-primary me-3" title="Report an issue">
           <i class="bi bi-bug-fill"></i>
@@ -138,6 +137,7 @@
   <script>
     // --- Constants ---
     const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
+    const incrementalRegex = /\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g; // Updated regex for incremental content with nested brackets
     const LOCAL_STORAGE_KEY = 'QuickChart-Beta';
     const MIN_INLINE_WIDTH = 50; // Min width for inline fields (px)
     const MAX_INLINE_WIDTH_PERCENT = 80; // Max width relative to parent (%)
@@ -638,33 +638,75 @@
         if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues) || sentenceObj.tabValues.length !== sentenceObj.tabs.length) {
           sentenceObj.tabValues = sentenceObj.tabs.map(() => ({}));
         } else {
-          // Ensure each tab's value store is an object
           sentenceObj.tabValues = sentenceObj.tabValues.map(valStore =>
             (typeof valStore === 'object' && !Array.isArray(valStore) && valStore !== null) ? valStore : {}
           );
         }
       } else { // Initialize for non-tabbed sentences
-        if (!sentenceObj.values || Array.isArray(sentenceObj.values)) { // Ensure .values is an object
+        if (!sentenceObj.values || Array.isArray(sentenceObj.values)) {
           sentenceObj.values = {};
+        }
+        
+        // For incremental sentences, initialize array-based values if needed
+        if (sentenceObj.text && (sentenceObj.text.startsWith('+') || sentenceObj.text.startsWith('++'))) {
+          if (!sentenceObj.incrementalValues) {
+            sentenceObj.incrementalValues = {};
+          }
+        }
+      }
+      
+      // Initialize incremental count for sentences that start with + or ++
+      if (sentenceObj.text && (sentenceObj.text.startsWith('+') || sentenceObj.text.startsWith('++'))) {
+        if (typeof sentenceObj.incrementCount === 'undefined') {
+          sentenceObj.incrementCount = 1;
         }
       }
     }
 
     // --- String Manipulation Helpers ---
     function shortPlaceholderString(sentence) {
-      return sentence.replace(placeholderRegex, (match, type, label) => `[${label}]`);
+      // Remove leading + or ++ for display purposes
+      let cleanSentence = sentence;
+      if (sentence.startsWith('++')) {
+        cleanSentence = sentence.substring(2);
+      } else if (sentence.startsWith('+')) {
+        cleanSentence = sentence.substring(1);
+      }
+      
+      // Process incremental content for display (show just one instance)
+      const processedSentence = cleanSentence.replace(incrementalRegex, '$1');
+      // Convert \n to spaces for display in suggestions
+      const displaySentence = processedSentence.replace(/\\n/g, ' ');
+      return displaySentence.replace(placeholderRegex, (match, type, label) => `[${label}]`);
     }
+    
     function expandedPlaceholderString(sentence) {
-      return sentence.replace(placeholderRegex, (match, theType, label, opts) => opts ? `[${label}(${opts})]` : `[${label}]`);
+      // Remove leading + or ++ for search purposes
+      let cleanSentence = sentence;
+      if (sentence.startsWith('++')) {
+        cleanSentence = sentence.substring(2);
+      } else if (sentence.startsWith('+')) {
+        cleanSentence = sentence.substring(1);
+      }
+      
+      // Process incremental content for search (show just one instance)
+      const processedSentence = cleanSentence.replace(incrementalRegex, '$1');
+      // Convert \n to spaces for search
+      const searchSentence = processedSentence.replace(/\\n/g, ' ');
+      return searchSentence.replace(placeholderRegex, (match, theType, label, opts) => opts ? `[${label}(${opts})]` : `[${label}]`);
     }
 
-    // --- UI Building Functions ---
+    // --- UI Building ---
     function buildSectionsUI() {
       const container = document.getElementById("sectionContainer");
-      if (!container) { console.error("Section container not found!"); return; }
+      if (!container) {
+        console.error("Section container not found.");
+        return;
+      }
       container.innerHTML = ""; // Clear existing content
-      narrativeSections.forEach(secObj => {
-        container.appendChild(createSectionElement(secObj));
+      narrativeSections.forEach(sec => {
+        const sectionEl = createSectionElement(sec);
+        container.appendChild(sectionEl);
       });
       makeSentencesDraggable(); // Make new sentences draggable
       initializeTooltips(); // Re-initialize tooltips for new elements
@@ -726,6 +768,9 @@
       li.dataset.id = sentenceObj.id;
       li.dataset.part = partLabel; // Keep track of which part it belongs to
 
+      // Check if this is an incremental sentence (either + or ++)
+      const isIncremental = sentenceObj.text && (sentenceObj.text.startsWith('+') || sentenceObj.text.startsWith('++'));
+      
       // Drag Handle
       const handle = document.createElement("span");
       handle.classList.add("drag-handle");
@@ -744,19 +789,40 @@
           contentDiv.appendChild(createTabPaneElement(sentenceObj, i));
         });
       } else {
-        contentDiv.innerHTML = buildInlineFields(sentenceObj.text, sentenceObj.values);
+        // For incremental sentences, process the text to expand [+content] based on incrementCount
+        let textToProcess = isIncremental ? processIncrementalText(sentenceObj.text, sentenceObj.incrementCount) : sentenceObj.text;
+        
+        // Convert \n to <br> BEFORE calling buildInlineFields
+        // Use \\n to match literal backslash-n characters from JSON
+        if (textToProcess) {
+          textToProcess = textToProcess.replace(/\\n/g, '<br>');
+        }
+        
+        contentDiv.innerHTML = buildInlineFields(textToProcess, sentenceObj.values);
       }
       li.appendChild(contentDiv);
 
-      // Controls (Edit, Lock, Remove buttons)
-      const controls = document.createElement('div');
-      controls.classList.add('sentence-controls');
-      controls.append(
+      // Top-right Controls (Edit, Lock, Remove buttons)
+      const topControls = document.createElement('div');
+      topControls.classList.add('sentence-controls');
+      
+      const topButtons = [
         createEditButton(sentenceObj, partLabel),
         createLockButton(sentenceObj, partLabel),
         createRemoveButton(sentenceObj.id, partLabel)
-      );
-      li.appendChild(controls);
+      ];
+      
+      topControls.append(...topButtons);
+      li.appendChild(topControls);
+
+      // Bottom-right Controls (Increment controls for incremental sentences)
+      if (isIncremental) {
+        const bottomControls = document.createElement('div');
+        bottomControls.classList.add('sentence-controls-bottom');
+        bottomControls.appendChild(createIncrementControls(sentenceObj, partLabel));
+        li.appendChild(bottomControls);
+      }
+      
       return li;
     }
 
@@ -782,7 +848,12 @@
       tabPane.dataset.tabIndex = tabIndex;
       if (tabIndex === sentenceObj.activeTabIndex) tabPane.classList.add("active");
 
-      const tabContent = sentenceObj.tabs[tabIndex].text || "";
+      let tabContent = sentenceObj.tabs[tabIndex].text || "";
+      
+      // Convert \n to <br> BEFORE calling buildInlineFields
+      // Use \\n to match literal backslash-n characters from JSON
+      tabContent = tabContent.replace(/\\n/g, '<br>');
+      
       const tabValues = sentenceObj.tabValues[tabIndex] || {}; // Ensure tabValues for this index exists
       tabPane.innerHTML = buildInlineFields(tabContent, tabValues);
       return tabPane;
@@ -839,6 +910,13 @@
         // Mark as being edited
         contentDiv.classList.add('editing');
 
+        // Disable increment controls if they exist
+        const incrementControls = li.querySelectorAll('.increment-controls .increment-btn');
+        incrementControls.forEach(btn => {
+          btn.disabled = true;
+          btn.classList.add('disabled');
+        });
+
         // Create an editable textarea
         const textarea = document.createElement('textarea');
         textarea.classList.add('form-control', 'sentence-edit-textarea', 'auto-height-textarea');
@@ -868,6 +946,15 @@
         adjustTextareaHeight(textarea);
         textarea.focus();
 
+        // Function to re-enable increment controls
+        const enableIncrementControls = () => {
+          const incrementControls = li.querySelectorAll('.increment-controls .increment-btn');
+          incrementControls.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+          });
+        };
+
         // Save changes
         saveBtn.addEventListener('click', () => {
           const newText = textarea.value.trim();
@@ -894,14 +981,16 @@
           } else {
             contentDiv.innerHTML = originalHTML;
           }
-          // Remove editing class
+          // Remove editing class and re-enable controls
           contentDiv.classList.remove('editing');
+          enableIncrementControls();
         });
 
         // Cancel editing
         cancelBtn.addEventListener('click', () => {
           contentDiv.innerHTML = originalHTML;
           contentDiv.classList.remove('editing');
+          enableIncrementControls();
         });
       });
       return btn;
@@ -926,6 +1015,205 @@
       return btn;
     }
 
+    function createIncrementControls(sentenceObj, partLabel) {
+      const controlsContainer = document.createElement('div');
+      controlsContainer.classList.add('increment-controls', 'd-flex', 'align-items-center');
+      
+      // Decrement button
+      const decrementBtn = document.createElement('button');
+      decrementBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'increment-btn');
+      decrementBtn.innerHTML = '<i class="bi bi-dash"></i>';
+      decrementBtn.title = 'Decrease count';
+      decrementBtn.addEventListener('click', () => {
+        if (sentenceObj.incrementCount > 1) {
+          sentenceObj.incrementCount--;
+          updateIncrementalSentence(sentenceObj, partLabel);
+        }
+      });
+      
+      // Count display
+      const countDisplay = document.createElement('span');
+      countDisplay.classList.add('increment-count', 'mx-2', 'fw-bold');
+      countDisplay.textContent = sentenceObj.incrementCount || 1;
+      
+      // Increment button
+      const incrementBtn = document.createElement('button');
+      incrementBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'increment-btn');
+      incrementBtn.innerHTML = '<i class="bi bi-plus"></i>';
+      incrementBtn.title = 'Increase count';
+      incrementBtn.addEventListener('click', () => {
+        sentenceObj.incrementCount = (sentenceObj.incrementCount || 1) + 1;
+        updateIncrementalSentence(sentenceObj, partLabel);
+      });
+      
+      controlsContainer.appendChild(decrementBtn);
+      controlsContainer.appendChild(countDisplay);
+      controlsContainer.appendChild(incrementBtn);
+      
+      return controlsContainer;
+    }
+
+    function updateIncrementalSentence(sentenceObj, partLabel) {
+      const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
+      if (!li) return;
+      
+      // Store current values before rebuilding - but store them properly for incremental sentences
+      const existingIncrementalValues = {};
+      
+      // Get all fields grouped by label with their index positions
+      const fieldsByLabel = {};
+      li.querySelectorAll('.sentence-content .inline-field[data-label]').forEach((field, globalIndex) => {
+        const label = field.dataset.label;
+        if (!fieldsByLabel[label]) {
+          fieldsByLabel[label] = [];
+        }
+        fieldsByLabel[label].push({
+          field: field,
+          value: field.value,
+          index: fieldsByLabel[label].length // This gives us the position within this label group
+        });
+      });
+      
+      // Store values in the incremental format - but preserve empty positions
+      Object.keys(fieldsByLabel).forEach(label => {
+        existingIncrementalValues[label] = fieldsByLabel[label].map(item => item.value);
+      });
+      
+      // Update the count display
+      const countDisplay = li.querySelector('.increment-count');
+      if (countDisplay) {
+        countDisplay.textContent = sentenceObj.incrementCount;
+      }
+      
+      // Update the content with the new incremental text
+      const contentDiv = li.querySelector('.sentence-content');
+      if (contentDiv && sentenceObj.text) {
+        let processedText = processIncrementalText(sentenceObj.text, sentenceObj.incrementCount);
+        
+        // Convert \n to <br> BEFORE calling buildInlineFields
+        if (processedText) {
+          processedText = processedText.replace(/\\n/g, '<br>');
+        }
+        
+        contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values);
+        
+        // Restore values to their respective positions - ONLY restore values that actually existed
+        Object.keys(existingIncrementalValues).forEach(label => {
+          const fields = contentDiv.querySelectorAll(`.inline-field[data-label="${label}"]`);
+          const savedValues = existingIncrementalValues[label];
+          
+          fields.forEach((field, index) => {
+            // Only restore value if it existed at this specific index AND has a value
+            if (index < savedValues.length && savedValues[index] !== undefined && savedValues[index] !== null && savedValues[index].trim() !== '') {
+              field.value = savedValues[index];
+              field.title = savedValues[index];
+              adjustInputWidth(field);
+            }
+            // If savedValues[index] is undefined, null, or empty string, leave the field blank (default behavior)
+          });
+        });
+        
+        // Update the sentence object's incremental values - but only store non-empty values
+        if (!sentenceObj.incrementalValues) {
+          sentenceObj.incrementalValues = {};
+        }
+        
+        // Store the current state in incrementalValues, but filter out empty values
+        Object.keys(existingIncrementalValues).forEach(label => {
+          sentenceObj.incrementalValues[label] = existingIncrementalValues[label].map(value => 
+            (value && value.trim()) ? value : '' // Ensure empty strings for blank fields
+          );
+        });
+        
+        // Reattach event listeners for the updated content
+        attachAllEventListenersForElement(contentDiv);
+        adjustAllInitialSizesForElement(contentDiv);
+      }
+      
+      saveState();
+    }
+
+    function processIncrementalText(originalText, count) {
+      // Check if this is a ++ (formatted) or + (plain) incremental sentence
+      const isFormattedIncremental = originalText.startsWith('++');
+      const isPlainIncremental = originalText.startsWith('+') && !originalText.startsWith('++');
+      
+      // Remove the leading + or ++ if present
+      let text = originalText;
+      if (isFormattedIncremental) {
+        text = originalText.substring(2); // Remove ++
+      } else if (isPlainIncremental) {
+        text = originalText.substring(1); // Remove +
+      } else {
+        return originalText; // No incremental markers
+      }
+      
+      // Find incremental content marked with [+content] - need to handle nested brackets properly
+      const incrementalMatches = [];
+      let match;
+      const regex = /\[\+/g;
+      
+      while ((match = regex.exec(text)) !== null) {
+        const startIndex = match.index;
+        let bracketCount = 1;
+        let endIndex = match.index + match[0].length;
+        
+        // Find the matching closing bracket, accounting for nested brackets
+        while (bracketCount > 0 && endIndex < text.length) {
+          if (text[endIndex] === '[') {
+            bracketCount++;
+          } else if (text[endIndex] === ']') {
+            bracketCount--;
+          }
+          endIndex++;
+        }
+        
+        if (bracketCount === 0) {
+          const fullMatch = text.substring(startIndex, endIndex);
+          const content = text.substring(startIndex + 2, endIndex - 1); // Remove [+ and ]
+          incrementalMatches.push({
+            fullMatch,
+            content,
+            index: startIndex
+          });
+        }
+      }
+      
+      if (incrementalMatches.length === 0) {
+        return text; // No incremental content found
+      }
+      
+      // Process each incremental section (in reverse order to maintain indices)
+      let processedText = text;
+      
+      incrementalMatches.reverse().forEach(matchData => {
+        const { fullMatch, content } = matchData;
+        
+        let repeatedContent;
+        
+        if (isFormattedIncremental) {
+          // ++ sentences: Use proper grammar with Oxford comma and "and"
+          if (count === 1) {
+            repeatedContent = content;
+          } else if (count === 2) {
+            repeatedContent = `${content} and ${content}`;
+          } else {
+            // For 3 or more items: "item, item, and item"
+            const items = Array(count).fill(content);
+            const lastItem = items.pop();
+            repeatedContent = items.join(', ') + ', and ' + lastItem;
+          }
+        } else if (isPlainIncremental) {
+          // + sentences: Just repeat the content with spaces, no formatting added
+          repeatedContent = Array(count).fill(content).join(' ');
+        }
+        
+        // Replace the [+content] with the repeated content
+        processedText = processedText.replace(fullMatch, repeatedContent);
+      });
+      
+      return processedText;
+    }
 
     function createAddSentenceForm(secObj) {
       const form = document.createElement("form");
@@ -968,7 +1256,7 @@
             addSentence(secObj.part, { text: newText });
             textarea.value = "";
             adjustTextareaHeight(textarea);
-            suggestionsBox.style.display = 'none';
+            suggestionsBox.style.display = "none";
           }
         }
       });
@@ -1017,7 +1305,10 @@
 
       fuseResults.slice(0, 10).forEach((res) => { // Show top 10 results
         const li = document.createElement("li");
-        li.textContent = res.item.display; // Show shortened version
+        
+        // Remove leading + from display text
+        const displayText = res.item.display.startsWith('+') ? res.item.display.substring(1) : res.item.display;
+        li.textContent = displayText;
         li.title = res.item.original;    // Full text on hover
 
         // Use mousedown for selection to fire before blur on textarea
@@ -1181,9 +1472,27 @@
           }
         }
       } else if (sentenceObj.values) { // Value is in a non-tabbed sentence
-        if (sentenceObj.values[label] !== value) {
-          sentenceObj.values[label] = value;
-          valueChanged = true;
+        // Check if this is an incremental sentence with multiple instances of the same field
+        const isIncremental = sentenceObj.text && (sentenceObj.text.startsWith('+') || sentenceObj.text.startsWith('++'));
+        
+        if (isIncremental) {
+          // For incremental sentences, store values as arrays
+          const allFieldsWithSameLabel = li.querySelectorAll(`.sentence-content > .inline-field[data-label="${label}"]`);
+          const fieldIndex = Array.from(allFieldsWithSameLabel).indexOf(field);
+          
+          if (!sentenceObj.incrementalValues) sentenceObj.incrementalValues = {};
+          if (!sentenceObj.incrementalValues[label]) sentenceObj.incrementalValues[label] = [];
+          
+          if (sentenceObj.incrementalValues[label][fieldIndex] !== value) {
+            sentenceObj.incrementalValues[label][fieldIndex] = value;
+            valueChanged = true;
+          }
+        } else {
+          // Regular non-incremental sentence
+          if (sentenceObj.values[label] !== value) {
+            sentenceObj.values[label] = value;
+            valueChanged = true;
+          }
         }
       }
       
@@ -1249,24 +1558,24 @@
     // --- HTML Building for Inline Fields ---
     function buildInlineFields(textTemplate, valuesObject) {
       if (!valuesObject) valuesObject = {}; // Ensure valuesObject is an object
-      const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, ""); // Remove <br> tags
-
-      // If there are no placeholders in the text, return the clean text as-is
-      if (!placeholderRegex.test(cleanText)) {
-        return cleanText;
+      
+      let displayText = textTemplate || "";
+      
+      // If there are no placeholders in the text, return as-is (no more \n conversion needed)
+      if (!placeholderRegex.test(displayText)) {
+        return displayText;
       }
-
-      return cleanText.replace(placeholderRegex, (match, type, label, options) => {
+    
+      const processedText = displayText.replace(placeholderRegex, (match, type, label, options) => {
         const currentValue = valuesObject[label] || "";
         let dropdownOptionsArray = [];
-
+    
         if (options) { // Options defined directly in template
           dropdownOptionsArray = options.split(",").map(x => x.trim());
         } else if (globalDropdownOptions[label]) { // Options from global config
           dropdownOptionsArray = globalDropdownOptions[label];
         }
-        // else: it's a text or number field, or a dropdown with no predefined options (less common)
-
+    
         switch (type) {
           case "customDropdown":
             const listItems = dropdownOptionsArray.map(opt => {
@@ -1283,18 +1592,20 @@
               </div>
             </div>`;
           case "text":
+            // Keep the original value (with \n) for the input field
             return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
           case "number":
             return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
-          case "dropdown": // This type might be legacy or needs specific handling if different from customDropdown
+          case "dropdown":
             console.warn(`Standard 'dropdown' type encountered for [${label}]. Consider using 'customDropdown' for richer features or ensure specific handling is implemented if needed.`);
-            // Basic input for now, can be enhanced if standard dropdowns have unique behavior
             return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>`;
           default:
             console.warn(`Unknown placeholder type: ${type} for label: ${label}`);
-            return match; // Return original match if type is unknown
+            return match;
         }
       });
+    
+      return processedText;
     }
 
     // --- Drag and Drop ---
@@ -1895,11 +2206,11 @@
           const result = await response.json();
           console.log(`Successfully tracked facility: ${facilityName}`, result);
         } else {
-          console.warn(`Failed to track facility: ${facilityName}. Status: ${response.status}`);
+          console.warn('Failed to track facility: ${facilityName. Status: ${response.status}');
         }
       } catch (error) {
         // Fail silently for tracking - don't interrupt user experience
-        console.warn(`Error tracking facility "${facilityName}":`, error);
+        console.warn('Error tracking facility "${facilityName}":', error);
       }
     }
 
@@ -1921,16 +2232,93 @@
     /**
      * Process a sentence by replacing placeholders with values
      * Fix: Show [placeholder] when values are empty or missing
+     * Also handle line breaks properly in final output
      */
     function processSentence(text, values) {
       if (!text) return "";
       if (!values) values = {};
 
-      return text.replace(placeholderRegex, (match, type, label) => {
-        const value = values[label];
-        // Fix: Return [label] if value is empty, null, undefined, or just whitespace
-        return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
-      });
+      let processedText = text;
+
+      // Remove leading + or ++ markers for final output
+      if (processedText.startsWith('++')) {
+        processedText = processedText.substring(2);
+      } else if (processedText.startsWith('+')) {
+        processedText = processedText.substring(1);
+      }
+
+      // For incremental sentences, we need to find the sentence object to get incrementalValues
+      // This is a bit of a hack, but we need to identify if this is an incremental sentence
+      const isIncremental = text.startsWith('+') || text.startsWith('++');
+      
+      if (isIncremental) {
+        // Find the sentence object that matches this text to get incremental values
+        let sentenceObj = null;
+        for (const section of narrativeSections) {
+          if (!section.sentences) continue;
+          for (const sentence of section.sentences) {
+            if (sentence.text === text) {
+              sentenceObj = sentence;
+              break;
+            }
+          }
+          if (sentenceObj) break;
+        }
+        
+        if (sentenceObj && sentenceObj.incrementalValues) {
+          // Process incremental text first to get the expanded version
+          processedText = processIncrementalText(text, sentenceObj.incrementCount);
+          
+          // Remove the leading markers again after processing
+          if (processedText.startsWith('++')) {
+            processedText = processedText.substring(2);
+          } else if (processedText.startsWith('+')) {
+            processedText = processedText.substring(1);
+          }
+          
+          // Remove [+content] markers
+          processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
+          
+          // Replace placeholders with incremental values
+          const placeholderCounts = {};
+          processedText = processedText.replace(placeholderRegex, (match, type, label) => {
+            // Track how many times we've seen this placeholder
+            if (!placeholderCounts[label]) {
+              placeholderCounts[label] = 0;
+            }
+            
+            const index = placeholderCounts[label];
+            placeholderCounts[label]++;
+            
+            // Get the value for this specific instance
+            const incrementalValues = sentenceObj.incrementalValues[label];
+            if (incrementalValues && incrementalValues[index] && incrementalValues[index].trim()) {
+              return incrementalValues[index].trim();
+            } else {
+              return `[${label}]`;
+            }
+          });
+        } else {
+          // Fallback for incremental sentences without proper incrementalValues
+          processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
+          processedText = processedText.replace(placeholderRegex, (match, type, label) => {
+            const value = values[label];
+            return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
+          });
+        }
+      } else {
+        // Regular non-incremental sentence processing
+        processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
+        processedText = processedText.replace(placeholderRegex, (match, type, label) => {
+          const value = values[label];
+          return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
+        });
+      }
+
+      // Convert \n to actual line breaks in final output for copying/exporting
+      processedText = processedText.replace(/\\n/g, '\n');
+      
+      return processedText;
     }
 
     // --- Button Event Listeners ---

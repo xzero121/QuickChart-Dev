@@ -111,7 +111,7 @@ html,
       position: absolute;
       top: 4px;
       /* Adjust as needed for vertical alignment */
-      right: 4px;
+      right: 0;
       /* Adjust as needed for horizontal alignment */
       display: flex;
       align-items: center;
@@ -148,7 +148,6 @@ html,
     }
 
     .sentence-controls .btn:last-child {
-      margin-right: -4px;
       border-top-right-radius: .25rem;
       /* Rounded top-right corner */
     }
@@ -199,6 +198,68 @@ html,
 
     /* --- End Sentence Controls --- */
 
+    /* --- Sentence Controls Bottom --- */
+
+    .sentence-controls-bottom {
+      position: absolute;
+      bottom: 0;
+      /* Adjust as needed for vertical alignment */
+      right: 0;
+      /* Adjust as needed for horizontal alignment */
+      display: flex;
+      align-items: center;
+      /* Ensures buttons align nicely if heights vary slightly */
+    }
+
+      .sentence-controls-bottom .btn {
+      border-radius: 0;
+    }
+
+    .sentence-controls-bottom .btn:first-child {
+
+      border-top-left-radius: .25rem;
+      /* Rounded bottom-left corner */
+    }
+
+    .sentence-controls-bottom .btn:last-child {
+      border-bottom-right-radius: .25rem;
+      /* Rounded top-right corner */
+    }
+
+    /* --- End Sentence Controls Bottom --- */
+
+    /* Disabled increment controls styling */
+    .increment-controls .increment-btn:disabled,
+    .increment-controls .increment-btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Optional: Add a subtle visual indication that controls are locked */
+    .sentence-content.editing + .sentence-controls-bottom {
+      opacity: 0.6;
+    }
+
+    .sentence-content.editing + .sentence-controls-bottom::after {
+      content: "🔒";
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    [data-bs-theme="dark"] .sentence-content.editing + .sentence-controls-bottom::after {
+      background: rgba(33, 37, 41, 0.9);
+    }
 
     /* Add item form and group */
     .add-item-form {
