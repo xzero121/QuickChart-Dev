@@ -817,6 +817,7 @@
 
       // Bottom-right Controls (Increment controls for incremental sentences)
       if (isIncremental) {
+        li.style.setProperty('min-height', '4.5em'); // Ensure enough height for increment controls
         const bottomControls = document.createElement('div');
         bottomControls.classList.add('sentence-controls-bottom');
         bottomControls.appendChild(createIncrementControls(sentenceObj, partLabel));
