@@ -387,6 +387,13 @@ html,
       box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5) !important;
     }
 
+    /* Un-added text warning */
+    .add-item-form textarea.unadded-text {
+      border-color: #ffc107 !important;
+      box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+      background-color: rgba(255, 193, 7, 0.05);
+    }
+
     /* Custom dropdown container */
     .custom-dropdown {
       display: contents;

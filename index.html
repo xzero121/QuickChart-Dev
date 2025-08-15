@@ -1349,6 +1349,15 @@
         adjustAllInitialSizes();
       }
       saveState();
+
+      // After adding, find the corresponding textarea and remove the warning class
+      const form = document.querySelector(`.add-item-form[data-part="${partLabel}"]`);
+      if (form) {
+        const textarea = form.querySelector('textarea');
+        if (textarea) {
+          textarea.classList.remove('unadded-text');
+        }
+      }
     }
 
     function removeSentence(partLabel, sentenceId) {
@@ -1627,6 +1636,42 @@
           dragClass: "sortable-drag",    // Class for the dragging item
           onEnd: handleDragEnd,
         });
+      });
+    }
+
+    /**
+     * Checks for un-added text in the "add sentence" textareas.
+     * @returns {boolean} True if any "add sentence" textarea has un-added text.
+     */
+    function checkForUnaddedSentences() {
+      let hasUnaddedText = false;
+      const addSentenceForms = document.querySelectorAll('.add-item-form');
+      addSentenceForms.forEach(form => {
+        const textarea = form.querySelector('textarea');
+        if (textarea && textarea.value.trim() !== '') {
+          hasUnaddedText = true;
+        }
+      });
+      return hasUnaddedText;
+    }
+
+    /**
+     * Highlights "add sentence" textareas that have un-added text.
+     * @param {boolean} highlight - Whether to add or remove the highlight.
+     */
+    function highlightUnaddedSentences(highlight = true) {
+      document.querySelectorAll('.add-item-form textarea.unadded-text').forEach(field => {
+        field.classList.remove('unadded-text');
+      });
+
+      if (!highlight) return;
+
+      const addSentenceForms = document.querySelectorAll('.add-item-form');
+      addSentenceForms.forEach(form => {
+        const textarea = form.querySelector('textarea');
+        if (textarea && textarea.value.trim() !== '') {
+          textarea.classList.add('unadded-text');
+        }
       });
     }
 
@@ -2130,9 +2175,11 @@
           copyLockedInfoEl.style.display = 'none';
         }
 
-        // Only check for empty placeholders when generating text
+        // Check for both empty placeholders and un-added sentences
         const hasEmptyFields = checkForEmptyPlaceholders();
-        showPlaceholderWarning(hasEmptyFields);
+        const hasUnaddedSentences = checkForUnaddedSentences();
+        showPlaceholderWarning(hasEmptyFields || hasUnaddedSentences);
+
       } catch (error) {
         console.error("Error generating final text:", error);
         showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => { }, () => { }, true);
@@ -2486,13 +2533,22 @@
       const warningContainer = document.getElementById("placeholderWarningContainer") || createWarningElement();
 
       if (show) {
-        finalTextArea.classList.add("has-empty-placeholders");
+        finalTextArea.classList.add("has-empty-placeholders"); // This class is generic enough for both warnings
         warningContainer.style.display = "block";
         highlightEmptyFields(true);
+        highlightUnaddedSentences(true);
+
+        // Scroll to the first field with an error
+        const firstErrorField = document.querySelector('.empty-field, .unadded-text');
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
       } else {
         finalTextArea.classList.remove("has-empty-placeholders");
         warningContainer.style.display = "none";
         highlightEmptyFields(false);
+        highlightUnaddedSentences(false);
       }
     }
 
