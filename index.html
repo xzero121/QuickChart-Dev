@@ -2231,6 +2231,27 @@
     }
 
     /**
+     * Safely decode URL-encoded text if it contains percent-encoding
+     * @param {string} text - The text to decode
+     * @returns {string} - The decoded text, or original if decoding fails
+     */
+    function decodeURLEncodedText(text) {
+      if (!text || typeof text !== 'string') return text;
+      
+      // Check if the text contains percent-encoded characters (like %20)
+      if (/%[0-9A-Fa-f]{2}/.test(text)) {
+        try {
+          return decodeURIComponent(text);
+        } catch (e) {
+          // If decoding fails, return the original text
+          console.warn('Failed to decode URL-encoded text:', text, e);
+          return text;
+        }
+      }
+      return text;
+    }
+
+    /**
      * Process a sentence by replacing placeholders with values
      * Fix: Show [placeholder] when values are empty or missing
      * Also handle line breaks properly in final output
@@ -2294,7 +2315,7 @@
             // Get the value for this specific instance
             const incrementalValues = sentenceObj.incrementalValues[label];
             if (incrementalValues && incrementalValues[index] && incrementalValues[index].trim()) {
-              return incrementalValues[index].trim();
+              return decodeURLEncodedText(incrementalValues[index].trim());
             } else {
               return `[${label}]`;
             }
@@ -2304,7 +2325,7 @@
           processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
           processedText = processedText.replace(placeholderRegex, (match, type, label) => {
             const value = values[label];
-            return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
+            return (value && value.toString().trim()) ? decodeURLEncodedText(value.toString().trim()) : `[${label}]`;
           });
         }
       } else {
@@ -2312,7 +2333,7 @@
         processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
         processedText = processedText.replace(placeholderRegex, (match, type, label) => {
           const value = values[label];
-          return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
+          return (value && value.toString().trim()) ? decodeURLEncodedText(value.toString().trim()) : `[${label}]`;
         });
       }
 
