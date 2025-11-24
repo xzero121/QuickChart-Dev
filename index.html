@@ -1383,7 +1383,7 @@
       if (!li) return;
 
       // Check if currently in edit mode - prevent tab switching
-      const contentDiv = li.querySelector('.sentence-content');
+      const contentD166841iv = li.querySelector('.sentence-content');
       if (contentDiv && contentDiv.classList.contains('editing')) {
         console.log('Cannot switch tabs while editing. Please save or cancel your changes first.');
         showConfirmationModal(
@@ -1753,7 +1753,7 @@
         const suggestionBox = dropdownContainer?.querySelector('.suggestions');
         if (suggestionBox && suggestionBox.contains(event.relatedTarget)) {
           return; // Don't hide if focus moved to a suggestion
-        }
+        }166841
         processDropdownBlur(event.target);
       }
     }
@@ -1869,7 +1869,7 @@
 
         // Check if dropdown extends beyond viewport bottom
         if (suggestionsRect.bottom > window.innerHeight) {
-          const spaceAbove = inputRect.top; // Space above input in viewport
+          const spac166841eAbove = inputRect.top; // Space above input in viewport
 
           if (suggestionsRect.height < spaceAbove) {
             // If it fits above the input, position it above
@@ -2087,7 +2087,7 @@
 
           if (processedText.trim()) {
             sectionText += processedText.trim() + " ";
-          }
+          }166841
         });
 
         if (sectionText.trim()) {
@@ -2117,7 +2117,7 @@
         finalTextArea.value = finalText;
 
         // Track Receiving Facility values in the background
-        trackReceivingFacilities();
+        trackReceivi166841ngFacilities();
 
         // If there are locked sentences, show an indicator
         const copyLockedInfoEl = document.getElementById('copyLockedInfo') || createCopyLockedInfoElement();
@@ -2179,7 +2179,7 @@
       if (receivingFacilities.size > 0) {
         console.log(`Tracked ${receivingFacilities.size} unique receiving facilities:`, Array.from(receivingFacilities));
       }
-    }
+    }166841
 
     /**
      * Sends a receiving facility value to the API
@@ -2232,7 +2232,7 @@
 
     /**
      * Process a sentence by replacing placeholders with values
-     * Fix: Show [placeholder] when values are empty or missing
+     * Fix: Show [pl166841aceholder] when values are empty or missing
      * Also handle line breaks properly in final output
      */
     function processSentence(text, values) {
@@ -2330,7 +2330,7 @@
         showConfirmationModal("Copy", "Nothing to copy!", "", () => { }, () => { }, true);
         return;
       }
-      navigator.clipboard.writeText(textToCopy).then(() => {
+      navigator.clipboard.writeText("\u200B" + textToCopy).then(() => {
         console.log("Text copied to clipboard.");
         showConfirmationModal("Copied to Clipboard",
           "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
