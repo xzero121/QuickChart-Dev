@@ -1572,8 +1572,11 @@
                 const currentValues = sentenceObj.incrementalValues[label] || [];
                 const newValues = fieldsByLabel[label];
                 
-                // Check if values have changed
-                if (JSON.stringify(currentValues) !== JSON.stringify(newValues)) {
+                // Check if values have changed - compare arrays element by element
+                const hasChanged = currentValues.length !== newValues.length ||
+                  newValues.some((val, idx) => val !== currentValues[idx]);
+                
+                if (hasChanged) {
                   sentenceObj.incrementalValues[label] = newValues;
                   changesMade = true;
                 }
