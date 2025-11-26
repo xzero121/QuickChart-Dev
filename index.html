@@ -2540,6 +2540,12 @@
      * @returns {HTMLElement} The warning container element
      */
     function createUnaddedWarningElement() {
+      // Check if element already exists to prevent duplicates
+      const existingElement = document.getElementById("unaddedSentenceWarningContainer");
+      if (existingElement) {
+        return existingElement;
+      }
+
       const finalTextArea = document.getElementById("finalText");
       const finalTextContainer = finalTextArea.parentElement;
 
@@ -2548,13 +2554,8 @@
       warningContainer.classList.add("placeholder-warning", "text-danger");
       warningContainer.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Warning: Some sentences have not been added!';
 
-      // Insert before the textarea (after placeholder warning if it exists)
-      const placeholderWarning = document.getElementById("placeholderWarningContainer");
-      if (placeholderWarning) {
-        finalTextContainer.insertBefore(warningContainer, placeholderWarning.nextSibling);
-      } else {
-        finalTextContainer.insertBefore(warningContainer, finalTextArea);
-      }
+      // Insert before the textarea
+      finalTextContainer.insertBefore(warningContainer, finalTextArea);
       return warningContainer;
     }
 
