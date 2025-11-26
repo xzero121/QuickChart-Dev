@@ -546,6 +546,9 @@
       // Clear the placeholder warning without checking
       showPlaceholderWarning(false);
 
+      // Clear the unadded sentence warning
+      showUnaddedSentenceWarning(false);
+
       // Clear the locked sentences info
       const copyLockedInfoEl = document.getElementById('copyLockedInfo');
       if (copyLockedInfoEl) {
@@ -2133,6 +2136,10 @@
         // Only check for empty placeholders when generating text
         const hasEmptyFields = checkForEmptyPlaceholders();
         showPlaceholderWarning(hasEmptyFields);
+
+        // Check for unadded sentences in add sentence textareas
+        const hasUnaddedSentences = checkForUnaddedSentences();
+        showUnaddedSentenceWarning(hasUnaddedSentences);
       } catch (error) {
         console.error("Error generating final text:", error);
         showConfirmationModal("Error", "Failed to generate text. Please check console for details.", "", () => { }, () => { }, true);
@@ -2512,6 +2519,58 @@
       // Insert before the textarea
       finalTextContainer.insertBefore(warningContainer, finalTextArea);
       return warningContainer;
+    }
+
+    /**
+     * Checks for any unadded sentences in add sentence textareas
+     * @returns {boolean} True if any add sentence textareas have content
+     */
+    function checkForUnaddedSentences() {
+      const addSentenceTextareas = document.querySelectorAll('.add-item-form textarea');
+      for (const textarea of addSentenceTextareas) {
+        if (textarea.value.trim() !== '') {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Creates the unadded sentence warning element if it doesn't exist
+     * @returns {HTMLElement} The warning container element
+     */
+    function createUnaddedWarningElement() {
+      // Check if element already exists to prevent duplicates
+      const existingElement = document.getElementById("unaddedSentenceWarningContainer");
+      if (existingElement) {
+        return existingElement;
+      }
+
+      const finalTextArea = document.getElementById("finalText");
+      const finalTextContainer = finalTextArea.parentElement;
+
+      const warningContainer = document.createElement("div");
+      warningContainer.id = "unaddedSentenceWarningContainer";
+      warningContainer.classList.add("placeholder-warning", "text-danger");
+      warningContainer.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Warning: Some sentences have not been added!';
+
+      // Insert before the textarea
+      finalTextContainer.insertBefore(warningContainer, finalTextArea);
+      return warningContainer;
+    }
+
+    /**
+     * Shows or hides the unadded sentence warning
+     * @param {boolean} show Whether to show the warning
+     */
+    function showUnaddedSentenceWarning(show) {
+      const warningContainer = document.getElementById("unaddedSentenceWarningContainer") || createUnaddedWarningElement();
+
+      if (show) {
+        warningContainer.style.display = "block";
+      } else {
+        warningContainer.style.display = "none";
+      }
     }
 
     /**
