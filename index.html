@@ -801,7 +801,8 @@
           textToProcess = textToProcess.replace(/\\n/g, '<br>');
         }
         
-        contentDiv.innerHTML = buildInlineFields(textToProcess, sentenceObj.values);
+        // For incremental sentences, pass the incrementalValues object to support multiple values per label
+        contentDiv.innerHTML = buildInlineFields(textToProcess, sentenceObj.values, isIncremental ? sentenceObj.incrementalValues : undefined);
       }
       li.appendChild(contentDiv);
 
@@ -976,7 +977,29 @@
             } else {
               // Update regular sentence text
               sentenceObj.text = newText;
-              contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {});
+              
+              // Check if this is an incremental sentence
+              const isIncrementalSentence = newText.startsWith('+') || newText.startsWith('++');
+              
+              if (isIncrementalSentence) {
+                // Reset incremental values when text changes to avoid stale data
+                sentenceObj.incrementalValues = {};
+                
+                // Initialize incrementCount if not set
+                if (typeof sentenceObj.incrementCount === 'undefined') {
+                  sentenceObj.incrementCount = 1;
+                }
+                
+                // Process the incremental text
+                let processedText = processIncrementalText(newText, sentenceObj.incrementCount);
+                if (processedText) {
+                  processedText = processedText.replace(/\\n/g, '<br>');
+                }
+                
+                contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values || {}, sentenceObj.incrementalValues);
+              } else {
+                contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {});
+              }
             }
 
             attachAllEventListenersForElement(contentDiv);
@@ -1089,6 +1112,18 @@
         countDisplay.textContent = sentenceObj.incrementCount;
       }
       
+      // Update the sentence object's incremental values before rebuilding the UI
+      if (!sentenceObj.incrementalValues) {
+        sentenceObj.incrementalValues = {};
+      }
+      
+      // Store the current state in incrementalValues
+      Object.keys(existingIncrementalValues).forEach(label => {
+        sentenceObj.incrementalValues[label] = existingIncrementalValues[label].map(value => 
+          (value && value.trim()) ? value : '' // Ensure empty strings for blank fields
+        );
+      });
+      
       // Update the content with the new incremental text
       const contentDiv = li.querySelector('.sentence-content');
       if (contentDiv && sentenceObj.text) {
@@ -1099,35 +1134,8 @@
           processedText = processedText.replace(/\\n/g, '<br>');
         }
         
-        contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values);
-        
-        // Restore values to their respective positions - ONLY restore values that actually existed
-        Object.keys(existingIncrementalValues).forEach(label => {
-          const fields = contentDiv.querySelectorAll(`.inline-field[data-label="${label}"]`);
-          const savedValues = existingIncrementalValues[label];
-          
-          fields.forEach((field, index) => {
-            // Only restore value if it existed at this specific index AND has a value
-            if (index < savedValues.length && savedValues[index] !== undefined && savedValues[index] !== null && savedValues[index].trim() !== '') {
-              field.value = savedValues[index];
-              field.title = savedValues[index];
-              adjustInputWidth(field);
-            }
-            // If savedValues[index] is undefined, null, or empty string, leave the field blank (default behavior)
-          });
-        });
-        
-        // Update the sentence object's incremental values - but only store non-empty values
-        if (!sentenceObj.incrementalValues) {
-          sentenceObj.incrementalValues = {};
-        }
-        
-        // Store the current state in incrementalValues, but filter out empty values
-        Object.keys(existingIncrementalValues).forEach(label => {
-          sentenceObj.incrementalValues[label] = existingIncrementalValues[label].map(value => 
-            (value && value.trim()) ? value : '' // Ensure empty strings for blank fields
-          );
-        });
+        // Pass incrementalValues to buildInlineFields so existing values are preserved
+        contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values, sentenceObj.incrementalValues);
         
         // Reattach event listeners for the updated content
         attachAllEventListenersForElement(contentDiv);
@@ -1541,16 +1549,50 @@
             });
           } else { // Non-tabbed sentence
             if (!sentenceObj.values) sentenceObj.values = {}; // Should be initialized already
-
-            li.querySelectorAll(".sentence-content > .inline-field[data-label]").forEach(field => {
-              // Ensure we only get direct children of sentence-content, not those inside tab-panes if any mix-up
-              const label = field.dataset.label;
-              const newValue = field.value;
-              if (sentenceObj.values[label] !== newValue) {
-                sentenceObj.values[label] = newValue;
-                changesMade = true;
-              }
-            });
+            
+            // Check if this is an incremental sentence
+            const isIncremental = sentenceObj.text && (sentenceObj.text.startsWith('+') || sentenceObj.text.startsWith('++'));
+            
+            if (isIncremental) {
+              // For incremental sentences, store values as arrays in incrementalValues
+              if (!sentenceObj.incrementalValues) sentenceObj.incrementalValues = {};
+              
+              // Group fields by label
+              const fieldsByLabel = {};
+              li.querySelectorAll(".sentence-content .inline-field[data-label]").forEach((field) => {
+                const label = field.dataset.label;
+                if (!fieldsByLabel[label]) {
+                  fieldsByLabel[label] = [];
+                }
+                fieldsByLabel[label].push(field.value);
+              });
+              
+              // Store the values in incrementalValues
+              Object.keys(fieldsByLabel).forEach(label => {
+                const currentValues = sentenceObj.incrementalValues[label] || [];
+                const newValues = fieldsByLabel[label];
+                
+                // Check if values have changed - compare arrays element by element
+                const hasChanged = currentValues.length !== newValues.length ||
+                  newValues.some((val, idx) => val !== currentValues[idx]);
+                
+                if (hasChanged) {
+                  sentenceObj.incrementalValues[label] = newValues;
+                  changesMade = true;
+                }
+              });
+            } else {
+              // Regular non-incremental sentence
+              li.querySelectorAll(".sentence-content > .inline-field[data-label]").forEach(field => {
+                // Ensure we only get direct children of sentence-content, not those inside tab-panes if any mix-up
+                const label = field.dataset.label;
+                const newValue = field.value;
+                if (sentenceObj.values[label] !== newValue) {
+                  sentenceObj.values[label] = newValue;
+                  changesMade = true;
+                }
+              });
+            }
           }
         });
       });
@@ -1560,8 +1602,9 @@
 
 
     // --- HTML Building for Inline Fields ---
-    function buildInlineFields(textTemplate, valuesObject) {
+    function buildInlineFields(textTemplate, valuesObject, incrementalValuesObject) {
       if (!valuesObject) valuesObject = {}; // Ensure valuesObject is an object
+      if (!incrementalValuesObject) incrementalValuesObject = {}; // For incremental sentences
       
       let displayText = textTemplate || "";
       
@@ -1569,9 +1612,26 @@
       if (!placeholderRegex.test(displayText)) {
         return displayText;
       }
+      
+      // Track placeholder counts for incremental sentences
+      const placeholderCounts = {};
     
       const processedText = displayText.replace(placeholderRegex, (match, type, label, options) => {
-        const currentValue = valuesObject[label] || "";
+        // For incremental sentences, track how many times we've seen each placeholder
+        if (!placeholderCounts[label]) {
+          placeholderCounts[label] = 0;
+        }
+        const currentIndex = placeholderCounts[label];
+        placeholderCounts[label]++;
+        
+        // Get value: first try incrementalValues array, then fall back to regular values
+        let currentValue = "";
+        if (incrementalValuesObject[label] && Array.isArray(incrementalValuesObject[label])) {
+          currentValue = incrementalValuesObject[label][currentIndex] || "";
+        } else {
+          currentValue = valuesObject[label] || "";
+        }
+        
         let dropdownOptionsArray = [];
     
         if (options) { // Options defined directly in template
