@@ -56,6 +56,11 @@ html,
       align-items: center;
       margin-bottom: .5rem;
       font-weight: 600;
+      gap: 0.5rem;
+    }
+
+    .section-header .section-title-wrapper {
+      flex-shrink: 0;
     }
 
     .section-header .section-subpart {
@@ -79,6 +84,49 @@ html,
       list-style: none;
       padding-left: 0;
       margin-bottom: 0;
+    }
+
+    /* Quick-add buttons container */
+    .quick-add-container {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      -ms-overflow-style: none;
+      padding: 0.25rem 0.5rem;
+      flex: 1;
+      min-width: 0; /* Allow flex item to shrink below content size */
+    }
+
+    /* Inner wrapper for centering buttons without clipping */
+    .quick-add-container::before,
+    .quick-add-container::after {
+      content: '';
+      flex: 1 0 0;
+    }
+
+    .quick-add-container::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .quick-add-container::-webkit-scrollbar-thumb {
+      background-color: #6c757d;
+      border-radius: 2px;
+    }
+
+    .quick-add-btn {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.25rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .quick-add-btn:hover {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      color: white;
     }
 
     .sentence-list li {
@@ -377,14 +425,22 @@ html,
 
     /* Empty field highlighting */
     .inline-field.empty-field {
-      border-color: #dc3545 !important;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-      background-color: rgba(220, 53, 69, 0.05);
+      box-shadow: none !important;
+      background-color: transparent;
+    }
+
+    .inline-field.empty-field::placeholder {
+      color: #dc3545 !important;
+      opacity: 1;
     }
 
     .inline-field.empty-field:focus {
-      border-color: #dc3545 !important;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5) !important;
+      box-shadow: none !important;
+    }
+
+    .inline-field.empty-field:focus::placeholder {
+      color: #dc3545 !important;
+      opacity: 0.7;
     }
 
     /* Custom dropdown container */
@@ -642,6 +698,15 @@ html,
       color: rgb(230,230,230);
     }
 
+    /* Dark mode empty field styling */
+    body.dark-mode .inline-field.empty-field::placeholder {
+      color: rgba(150, 0, 0, 1) !important;
+    }
+
+    body.dark-mode .inline-field.empty-field:focus::placeholder {
+      color: rgba(150, 0, 0, 0.7) !important;
+    }
+
     body.dark-mode .custom-dropdown .suggestions
     {
       background-color: #666 !important;
@@ -688,6 +753,17 @@ html,
     [data-bs-theme="dark"] .sentence-list li {
       background-color: #2a2a2a;
       border-color: #444;
+    }
+
+    [data-bs-theme="dark"] .quick-add-btn {
+      border-color: #6c757d;
+      color: #adb5bd;
+    }
+
+    [data-bs-theme="dark"] .quick-add-btn:hover {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      color: white;
     }
 
     [data-bs-theme="dark"] textarea,

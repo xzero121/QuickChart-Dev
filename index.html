@@ -57,6 +57,7 @@
 
     <button id="generateBtn" class="btn btn-primary mb-3" title="Generate the final narrative text below">Generate Final
       Text</button>
+    <button id="validateBtn" class="btn btn-warning mb-3 ms-2" title="Check for empty fields without generating text">Validate</button>
 
     <div class="mb-3">
       <label for="finalText" class="form-label fw-bold">Final Narrative</label>
@@ -136,6 +137,7 @@
 
   <script>
     // --- Constants ---
+    const DEBUG = false; // Set to true to enable console logging
     const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
     const incrementalRegex = /\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g; // Updated regex for incremental content with nested brackets
     const LOCAL_STORAGE_KEY = 'QuickChart-Beta';
@@ -165,85 +167,6 @@
       ignoreLocation: true
     };
 
-    // --- Functions ---
-    // initializeTooltips();
-    // initializeApp();
-    // attachAllEventListeners();
-    // attachAllEventListenersForElement();
-    // attachHeaderListeners();
-    // loadConfiguration();
-    // loadState();
-    // saveState();
-    // resetToCurrentConfigDefaults();
-    // assignInitialIDs();
-    // initializedarkMode();
-    // findHighestSentenceId();
-    // initializeSentenceValues();
-    // shortPlaceholderString();
-    // expandedPlaceholderString();
-    // buildSectionsUI();
-    // createSectionElement();
-    // createSentenceElement();
-    // createTabsContainer();
-    // createTabPaneElement();
-    // createRemoveButton();
-    // createEditButton();
-    // createLockButton();
-    // createAddSentenceForm();
-    // handleSuggestionsInput();
-    // addSentence();
-    // removeSentence();
-    // switchTab();
-    // attachBlurListeners();
-    // attachBlurListenersForElement();
-    // handleInlineFieldBlurDelegated();
-    // handleInlineFieldBlur();
-    // storeAllInlineValues();
-    // buildInlineFields();
-    // makeSentencesDraggable();
-    // handleDragEnd();
-    // attachDropdownLogic();
-    // attachDropdownLogicForElement();
-    // handleDropdownFocusDelegated();
-    // handleDropdownInputDelegated();
-    // handleDropdownKeydownDelegated();
-    // handleDropdownSuggestionClick();
-    // handleDropdownBlurDelegated();
-    // handleDropdownFocusDirect();
-    // handleDropdownInputDirect();
-    // handleDropdownKeydownDirect();
-    // handleDropdownSuggestionClickDirect();
-    // handleDropdownBlurDirect();
-    // filterAndShowDropdownSuggestions();
-    // positionDropdownSuggestions();
-    // processDropdownKeydown();
-    // highlightDropdownItem();
-    // selectDropdownItem();
-    // hideDropdownSuggestions();
-    // processDropdownBlur();
-    // handleScrollForDropdown();
-    // generateAndDisplayText();
-    // createCopyLockedInfoElement();
-    // generateFiunalTextWithLockInfo();
-    // processSentence();
-    // checkForEmptyPlaceholders();
-    // showPlaceholderWarning();
-    // createWarningElement();
-    // debounce();
-    // renderSectionText();
-    // FindSentenceById();
-    // attachInputSizingListeners();
-    // attachInputSizingListenersForElement();
-    // handleAutoSizingInputDelegated();
-    // HandleAutoSizingInputDirect();
-    // adjustTextareaHeight();
-    // adjustInputWidth();
-    // adjustAllInitialSizes();
-    // adjustAllInitialSizesForElement();
-    // showConfirmationModal();
-    // initializeBugReport();
-
-
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', function () {
       initializeApp();
@@ -257,11 +180,11 @@
         }
         return null;
       });
-      console.log("Tooltips initialized.");
+      if (DEBUG) console.log("Tooltips initialized.");
     }
 
     async function initializeApp() {
-      console.log("Initializing QuickChart...");
+      if (DEBUG) console.log("Initializing QuickChart...");
       widthMeasurerSpan = document.getElementById('width-measurer');
       if (!widthMeasurerSpan) console.error("Width measurer span not found!");
 
@@ -272,10 +195,10 @@
       try {
         const savedConfigName = localStorage.getItem("QuickChart-Beta-Config");
         if (!savedConfigName) {
-          console.warn("No saved configuration name found. Using default.");
+          if (DEBUG) console.warn("No saved configuration name found. Using default.");
           await loadConfiguration(DEFAULT_CONFIG_NAME, true);
         } else {
-          console.log(`Loaded saved configuration name: ${savedConfigName}`);
+          if (DEBUG) console.log(`Loaded saved configuration name: ${savedConfigName}`);
           await loadConfiguration(savedConfigName, true);
         }
         loadState();
@@ -285,7 +208,7 @@
         adjustAllInitialSizes();
 
         // Remove initial placeholder check - only check when generating text
-        console.log("QuickChart Initialized Successfully.");
+        if (DEBUG) console.log("QuickChart Initialized Successfully.");
       } catch (err) {
         console.error("Failed to initialize QuickChart:", err);
         showConfirmationModal("Initialization Error", `Could not load initial configuration. Please check console or refresh. Error: ${err.message}`, "", () => { }, () => { }, true);
@@ -356,8 +279,23 @@
     async function loadConfiguration(configName, isInitialLoad = false) {
       const filename = `${configName.toLowerCase()}.json`;
 
-      console.log(`Attempting to load configuration: ${filename}`);
+      if (DEBUG) console.log(`Attempting to load configuration: ${filename}`);
       try {
+        // First, load the global configuration
+        let globalData = { commonSentences: [], globalDropdownOptions: {} };
+        try {
+          const globalResponse = await fetch('global.json');
+          if (globalResponse.ok) {
+            globalData = await globalResponse.json();
+            if (DEBUG) console.log("Global configuration loaded.");
+          } else {
+            console.warn("Global configuration not found, using empty defaults.");
+          }
+        } catch (globalError) {
+          console.warn("Failed to load global configuration:", globalError);
+        }
+
+        // Then load the template-specific configuration
         const response = await fetch(filename);
         if (!response.ok) {
           throw new Error(`Configuration file '${filename}' not found or could not be loaded (Status: ${response.status})`);
@@ -373,19 +311,33 @@
           }
         }
 
+        // Merge global and local configurations
+        // Global commonSentences come first, then local ones are added
+        const globalSentences = globalData.commonSentences || [];
+        const localSentences = data.commonSentences || [];
+        rawCommonSentences = [...globalSentences, ...localSentences];
 
-        rawCommonSentences = data.commonSentences || [];
-        globalDropdownOptions = data.globalDropdownOptions || {};
+        // Merge dropdown options: local options override global options for the same key
+        const globalOptions = globalData.globalDropdownOptions || {};
+        const localOptions = data.localDropdownOptions || data.globalDropdownOptions || {};
+        globalDropdownOptions = { ...globalOptions, ...localOptions };
+
         defaultNarrativeSections = data.narrativeSections || [];
 
         // Assign stable IDs on defaultNarrativeSections so locks persist across resets
         assignInitialIDs(defaultNarrativeSections);
 
-        commonSentences = rawCommonSentences.map((s) => ({
-          original: s,
-          display: shortPlaceholderString(s),
-          searchable: expandedPlaceholderString(s),
-        }));
+        // Handle both old format (string) and new format (object with name/text)
+        commonSentences = rawCommonSentences.map((s) => {
+          const sentenceText = typeof s === 'string' ? s : s.text;
+          const sentenceName = typeof s === 'string' ? null : s.name;
+          return {
+            original: sentenceText,
+            display: shortPlaceholderString(sentenceText),
+            searchable: expandedPlaceholderString(sentenceText),
+            name: sentenceName
+          };
+        });
         fuse = new Fuse(commonSentences, fuseOptions);
 
         currentConfigName = configName;
@@ -394,7 +346,7 @@
         if (!isInitialLoad) {
           showConfirmationModal("Load Successful", `Configuration '${configName}' loaded successfully.`, "", () => { }, () => { }, true);
         }
-        console.log(`Configuration '${configName}' loaded.`);
+        if (DEBUG) console.log(`Configuration '${configName}' loaded.`);
       } catch (error) {
         console.error(`Failed to load or parse configuration '${filename}':`, error);
         showConfirmationModal("Load Error", `Could not load configuration '${configName}'. Please check the name and ensure the file exists. <br><small>(${error.message})</small>`, "", () => { }, () => { }, true);
@@ -457,14 +409,14 @@
             });
           }
 
-          console.log("Working state loaded from localStorage with locked sentences preserved.");
+          if (DEBUG) console.log("Working state loaded from localStorage with locked sentences preserved.");
         } catch (e) {
           console.error("Failed to parse saved state, using defaults from loaded config.", e);
           localStorage.removeItem(LOCAL_STORAGE_KEY);
           resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
         }
       } else {
-        console.log("No saved working state found, using defaults from loaded config.");
+        if (DEBUG) console.log("No saved working state found, using defaults from loaded config.");
         resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
       }
       sentenceIdCounter = findHighestSentenceId(narrativeSections) + 1;
@@ -497,7 +449,7 @@
         })
       );
 
-      console.log(`Resetting to defaults for config: ${currentConfigName}`);
+      if (DEBUG) console.log(`Resetting to defaults for config: ${currentConfigName}`);
       narrativeSections = JSON.parse(JSON.stringify(defaultNarrativeSections));
       assignInitialIDs(narrativeSections); // IDs preserved from defaultNarrativeSections, so lockedIDs now match
 
@@ -576,7 +528,7 @@
 
     // Add dark mode initialization function
     function initializeDarkMode() {
-      console.log("Initializing dark mode...");
+      if (DEBUG) console.log("Initializing dark mode...");
       const darkModeToggle = document.getElementById('darkModeToggle');
 
       if (!darkModeToggle) {
@@ -612,10 +564,10 @@
         // Save preference to localStorage
         localStorage.setItem('darkMode', newTheme === 'dark');
 
-        console.log(`Theme switched to: ${newTheme}`);
+        if (DEBUG) console.log(`Theme switched to: ${newTheme}`);
       });
 
-      console.log("Dark mode initialization complete");
+      if (DEBUG) console.log("Dark mode initialization complete");
     }
 
     function findHighestSentenceId(sections) {
@@ -717,6 +669,102 @@
       // or attachAllEventListenersForElement() when adding single items.
     }
 
+    function createQuickAddButtons(partLabel) {
+      // Find the default section to get QuickSentence placeholders
+      // (use defaultNarrativeSections, not the runtime narrativeSections)
+      const defaultSection = defaultNarrativeSections.find(s => s.part === partLabel);
+      if (!defaultSection || !defaultSection.sentences) {
+        return null;
+      }
+      
+      // Find all QuickSentence placeholders in this section's default sentences
+      const quickSentenceNames = [];
+      defaultSection.sentences.forEach((s, index) => {
+        if (s.QuickSentence) {
+          quickSentenceNames.push({ name: s.QuickSentence, index: index });
+        }
+      });
+      
+      if (quickSentenceNames.length === 0) {
+        return null;
+      }
+      
+      const container = document.createElement("div");
+      container.classList.add("quick-add-container");
+      
+      quickSentenceNames.forEach(qs => {
+        // Find the matching common sentence by name
+        const sentence = commonSentences.find(s => s.name && s.name.toLowerCase() === qs.name.toLowerCase());
+        if (!sentence) {
+          console.warn(`QuickSentence "${qs.name}" not found in common sentences`);
+          return;
+        }
+        
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.classList.add("btn", "btn-sm", "btn-outline-secondary", "quick-add-btn");
+        btn.textContent = sentence.name || sentence.display.substring(0, 20) + "...";
+        btn.title = sentence.display;
+        btn.dataset.sentenceText = sentence.original;
+        btn.dataset.section = partLabel;
+        btn.dataset.quickSentenceName = qs.name;
+        
+        btn.addEventListener("click", () => {
+          handleQuickAddSentence(partLabel, sentence.original, qs.name);
+        });
+        
+        container.appendChild(btn);
+      });
+      
+      return container;
+    }
+
+    function handleQuickAddSentence(partLabel, sentenceText, quickSentenceName) {
+      // Create a sentence object from the text
+      const sentenceData = { text: sentenceText };
+      
+      // Find the position of the QuickSentence placeholder in defaultNarrativeSections
+      // (not narrativeSections, which may have been modified by user actions)
+      const defaultSection = defaultNarrativeSections.find(s => s.part === partLabel);
+      if (!defaultSection || !defaultSection.sentences) {
+        addSentence(partLabel, sentenceData);
+        return;
+      }
+      
+      // Find the index of the QuickSentence placeholder in the defaults
+      const placeholderIndex = defaultSection.sentences.findIndex(s => 
+        s.QuickSentence && s.QuickSentence.toLowerCase() === quickSentenceName.toLowerCase()
+      );
+      
+      if (placeholderIndex === -1) {
+        // Placeholder not found in defaults, add to end
+        addSentence(partLabel, sentenceData);
+        return;
+      }
+      
+      // Now find where to insert in the runtime narrativeSections
+      // Count how many non-QuickSentence items come before this placeholder in defaults
+      let targetPosition = 0;
+      for (let i = 0; i < placeholderIndex; i++) {
+        if (!defaultSection.sentences[i].QuickSentence) {
+          targetPosition++;
+        }
+      }
+      
+      // Find the corresponding position in the runtime section
+      const section = narrativeSections.find(s => s.part === partLabel);
+      if (!section) {
+        addSentence(partLabel, sentenceData);
+        return;
+      }
+      
+      if (!section.sentences) section.sentences = [];
+      
+      // Insert at the target position (or at end if position is beyond current length)
+      const insertIndex = Math.min(targetPosition, section.sentences.length);
+      addSentenceAtIndex(partLabel, sentenceData, insertIndex);
+    }
+
     function createSectionElement(secObj) {
       const sectionDiv = document.createElement("div");
       sectionDiv.classList.add("narrative-section");
@@ -750,6 +798,13 @@
         titleWrapper.setAttribute('title', secObj.tooltip);
       }
       header.appendChild(titleWrapper);
+
+      // Create quick-add buttons for QuickSentence placeholders in this section (inline with header)
+      const quickAddContainer = createQuickAddButtons(secObj.part);
+      if (quickAddContainer) {
+        header.appendChild(quickAddContainer);
+      }
+
       sectionDiv.appendChild(header);
 
       const ul = document.createElement("ul");
@@ -757,6 +812,10 @@
       ul.dataset.part = secObj.part; // For SortableJS group identification
       if (secObj.sentences) {
         secObj.sentences.forEach(sentenceObj => {
+          // Skip QuickSentence placeholders - they are just markers for button placement
+          if (sentenceObj.QuickSentence) {
+            return;
+          }
           ul.appendChild(createSentenceElement(sentenceObj, secObj.part));
         });
       }
@@ -894,7 +953,7 @@
 
         // Check if already in edit mode
         if (contentDiv.classList.contains('editing')) {
-          console.log('Sentence is already in edit mode');
+          if (DEBUG) console.log('Sentence is already in edit mode');
           return;
         }
 
@@ -1343,7 +1402,7 @@
       initializeSentenceValues(sentenceData); // Ensure values are initialized
       if (!section.sentences) section.sentences = [];
       section.sentences.push(sentenceData);
-      console.log(`Sentence added: ${sentenceData.id} to ${partLabel}`);
+      if (DEBUG) console.log(`Sentence added: ${sentenceData.id} to ${partLabel}`);
 
       const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
       if (ul) {
@@ -1362,6 +1421,49 @@
       saveState();
     }
 
+    function addSentenceAtIndex(partLabel, sentenceData, index) {
+      const section = narrativeSections.find(s => s.part === partLabel);
+      if (!section) { console.error(`Section ${partLabel} not found.`); return; }
+
+      sentenceData.id = "sentence-" + sentenceIdCounter++;
+      initializeSentenceValues(sentenceData);
+      if (!section.sentences) section.sentences = [];
+      
+      // Insert at the specified index (clamped to valid range)
+      const insertIndex = Math.min(index, section.sentences.length);
+      section.sentences.splice(insertIndex, 0, sentenceData);
+      if (DEBUG) console.log(`Sentence added at index ${insertIndex}: ${sentenceData.id} to ${partLabel}`);
+
+      const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
+      if (ul) {
+        const li = createSentenceElement(sentenceData, partLabel);
+        
+        // Get direct children only (not nested li elements)
+        const existingItems = ul.children;
+        
+        // Safely insert at the correct position
+        if (existingItems.length > 0 && insertIndex < existingItems.length) {
+          const referenceNode = existingItems[insertIndex];
+          if (referenceNode && referenceNode.parentNode === ul) {
+            ul.insertBefore(li, referenceNode);
+          } else {
+            ul.appendChild(li);
+          }
+        } else {
+          ul.appendChild(li);
+        }
+        
+        attachAllEventListenersForElement(li);
+        adjustAllInitialSizesForElement(li);
+        li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        buildSectionsUI();
+        attachAllEventListeners();
+        adjustAllInitialSizes();
+      }
+      saveState();
+    }
+
     function removeSentence(partLabel, sentenceId) {
       const section = narrativeSections.find(s => s.part === partLabel);
       if (!section || !section.sentences) return;
@@ -1369,11 +1471,11 @@
       const index = section.sentences.findIndex(s => s.id === sentenceId);
       if (index > -1) {
         section.sentences.splice(index, 1);
-        console.log(`Sentence data removed: ${sentenceId}`);
+        if (DEBUG) console.log(`Sentence data removed: ${sentenceId}`);
         const li = document.querySelector(`li[data-id="${sentenceId}"]`);
         if (li) {
           li.remove();
-          console.log(`Sentence DOM element removed: ${sentenceId}`);
+          if (DEBUG) console.log(`Sentence DOM element removed: ${sentenceId}`);
         } else { // Fallback if DOM element somehow not found
           buildSectionsUI();
           attachAllEventListeners();
@@ -1396,7 +1498,7 @@
       // Check if currently in edit mode - prevent tab switching
       const contentDiv = li.querySelector('.sentence-content');
       if (contentDiv && contentDiv.classList.contains('editing')) {
-        console.log('Cannot switch tabs while editing. Please save or cancel your changes first.');
+        if (DEBUG) console.log('Cannot switch tabs while editing. Please save or cancel your changes first.');
         showConfirmationModal(
           "Edit in Progress",
           "Please save or cancel your current changes before switching tabs.",
@@ -1409,7 +1511,7 @@
       }
 
       sentenceObj.activeTabIndex = tabIndex;
-      console.log(`Switched to tab ${tabIndex} for sentence ${sentenceId}`);
+      if (DEBUG) console.log(`Switched to tab ${tabIndex} for sentence ${sentenceId}`);
 
       if (li) {
         // Update tab button active states
@@ -1514,7 +1616,7 @@
       }
       
       if (valueChanged) {
-        console.log(`Value saved for ${sentenceId} - ${label}: ${value}`);
+        if (DEBUG) console.log(`Value saved for ${sentenceId} - ${label}: ${value}`);
         saveState();
         
         // Remove placeholder check on blur - only check when generating text
@@ -1650,19 +1752,19 @@
             }).join("");
             return `
             <div class="custom-dropdown">
-              <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>
+              <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off" autocapitalize="off"/>
               <div class="suggestions">
                 <ul class="list-group">${listItems}</ul>
               </div>
             </div>`;
           case "text":
             // Keep the original value (with \n) for the input field
-            return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+            return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocapitalize="off"/>`;
           case "number":
-            return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+            return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocapitalize="off"/>`;
           case "dropdown":
             console.warn(`Standard 'dropdown' type encountered for [${label}]. Consider using 'customDropdown' for richer features or ensure specific handling is implemented if needed.`);
-            return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>`;
+            return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off" autocapitalize="off"/>`;
           default:
             console.warn(`Unknown placeholder type: ${type} for label: ${label}`);
             return match;
@@ -1704,7 +1806,7 @@
       const toPartLabel = toListEl.dataset.part;
       const fromPartLabel = fromListEl.dataset.part;
 
-      console.log(`Sentence ${sentenceId} moved from ${fromPartLabel}[${oldIndex}] to ${toPartLabel}[${newIndex}]`);
+      if (DEBUG) console.log(`Sentence ${sentenceId} moved from ${fromPartLabel}[${oldIndex}] to ${toPartLabel}[${newIndex}]`);
 
       // Find the sentence object in our JavaScript data
       const fromSection = narrativeSections.find(s => s.part === fromPartLabel);
@@ -2106,6 +2208,28 @@
       }
     });
 
+    // --- Validate Button ---
+    document.getElementById("validateBtn").addEventListener("click", () => {
+      storeAllInlineValues(); // Capture all current input values
+      
+      const hasEmptyFields = checkForEmptyPlaceholders();
+      const hasUnaddedSentences = checkForUnaddedSentences();
+      
+      showPlaceholderWarning(hasEmptyFields);
+      showUnaddedSentenceWarning(hasUnaddedSentences);
+      
+      if (!hasEmptyFields && !hasUnaddedSentences) {
+        showConfirmationModal(
+          "Validation Passed",
+          "All fields are filled and all sentences have been added.",
+          "",
+          () => {},
+          () => {},
+          true // single button (OK)
+        );
+      }
+    });
+
     /**
      * Generates the final text with information about locked sentences
      * @returns {Array} [finalText, hasLockedSentences, lockedSectionsInfo, lockedSentencesCount]
@@ -2244,7 +2368,7 @@
       });
       
       if (receivingFacilities.size > 0) {
-        console.log(`Tracked ${receivingFacilities.size} unique receiving facilities:`, Array.from(receivingFacilities));
+        if (DEBUG) console.log(`Tracked ${receivingFacilities.size} unique receiving facilities:`, Array.from(receivingFacilities));
       }
     }
 
@@ -2272,13 +2396,13 @@
         
         if (response.ok) {
           const result = await response.json();
-          console.log(`Successfully tracked facility: ${facilityName}`, result);
+          if (DEBUG) console.log(`Successfully tracked facility: ${facilityName}`, result);
         } else {
-          console.warn('Failed to track facility: ${facilityName. Status: ${response.status}');
+          console.warn(`Failed to track facility: ${facilityName}. Status: ${response.status}`);
         }
       } catch (error) {
         // Fail silently for tracking - don't interrupt user experience
-        console.warn('Error tracking facility "${facilityName}":', error);
+        console.warn(`Error tracking facility "${facilityName}":`, error);
       }
     }
 
@@ -2398,13 +2522,13 @@
         return;
       }
       navigator.clipboard.writeText("\u200B" + textToCopy).then(() => {
-        console.log("Text copied to clipboard.");
+        if (DEBUG) console.log("Text copied to clipboard.");
         showConfirmationModal("Copied to Clipboard",
           "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
           // Fix: Use HTML for disclaimer to properly render the <br> tag
           "<span>Paste your narrative first,</span><br><span>unlocked sentences will be reset to their default values.</span>",
           () => {
-            console.log("Final narrative area cleared after copy and confirmation.");
+            if (DEBUG) console.log("Final narrative area cleared after copy and confirmation.");
             // Clear the final text area
             finalTextArea.value = '';
             // Reset all sentences to current config defaults
@@ -2441,17 +2565,49 @@
           // Check for empty values in regular sentences
           if (!sentenceObj.tabs) {
             const text = sentenceObj.text || "";
-            const values = sentenceObj.values || {};
+            const isIncremental = text.startsWith('+') || text.startsWith('++');
             
-            // Find all placeholders in the text
-            const placeholderMatches = [...text.matchAll(placeholderRegex)];
-            placeholderMatches.forEach(match => {
-              const label = match[2]; // The label is the second capture group
-              const value = values[label];
-              if (!value || value.trim() === '') {
-                hasEmptyFields = true;
-              }
-            });
+            if (isIncremental) {
+              // For incremental sentences, check incrementalValues
+              const incrementalValues = sentenceObj.incrementalValues || {};
+              const incrementCount = sentenceObj.incrementCount || 1;
+              
+              // Process the text to expand it based on increment count
+              const expandedText = processIncrementalText(text, incrementCount);
+              
+              // Find all placeholders in the expanded text
+              const placeholderMatches = [...expandedText.matchAll(placeholderRegex)];
+              
+              // Track how many times we've seen each label
+              const labelCounts = {};
+              
+              placeholderMatches.forEach(match => {
+                const label = match[2]; // The label is the second capture group
+                if (!labelCounts[label]) labelCounts[label] = 0;
+                const index = labelCounts[label];
+                labelCounts[label]++;
+                
+                // Check if this specific instance has a value
+                const valuesArray = incrementalValues[label] || [];
+                const value = valuesArray[index];
+                if (!value || value.trim() === '') {
+                  hasEmptyFields = true;
+                }
+              });
+            } else {
+              // Regular non-incremental sentence
+              const values = sentenceObj.values || {};
+              
+              // Find all placeholders in the text
+              const placeholderMatches = [...text.matchAll(placeholderRegex)];
+              placeholderMatches.forEach(match => {
+                const label = match[2]; // The label is the second capture group
+                const value = values[label];
+                if (!value || value.trim() === '') {
+                  hasEmptyFields = true;
+                }
+              });
+            }
           } else {
             // For tabbed sentences, only check the ACTIVE tab
             const activeTabIndex = sentenceObj.activeTabIndex || 0;
@@ -2499,21 +2655,52 @@
           // Check for empty values in regular sentences
           if (!sentenceObj.tabs) {
             const text = sentenceObj.text || "";
-            const values = sentenceObj.values || {};
+            const isIncremental = text.startsWith('+') || text.startsWith('++');
             
-            // Find all placeholders in the text
-            const placeholderMatches = [...text.matchAll(placeholderRegex)];
-            placeholderMatches.forEach(match => {
-              const label = match[2]; // The label is the second capture group
-              const value = values[label];
-              if (!value || value.trim() === '') {
-                // Find and highlight the corresponding input field
-                const field = li.querySelector(`.inline-field[data-label="${label}"]:not(.tab-pane .inline-field)`);
-                if (field) {
-                  field.classList.add('empty-field');
+            if (isIncremental) {
+              // For incremental sentences, check incrementalValues and highlight ALL empty fields
+              const incrementalValues = sentenceObj.incrementalValues || {};
+              
+              // Get all inline fields in this sentence, grouped by label
+              const allFields = li.querySelectorAll(`.sentence-content .inline-field[data-label]`);
+              const fieldsByLabel = {};
+              
+              allFields.forEach((field, index) => {
+                const label = field.dataset.label;
+                if (!fieldsByLabel[label]) fieldsByLabel[label] = [];
+                fieldsByLabel[label].push(field);
+              });
+              
+              // Check each field instance
+              Object.keys(fieldsByLabel).forEach(label => {
+                const fields = fieldsByLabel[label];
+                const valuesArray = incrementalValues[label] || [];
+                
+                fields.forEach((field, index) => {
+                  const value = valuesArray[index];
+                  if (!value || value.trim() === '') {
+                    field.classList.add('empty-field');
+                  }
+                });
+              });
+            } else {
+              // Regular non-incremental sentence
+              const values = sentenceObj.values || {};
+              
+              // Find all placeholders in the text
+              const placeholderMatches = [...text.matchAll(placeholderRegex)];
+              placeholderMatches.forEach(match => {
+                const label = match[2]; // The label is the second capture group
+                const value = values[label];
+                if (!value || value.trim() === '') {
+                  // Find and highlight the corresponding input field
+                  const field = li.querySelector(`.inline-field[data-label="${label}"]:not(.tab-pane .inline-field)`);
+                  if (field) {
+                    field.classList.add('empty-field');
+                  }
                 }
-              }
-            });
+              });
+            }
           } else {
             // For tabbed sentences, only check the ACTIVE tab
             const activeTabIndex = sentenceObj.activeTabIndex || 0;
@@ -2631,58 +2818,6 @@
       } else {
         warningContainer.style.display = "none";
       }
-    }
-
-    /**
-     * Simple debounce function to limit how often a function is called
-     */
-    function debounce(func, wait) {
-      let timeout;
-      return function () {
-        const context = this;
-        const args = arguments;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), wait);
-      };
-    }
-
-    // --- UI Building for Final Text Generation ---
-    function renderSectionText(section) {
-      let sectionText = "";
-      let sectionHasContent = false;
-      const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
-
-      section.sentences.forEach(sentenceObj => {
-        let currentSentenceText = "";
-        // Determine if it's a tabbed sentence or regular
-        if (sentenceObj.tabs?.length) {
-          const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex];
-          if (!activeTab) return; // Skip if no active tab somehow
-          const tabValues = sentenceObj.tabValues[sentenceObj.activeTabIndex] || {};
-          currentSentenceText = (activeTab.text || "").replace(placeholderRegex, (match, type, label) => {
-            return (tabValues[label] || "").trim() || `[${label}]`; // Use placeholder if value is empty
-          });
-        } else { // Regular sentence
-          const values = sentenceObj.values || {};
-          currentSentenceText = (sentenceObj.text || "").replace(placeholderRegex, (match, type, label) => {
-            return (values[label] || "").trim() || `[${label}]`; // Use placeholder if value is empty
-          });
-        }
-        // Clean up and add to section text
-        currentSentenceText = currentSentenceText.replace(/<br\s*\/?>/gi, "").replace(/\s+/g, ' ').trim();
-        if (currentSentenceText) {
-          sectionText += currentSentenceText + " ";
-          sectionHasContent = true;
-        }
-      });
-
-      if (sectionHasContent) {
-        if (section.includeTitle && includeSectionTitles) {
-          sectionText = section.part + ":\n" + sectionText.trim();
-        }
-        return sectionText.trim() + "\n\n";
-      }
-      return "";
     }
 
     // --- Utility Functions ---
@@ -2870,13 +3005,13 @@
           }
         });
       });
-      console.log(`Unlocked ${unlockedCount} sentences`);
+      if (DEBUG) console.log(`Unlocked ${unlockedCount} sentences`);
       saveState(); // Save the unlocked state
     }
 
     // Bug Report initialization function
     function initializeBugReport() {
-      console.log("Initializing bug report functionality...");
+      if (DEBUG) console.log("Initializing bug report functionality...");
       const bugReportBtn = document.getElementById('bugReportBtn');
       const bugReportModalEl = document.getElementById('bugReportModal');
 
@@ -2939,7 +3074,7 @@
         });
       }
 
-      console.log("Bug report functionality initialized.");
+      if (DEBUG) console.log("Bug report functionality initialized.");
     }
   </script>
 </body>
