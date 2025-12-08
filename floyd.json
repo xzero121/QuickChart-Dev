@@ -163,6 +163,7 @@
         {
           "text": "Primary assessment findings, documented in the assessment section, revealed [text:Assessment Status]."
         },
+        { "QuickSentence": "IV Access" },
         { "QuickSentence": "Skin Assessment" },
         { "QuickSentence": "Lung Assessment" },
         { "QuickSentence": "Vitals Assessment" },
