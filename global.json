@@ -34,7 +34,7 @@
     },
     {
       "name": "Skin Assessment",
-      "text": "The patient skin was assessed as [customDropdown:Skin Appearance:warm, pink, and dry]."
+      "text": "The patient skin was assessed as [customDropdown:Skin Appearance:'warm, pink, and dry']."
     },
     {
       "name": "Lung Assessment",
@@ -119,6 +119,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
