@@ -347,11 +347,11 @@
             // Handle tabbed sentences
             if (s.tabs && Array.isArray(s.tabs)) {
               // For tabbed sentences, use the first tab's text for display/search
-              const firstTabText = s.tabs[0]?.text || '';
+              const firstTabText = s.tabs.length > 0 && s.tabs[0]?.text ? s.tabs[0].text : '';
               return {
                 originalObject: s, // Store the full object including tabs
                 original: firstTabText,
-                display: s.name || shortPlaceholderString(firstTabText),
+                display: s.name || (firstTabText ? shortPlaceholderString(firstTabText) : '(unnamed tab)'),
                 searchable: expandedPlaceholderString(firstTabText),
                 name: s.name,
                 hasTabs: true
