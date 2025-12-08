@@ -34,7 +34,7 @@
     },
     {
       "name": "Skin Assessment",
-      "text": "The patient skin was assessed as [customDropdown:Skin Appearance:'warm, pink, and dry']."
+      "text": "The patient's skin was assessed as [customDropdown:Skin Appearance]."
     },
     {
       "name": "Lung Assessment",
@@ -84,6 +84,7 @@
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
     "Mental Status": ["alert and oriented", "confused", "unresponsive", "altered level of consciousness"],
     "Method": ["sheet draw", "stand and pivot", "self ambulation"],
+    "Skin Assessment": ["warm, pink, and dry"],
     "Assistance Info": [
       "EMS Crew x1",
       "EMS Crew x2",
@@ -119,6 +120,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
