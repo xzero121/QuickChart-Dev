@@ -158,11 +158,14 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient's mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
+          "text": "The patient's mental status was assessed as [customDropdown:Mental Status], with an initial GCS of [text:Initial GCS], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
         },
         {
           "text": "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
         },
+        { "QuickSentence": "Skin Assessment" },
+        { "QuickSentence": "Lung Assessment" },
+        { "QuickSentence": "Vitals Assessment" },
         {
           "text": "Advanced Life Support (ALS) assessment was performed by [customDropdown:Provider]."
         },
