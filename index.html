@@ -329,9 +329,10 @@
 
         // Handle both old format (string) and new format (object with name/text)
         // Filter out invalid entries (e.g., objects with tabs but no text)
+        // Note: Objects with only 'tabs' property are not valid for commonSentences
         commonSentences = rawCommonSentences
           .filter((s) => {
-            // Keep strings and objects with text property
+            // Keep strings and objects with text property; exclude objects with only tabs
             return typeof s === 'string' || (s && s.text);
           })
           .map((s) => {
