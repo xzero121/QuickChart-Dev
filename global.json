@@ -82,7 +82,7 @@
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
-    "Mental Status": ["alert and oriented", "confused", "unresponsive", "Altered Level of Consciousness"],
+    "Mental Status": ["alert and oriented", "confused", "unresponsive", "altered level of consciousness"],
     "Method": ["sheet draw", "stand and pivot", "self ambulation"],
     "Assistance Info": [
       "EMS Crew x1",
@@ -119,6 +119,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
