@@ -33,13 +33,13 @@
       "text": "+During transport, the patient was administered the following medications: [+\\n[text:Dosage] of [customDropdown:Medication] via [text:Route] at [text:Time]] \\nby [customDropdown:Provider] due to [text:Reason for Medication]. The patient [customDropdown:Medication Response:responded well,had no response,had an adverse reaction] to the medications."
     },
       "name": "Skin Assessment",
-      "text": "The patient skin was assessed as [customDropdown:Skin Appearance:"warm, pink, and dry"]."
+      "text": "The patient skin was assessed as [customDropdown:Skin Appearance:warm, pink, and dry]."
     },
       "name": "Lung Assessment",
-      "text": "The patient's lung sounds were assessed as [customDropdown:Lung Sound Assessment:"clear and equal bilaterally"], and breathing was [customDropdown:Breathing:normal and non-labored]."
+      "text": "The patient's lung sounds were assessed as [customDropdown:Lung Sound Assessment:clear and equal bilaterally], and breathing was [customDropdown:Breathing:normal and non-labored]."
     },
       "name": "Vitals Assessment",
-      "text": "The patient's vitals noted as [customDropdown:Vitals:"Within Normal Limits"]."
+      "text": "The patient's vitals noted as [customDropdown:Vitals:Within Normal Limits]."
     }
   ],
   "globalDropdownOptions": {
@@ -116,4 +116,5 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
