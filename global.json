@@ -6,7 +6,7 @@
     },
     {
       "name": "Ventilator",
-      "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], and tidal volume [text:Tidal Volume]."
+      "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], ETco2 [text:ETco2], and tidal volume [text:Tidal Volume]."
     },
     {
       "name": "O2 Therapy",
@@ -31,6 +31,15 @@
     {
       "name": "Meds Administered",
       "text": "+During transport, the patient was administered the following medications: [+\\n[text:Dosage] of [customDropdown:Medication] via [text:Route] at [text:Time]] \\nby [customDropdown:Provider] due to [text:Reason for Medication]. The patient [customDropdown:Medication Response:responded well,had no response,had an adverse reaction] to the medications."
+    },
+      "name": "Skin Assessment",
+      "text": "The patient skin was assessed as [customDropdown:Skin Appearance:"warm, pink, and dry"]."
+    },
+      "name": "Lung Assessment",
+      "text": "The patient's lung sounds were assessed as [customDropdown:Lung Sound Assessment:"clear and equal bilaterally"], and breathing was [customDropdown:Breathing:normal and non-labored]."
+    },
+      "name": "Vitals Assessment",
+      "text": "The patient's vitals noted as [customDropdown:Vitals:"Within Normal Limits"]."
     }
   ],
   "globalDropdownOptions": {
@@ -70,7 +79,7 @@
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
-    "Mental Status": ["alert and oriented", "confused"],
+    "Mental Status": ["alert and oriented", "confused", "unresponsive", "Altered Level of Consciousness"],
     "Method": ["sheet draw", "stand and pivot", "self ambulation"],
     "Assistance Info": [
       "EMS Crew x1",
@@ -107,3 +116,4 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
