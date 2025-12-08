@@ -188,7 +188,7 @@
         { "QuickSentence": "GCS" },
         { "QuickSentence": "Ventilator" },
         { "QuickSentence": "O2 Therapy" },
-        { "QuickSentence": "IV Placement" },
+        { "QuickSentence": "IV Access" },
         { "QuickSentence": "Cardiac Monitor" },
         {
           "tabs": [
