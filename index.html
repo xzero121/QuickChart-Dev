@@ -760,12 +760,12 @@
       let sentenceData;
       
       // Handle tabbed sentences
-      if (sentence.hasTabs && sentence.originalObject) {
+      if (sentence && sentence.hasTabs && sentence.originalObject) {
         // Clone the original object with tabs
         sentenceData = JSON.parse(JSON.stringify(sentence.originalObject));
       } else {
         // Regular sentence with text
-        const sentenceText = typeof sentence === 'string' ? sentence : sentence.original;
+        const sentenceText = typeof sentence === 'string' ? sentence : (sentence && sentence.original) || '';
         sentenceData = { text: sentenceText };
       }
       
