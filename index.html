@@ -328,16 +328,23 @@
         assignInitialIDs(defaultNarrativeSections);
 
         // Handle both old format (string) and new format (object with name/text)
-        commonSentences = rawCommonSentences.map((s) => {
-          const sentenceText = typeof s === 'string' ? s : s.text;
-          const sentenceName = typeof s === 'string' ? null : s.name;
-          return {
-            original: sentenceText,
-            display: shortPlaceholderString(sentenceText),
-            searchable: expandedPlaceholderString(sentenceText),
-            name: sentenceName
-          };
-        });
+        // Filter out invalid entries (e.g., objects with tabs but no text)
+        // Note: Objects with only 'tabs' property are not valid for commonSentences
+        commonSentences = rawCommonSentences
+          .filter((s) => {
+            // Keep strings and objects with text property; exclude objects with only tabs
+            return typeof s === 'string' || (s && s.text);
+          })
+          .map((s) => {
+            const sentenceText = typeof s === 'string' ? s : s.text;
+            const sentenceName = typeof s === 'string' ? null : s.name;
+            return {
+              original: sentenceText,
+              display: shortPlaceholderString(sentenceText),
+              searchable: expandedPlaceholderString(sentenceText),
+              name: sentenceName
+            };
+          });
         fuse = new Fuse(commonSentences, fuseOptions);
 
         currentConfigName = configName;
@@ -620,6 +627,10 @@
 
     // --- String Manipulation Helpers ---
     function shortPlaceholderString(sentence) {
+      // Handle undefined or null sentences
+      if (!sentence) {
+        return '';
+      }
       // Remove leading + or ++ for display purposes
       let cleanSentence = sentence;
       if (sentence.startsWith('++')) {
@@ -636,6 +647,10 @@
     }
     
     function expandedPlaceholderString(sentence) {
+      // Handle undefined or null sentences
+      if (!sentence) {
+        return '';
+      }
       // Remove leading + or ++ for search purposes
       let cleanSentence = sentence;
       if (sentence.startsWith('++')) {
