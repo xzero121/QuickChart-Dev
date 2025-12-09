@@ -52,6 +52,14 @@
     {
       "name": "Vitals Assessment",
       "text": "The patient's vitals noted as [customDropdown:Vitals:Within Normal Limits]."
+    },
+    {
+      "name": "PTA Medications",
+      "text": "+Prior to EMS arrival the patient received the following medications [+\\n[text:Dosage] of [customDropdown:Medication] via [text:Route]]"
+    },
+    {
+      "name": "PTA Treatments",
+      "text": "+Prior to EMS arrival the patient received the following treatments: [+\\n[text:Treatment]]"
     }
   ],
   "globalDropdownOptions": {
@@ -129,6 +137,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
