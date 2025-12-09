@@ -636,9 +636,9 @@
           sentenceObj.tabIncrementCounts = sentenceObj.tabs.map((tab) => {
             const tabText = tab.text || "";
             if (tabText.startsWith('+') || tabText.startsWith('++')) {
-              return 1;
+              return 1; // Start at 1 for incremental tabs
             }
-            return undefined;
+            return 0; // Use 0 for non-incremental tabs (will be filtered out)
           });
         }
       } else { // Initialize for non-tabbed sentences
@@ -988,8 +988,11 @@
       
       // Process incremental text if needed
       if (isTabIncremental) {
-        const tabIncrementCount = sentenceObj.tabIncrementCounts?.[tabIndex] || 1;
-        tabContent = processIncrementalText(tabContent, tabIncrementCount);
+        const tabIncrementCount = sentenceObj.tabIncrementCounts?.[tabIndex];
+        // Only process if we have a valid count > 0
+        if (tabIncrementCount && tabIncrementCount > 0) {
+          tabContent = processIncrementalText(tabContent, tabIncrementCount);
+        }
       }
       
       // Convert \n to <br> BEFORE calling buildInlineFields
@@ -1189,12 +1192,17 @@
       // Determine if this is a tabbed sentence
       const isTabbed = sentenceObj.tabs && Array.isArray(sentenceObj.tabs);
       
-      // Get the current increment count
-      let currentCount;
+      // Get the current increment count and check if incremental
+      let currentCount = 1;
+      let isCurrentTabIncremental = false;
+      
       if (isTabbed) {
         const activeTabIndex = sentenceObj.activeTabIndex || 0;
+        const activeTabText = sentenceObj.tabs[activeTabIndex]?.text || "";
+        isCurrentTabIncremental = activeTabText.startsWith('+') || activeTabText.startsWith('++');
         currentCount = sentenceObj.tabIncrementCounts?.[activeTabIndex] || 1;
       } else {
+        isCurrentTabIncremental = true; // Non-tabbed incremental sentence
         currentCount = sentenceObj.incrementCount || 1;
       }
       
@@ -1206,6 +1214,10 @@
       decrementBtn.addEventListener('click', () => {
         if (isTabbed) {
           const activeTabIndex = sentenceObj.activeTabIndex || 0;
+          const activeTabText = sentenceObj.tabs[activeTabIndex]?.text || "";
+          const isIncremental = activeTabText.startsWith('+') || activeTabText.startsWith('++');
+          if (!isIncremental) return; // Don't allow decrement for non-incremental tabs
+          
           const currentTabCount = sentenceObj.tabIncrementCounts[activeTabIndex] || 1;
           if (currentTabCount > 1) {
             sentenceObj.tabIncrementCounts[activeTabIndex]--;
@@ -1232,6 +1244,10 @@
       incrementBtn.addEventListener('click', () => {
         if (isTabbed) {
           const activeTabIndex = sentenceObj.activeTabIndex || 0;
+          const activeTabText = sentenceObj.tabs[activeTabIndex]?.text || "";
+          const isIncremental = activeTabText.startsWith('+') || activeTabText.startsWith('++');
+          if (!isIncremental) return; // Don't allow increment for non-incremental tabs
+          
           sentenceObj.tabIncrementCounts[activeTabIndex] = (sentenceObj.tabIncrementCounts[activeTabIndex] || 1) + 1;
           updateIncrementalSentence(sentenceObj, partLabel);
         } else {
@@ -1713,8 +1729,12 @@
         // Update increment controls count display if they exist
         const countDisplay = li.querySelector('.increment-count');
         if (countDisplay && sentenceObj.tabIncrementCounts) {
-          const newCount = sentenceObj.tabIncrementCounts[tabIndex] || 1;
-          countDisplay.textContent = newCount;
+          const newTabText = sentenceObj.tabs[tabIndex]?.text || "";
+          const isNewTabIncremental = newTabText.startsWith('+') || newTabText.startsWith('++');
+          if (isNewTabIncremental) {
+            const newCount = sentenceObj.tabIncrementCounts[tabIndex] || 1;
+            countDisplay.textContent = newCount;
+          }
         }
       } else { // Fallback if sentence <li> not found
         buildSectionsUI();
