@@ -100,6 +100,8 @@
         {
           "text": "The response was [customDropdown:Response Type]."
         },
+        { "QuickSentence": "PTA Medications" },
+        { "QuickSentence": "PTA Treatments" },
         {
           "text": "Upon arrival, the patient’s condition was [customDropdown:Initial Condition:stable,stable and within normal limits]."
         },
