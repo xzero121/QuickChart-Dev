@@ -97,7 +97,7 @@
       "*10% Dextrose in Water (D10W)"
     ],
     "Gender": ["Male", "Female"],
-    "Response Type": ["emergent", "non-emergent"],
+    "Response Type": ["emergent", "immediate", "non-immediate"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
     "Mental Status": ["alert and oriented", "confused", "unresponsive", "altered level of consciousness"],
     "Method": ["sheet draw", "stand and pivot", "self ambulation"],
@@ -137,6 +137,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
