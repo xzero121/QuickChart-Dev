@@ -8,14 +8,18 @@
           "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] prior to EMS arrival."
         },
         {
+          "title": "Central Line Monitoring",
+          "text": "The patient had a [customDropdown:PICC, Midline, Central Line, Femoral Line] placed in the [customDropdown:IV Location:left arm,right arm]] prior to EMS arrival."
+        },
+        {
           "title": "IV Placement",
-          "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] at [text:Time]."
+          "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] at [text:Time] by [customDropdown:Provider]."
         }
       ]
     },
     {
       "name": "Ventilator",
-      "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], ETco2 [text:ETco2], and tidal volume [text:Tidal Volume]."
+      "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], EtCO2 [text:ETco2], and tidal volume [text:Tidal Volume]."
     },
     {
       "name": "O2 Therapy",
@@ -60,6 +64,19 @@
     {
       "name": "PTA Treatments",
       "text": "+Prior to EMS arrival the patient received the following treatments: [+\\n[text:Treatment]]"
+    },
+    {
+      "name": "ET Tube",
+      "tabs": [
+        {
+          "title": "PTA Intubation",
+          "text": "Prior to EMS transport the patient was intubated, the ET tube was [text:ET Tube Info]"
+        },
+        {
+          "title": "EMS Intubation",
+          "text": ""
+        }
+      ]
     }
   ],
   "globalDropdownOptions": {
@@ -101,7 +118,7 @@
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
     "Mental Status": ["alert and oriented", "confused", "unresponsive", "altered level of consciousness"],
     "Method": ["sheet draw", "stand and pivot", "self ambulation"],
-    "Skin Assessment": ["warm, pink, and dry"],
+    "Skin Appearance": ["warm, pink, and dry"],
     "Assistance Info": [
       "EMS Crew x1",
       "EMS Crew x2",
@@ -137,6 +154,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
