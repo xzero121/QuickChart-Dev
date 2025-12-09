@@ -1762,10 +1762,38 @@
 
       if (tabPane) { // Value is within a tab
         const tabIndex = parseInt(tabPane.dataset.tabIndex);
-        if (!isNaN(tabIndex) && sentenceObj.tabValues?.[tabIndex]) {
-          if (sentenceObj.tabValues[tabIndex][label] !== value) {
-            sentenceObj.tabValues[tabIndex][label] = value;
-            valueChanged = true;
+        if (!isNaN(tabIndex)) {
+          // Check if this tab has incremental text
+          const tabText = sentenceObj.tabs?.[tabIndex]?.text || "";
+          const isTabIncremental = tabText.startsWith('+') || tabText.startsWith('++');
+          
+          if (isTabIncremental) {
+            // For incremental tabs, store values as arrays in tabIncrementalValues
+            const allFieldsWithSameLabel = tabPane.querySelectorAll(`.inline-field[data-label="${label}"]`);
+            const fieldIndex = Array.from(allFieldsWithSameLabel).indexOf(field);
+            
+            if (!sentenceObj.tabIncrementalValues) {
+              sentenceObj.tabIncrementalValues = sentenceObj.tabs.map(() => ({}));
+            }
+            if (!sentenceObj.tabIncrementalValues[tabIndex]) {
+              sentenceObj.tabIncrementalValues[tabIndex] = {};
+            }
+            if (!sentenceObj.tabIncrementalValues[tabIndex][label]) {
+              sentenceObj.tabIncrementalValues[tabIndex][label] = [];
+            }
+            
+            if (sentenceObj.tabIncrementalValues[tabIndex][label][fieldIndex] !== value) {
+              sentenceObj.tabIncrementalValues[tabIndex][label][fieldIndex] = value;
+              valueChanged = true;
+            }
+          } else {
+            // Regular non-incremental tab
+            if (sentenceObj.tabValues?.[tabIndex]) {
+              if (sentenceObj.tabValues[tabIndex][label] !== value) {
+                sentenceObj.tabValues[tabIndex][label] = value;
+                valueChanged = true;
+              }
+            }
           }
         }
       } else if (sentenceObj.values) { // Value is in a non-tabbed sentence
@@ -1821,16 +1849,57 @@
             sentenceObj.tabs.forEach((tab, tabIndex) => {
               const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
               if (!tabPane) return;
-              if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {}; // Should be initialized already
-
-              tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
-                const label = field.dataset.label;
-                const newValue = field.value;
-                if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
-                  sentenceObj.tabValues[tabIndex][label] = newValue;
-                  changesMade = true;
+              
+              // Check if this tab has incremental text
+              const tabText = tab.text || "";
+              const isTabIncremental = tabText.startsWith('+') || tabText.startsWith('++');
+              
+              if (isTabIncremental) {
+                // For incremental tabs, store values as arrays in tabIncrementalValues
+                if (!sentenceObj.tabIncrementalValues) {
+                  sentenceObj.tabIncrementalValues = sentenceObj.tabs.map(() => ({}));
                 }
-              });
+                if (!sentenceObj.tabIncrementalValues[tabIndex]) {
+                  sentenceObj.tabIncrementalValues[tabIndex] = {};
+                }
+                
+                // Group fields by label
+                const fieldsByLabel = {};
+                tabPane.querySelectorAll(".inline-field[data-label]").forEach((field) => {
+                  const label = field.dataset.label;
+                  if (!fieldsByLabel[label]) {
+                    fieldsByLabel[label] = [];
+                  }
+                  fieldsByLabel[label].push(field.value);
+                });
+                
+                // Store the values in tabIncrementalValues
+                Object.keys(fieldsByLabel).forEach(label => {
+                  const currentValues = sentenceObj.tabIncrementalValues[tabIndex][label] || [];
+                  const newValues = fieldsByLabel[label];
+                  
+                  // Check if values have changed
+                  const hasChanged = currentValues.length !== newValues.length ||
+                    newValues.some((val, idx) => val !== currentValues[idx]);
+                  
+                  if (hasChanged) {
+                    sentenceObj.tabIncrementalValues[tabIndex][label] = newValues;
+                    changesMade = true;
+                  }
+                });
+              } else {
+                // Regular non-incremental tab
+                if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {};
+                
+                tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
+                  const label = field.dataset.label;
+                  const newValue = field.value;
+                  if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
+                    sentenceObj.tabValues[tabIndex][label] = newValue;
+                    changesMade = true;
+                  }
+                });
+              }
             });
           } else { // Non-tabbed sentence
             if (!sentenceObj.values) sentenceObj.values = {}; // Should be initialized already
