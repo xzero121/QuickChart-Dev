@@ -327,22 +327,43 @@
         // Assign stable IDs on defaultNarrativeSections so locks persist across resets
         assignInitialIDs(defaultNarrativeSections);
 
-        // Handle both old format (string) and new format (object with name/text)
-        // Filter out invalid entries (e.g., objects with tabs but no text)
-        // Note: Objects with only 'tabs' property are not valid for commonSentences
+        // Handle both old format (string) and new format (object with name/text or tabs)
+        // Support both regular sentences and tabbed sentences
         commonSentences = rawCommonSentences
           .filter((s) => {
-            // Keep strings and objects with text property; exclude objects with only tabs
-            return typeof s === 'string' || (s && s.text);
+            // Keep strings, objects with text property, and objects with tabs array
+            return typeof s === 'string' || (s && (s.text || (s.tabs && Array.isArray(s.tabs))));
           })
           .map((s) => {
-            const sentenceText = typeof s === 'string' ? s : s.text;
-            const sentenceName = typeof s === 'string' ? null : s.name;
+            if (typeof s === 'string') {
+              return {
+                original: s,
+                display: shortPlaceholderString(s),
+                searchable: expandedPlaceholderString(s),
+                name: null
+              };
+            }
+            
+            // Handle tabbed sentences
+            if (s.tabs && Array.isArray(s.tabs)) {
+              // For tabbed sentences, use the first tab's text for display/search
+              const firstTabText = s.tabs.length > 0 && s.tabs[0]?.text ? s.tabs[0].text : '';
+              return {
+                originalObject: s, // Store the full object including tabs
+                original: firstTabText,
+                display: s.name || (firstTabText ? shortPlaceholderString(firstTabText) : '(unnamed tab)'),
+                searchable: expandedPlaceholderString(firstTabText),
+                name: s.name,
+                hasTabs: true
+              };
+            }
+            
+            // Handle regular sentences with text
             return {
-              original: sentenceText,
-              display: shortPlaceholderString(sentenceText),
-              searchable: expandedPlaceholderString(sentenceText),
-              name: sentenceName
+              original: s.text,
+              display: shortPlaceholderString(s.text),
+              searchable: expandedPlaceholderString(s.text),
+              name: s.name
             };
           });
         fuse = new Fuse(commonSentences, fuseOptions);
@@ -725,7 +746,7 @@
         btn.dataset.quickSentenceName = qs.name;
         
         btn.addEventListener("click", () => {
-          handleQuickAddSentence(partLabel, sentence.original, qs.name);
+          handleQuickAddSentence(partLabel, sentence, qs.name);
         });
         
         container.appendChild(btn);
@@ -734,9 +755,19 @@
       return container;
     }
 
-    function handleQuickAddSentence(partLabel, sentenceText, quickSentenceName) {
-      // Create a sentence object from the text
-      const sentenceData = { text: sentenceText };
+    function handleQuickAddSentence(partLabel, sentence, quickSentenceName) {
+      // Create a sentence object from the sentence data
+      let sentenceData;
+      
+      // Handle tabbed sentences
+      if (sentence && sentence.hasTabs && sentence.originalObject) {
+        // Clone the original object with tabs
+        sentenceData = JSON.parse(JSON.stringify(sentence.originalObject));
+      } else {
+        // Regular sentence with text
+        const sentenceText = typeof sentence === 'string' ? sentence : (sentence && sentence.original) || '';
+        sentenceData = { text: sentenceText };
+      }
       
       // Find the position of the QuickSentence placeholder in defaultNarrativeSections
       // (not narrativeSections, which may have been modified by user actions)
