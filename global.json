@@ -19,7 +19,16 @@
     },
     {
       "name": "Ventilator",
-      "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], EtCO2 [text:ETco2], and tidal volume [text:Tidal Volume]."
+      "tabs": [
+        {
+          "title": "Facility Ventilator",
+          "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], EtCO2 [text:ETco2], and tidal volume [text:Tidal Volume]."
+        },
+        {
+          "title": "Vent Adjustment",
+          "text": "++Due to [text:Reason] the following ventilator settings were changed during transport, [+[customDropdown:setting:Pressure Control, Rate, FiO2, PEEP, EtCO2, Tidal Volume] was adjusted to [text:value]]\\n. The patient's condition [customDropdown:Patient Condition]."
+        }
+      ]
     },
     {
       "name": "O2 Therapy",
@@ -154,6 +163,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
