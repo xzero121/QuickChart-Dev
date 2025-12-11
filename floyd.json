@@ -185,7 +185,7 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient's vital signs, along with any performed interventions, are detailed in the flochart section."
+          "text": "The patient's vital signs, along with any performed interventions, are detailed in the flowchart section."
         },
         { "QuickSentence": "Facility Meds" },
         { "QuickSentence": "Meds Administered" },
