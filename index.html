@@ -2867,17 +2867,50 @@
             if (activeTabIndex < sentenceObj.tabs.length) {
               const activeTab = sentenceObj.tabs[activeTabIndex];
               const text = activeTab.text || "";
-              const tabValues = sentenceObj.tabValues[activeTabIndex] || {};
               
-              // Find all placeholders in the active tab's text
-              const placeholderMatches = [...text.matchAll(placeholderRegex)];
-              placeholderMatches.forEach(match => {
-                const label = match[2]; // The label is the second capture group
-                const value = tabValues[label];
-                if (!value || value.trim() === '') {
-                  hasEmptyFields = true;
-                }
-              });
+              // Check if this tab is incremental
+              const isTabIncremental = text.startsWith('+') || text.startsWith('++');
+              
+              if (isTabIncremental) {
+                // For incremental tabs, check tabIncrementalValues
+                const incrementalValues = sentenceObj.tabIncrementalValues?.[activeTabIndex] || {};
+                const incrementCount = sentenceObj.tabIncrementCounts?.[activeTabIndex] || 1;
+                
+                // Process the text to expand it based on increment count
+                const expandedText = processIncrementalText(text, incrementCount);
+                
+                // Find all placeholders in the expanded text
+                const placeholderMatches = [...expandedText.matchAll(placeholderRegex)];
+                
+                // Track how many times we've seen each label
+                const labelCounts = {};
+                
+                placeholderMatches.forEach(match => {
+                  const label = match[2];
+                  if (!labelCounts[label]) labelCounts[label] = 0;
+                  const index = labelCounts[label];
+                  labelCounts[label]++;
+                  
+                  const valuesArray = incrementalValues[label] || [];
+                  const value = valuesArray[index];
+                  if (!value || value.trim() === '') {
+                    hasEmptyFields = true;
+                  }
+                });
+              } else {
+                // Regular non-incremental tab
+                const tabValues = sentenceObj.tabValues[activeTabIndex] || {};
+                
+                // Find all placeholders in the active tab's text
+                const placeholderMatches = [...text.matchAll(placeholderRegex)];
+                placeholderMatches.forEach(match => {
+                  const label = match[2]; // The label is the second capture group
+                  const value = tabValues[label];
+                  if (!value || value.trim() === '') {
+                    hasEmptyFields = true;
+                  }
+                });
+              }
             }
           }
         });
@@ -2960,24 +2993,57 @@
             if (activeTabIndex < sentenceObj.tabs.length) {
               const activeTab = sentenceObj.tabs[activeTabIndex];
               const text = activeTab.text || "";
-              const tabValues = sentenceObj.tabValues[activeTabIndex] || {};
               
-              // Find all placeholders in the active tab's text
-              const placeholderMatches = [...text.matchAll(placeholderRegex)];
-              placeholderMatches.forEach(match => {
-                const label = match[2]; // The label is the second capture group
-                const value = tabValues[label];
-                if (!value || value.trim() === '') {
-                  // Find and highlight the corresponding input field in the active tab
-                  const tabPane = li.querySelector(`.tab-pane[data-tab-index="${activeTabIndex}"]`);
-                  if (tabPane) {
+              // Check if this tab is incremental
+              const isTabIncremental = text.startsWith('+') || text.startsWith('++');
+              
+              const tabPane = li.querySelector(`.tab-pane[data-tab-index="${activeTabIndex}"]`);
+              if (!tabPane) return;
+              
+              if (isTabIncremental) {
+                // For incremental tabs, check tabIncrementalValues and highlight ALL empty fields
+                const incrementalValues = sentenceObj.tabIncrementalValues?.[activeTabIndex] || {};
+                
+                // Get all inline fields in this tab pane, grouped by label
+                const allFields = tabPane.querySelectorAll(`.inline-field[data-label]`);
+                const fieldsByLabel = {};
+                
+                allFields.forEach((field) => {
+                  const label = field.dataset.label;
+                  if (!fieldsByLabel[label]) fieldsByLabel[label] = [];
+                  fieldsByLabel[label].push(field);
+                });
+                
+                // Check each field instance
+                Object.keys(fieldsByLabel).forEach(label => {
+                  const fields = fieldsByLabel[label];
+                  const valuesArray = incrementalValues[label] || [];
+                  
+                  fields.forEach((field, index) => {
+                    const value = valuesArray[index];
+                    if (!value || value.trim() === '') {
+                      field.classList.add('empty-field');
+                    }
+                  });
+                });
+              } else {
+                // Regular non-incremental tab
+                const tabValues = sentenceObj.tabValues[activeTabIndex] || {};
+                
+                // Find all placeholders in the active tab's text
+                const placeholderMatches = [...text.matchAll(placeholderRegex)];
+                placeholderMatches.forEach(match => {
+                  const label = match[2]; // The label is the second capture group
+                  const value = tabValues[label];
+                  if (!value || value.trim() === '') {
+                    // Find and highlight the corresponding input field in the active tab
                     const field = tabPane.querySelector(`.inline-field[data-label="${label}"]`);
                     if (field) {
                       field.classList.add('empty-field');
                     }
                   }
-                }
-              });
+                });
+              }
             }
           }
         });

@@ -9,7 +9,7 @@
         },
         {
           "title": "Central Line Monitoring",
-          "text": "The patient had a [customDropdown:Central Line:PICC, Midline, Central Line, Femoral Line] placed in the [customDropdown:IV Location:left arm,right arm]] prior to EMS arrival."
+          "text": "The patient had a [customDropdown:Central Line:PICC, Midline, Central Line, Femoral Line] placed in the [customDropdown:IV Location:left arm,right arm] prior to EMS arrival."
         },
         {
           "title": "IV Placement",
