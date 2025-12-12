@@ -1,12 +1,34 @@
 {
   "commonSentences": [
     {
-      "name": "IV Placement",
-      "text": "+The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]]."
+      "name": "IV Access",
+      "tabs": [
+        {
+          "title": "IV Monitoring",
+          "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] prior to EMS arrival."
+        },
+        {
+          "title": "Central Line Monitoring",
+          "text": "The patient had a [customDropdown:Central Line:PICC, Midline, Central Line, Femoral Line] placed in the [customDropdown:IV Location:left arm,right arm]] prior to EMS arrival."
+        },
+        {
+          "title": "IV Placement",
+          "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] at [text:Time] by [customDropdown:Provider]."
+        }
+      ]
     },
     {
       "name": "Ventilator",
-      "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], and tidal volume [text:Tidal Volume]."
+      "tabs": [
+        {
+          "title": "Facility Ventilator",
+          "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], EtCO2 [text:ETco2], and tidal volume [text:Tidal Volume]."
+        },
+        {
+          "title": "Vent Adjustment",
+          "text": "++Due to [text:Reason] the following ventilator settings were changed during transport, [+[customDropdown:setting:Pressure Control, Rate, FiO2, PEEP, EtCO2, Tidal Volume] was adjusted to [text:value]].\\nThe patient's condition [customDropdown:Patient Condition]."
+        }
+      ]
     },
     {
       "name": "O2 Therapy",
@@ -31,6 +53,39 @@
     {
       "name": "Meds Administered",
       "text": "+During transport, the patient was administered the following medications: [+\\n[text:Dosage] of [customDropdown:Medication] via [text:Route] at [text:Time]] \\nby [customDropdown:Provider] due to [text:Reason for Medication]. The patient [customDropdown:Medication Response:responded well,had no response,had an adverse reaction] to the medications."
+    },
+    {
+      "name": "Skin Assessment",
+      "text": "The patient's skin was assessed as [customDropdown:Skin Appearance]."
+    },
+    {
+      "name": "Lung Assessment",
+      "text": "The patient's lung sounds were assessed as [customDropdown:Lung Sound Assessment:clear and equal bilaterally], and breathing was [customDropdown:Breathing:normal and non-labored]."
+    },
+    {
+      "name": "Vitals Assessment",
+      "text": "The patient's vitals noted as [customDropdown:Vitals:Within Normal Limits]."
+    },
+    {
+      "name": "PTA Medications",
+      "text": "+Prior to EMS arrival the patient received the following medications [+\\n[text:Dosage] of [customDropdown:Medication] via [text:Route]]"
+    },
+    {
+      "name": "PTA Treatments",
+      "text": "+Prior to EMS arrival the patient received the following treatments: [+\\n[text:Treatment]]"
+    },
+    {
+      "name": "ET Tube",
+      "tabs": [
+        {
+          "title": "PTA Intubation",
+          "text": "Prior to EMS transport the patient was intubated, the ET tube was [text:ET Tube Info]"
+        },
+        {
+          "title": "EMS Intubation",
+          "text": ""
+        }
+      ]
     }
   ],
   "globalDropdownOptions": {
@@ -68,10 +123,11 @@
       "*10% Dextrose in Water (D10W)"
     ],
     "Gender": ["Male", "Female"],
-    "Response Type": ["emergent", "non-emergent"],
+    "Response Type": ["emergent", "immediate", "non-immediate"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
-    "Mental Status": ["alert and oriented", "confused"],
+    "Mental Status": ["alert and oriented", "confused", "unresponsive", "altered level of consciousness"],
     "Method": ["sheet draw", "stand and pivot", "self ambulation"],
+    "Skin Appearance": ["warm, pink, and dry"],
     "Assistance Info": [
       "EMS Crew x1",
       "EMS Crew x2",
@@ -107,3 +163,18 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -100,6 +100,8 @@
         {
           "text": "The response was [customDropdown:Response Type]."
         },
+        { "QuickSentence": "PTA Medications" },
+        { "QuickSentence": "PTA Treatments" },
         {
           "text": "Upon arrival, the patient’s condition was [customDropdown:Initial Condition:stable,stable and within normal limits]."
         },
@@ -147,7 +149,7 @@
           "text": "The patient was recently [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
         },
         {
-          "text": "The patient’s medical history, medications, and allergies are detailed in the HPI."
+          "text": "The patient’s medical history, medications, and allergies are detailed in their associated sections."
         }
       ]
     },
@@ -158,11 +160,16 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient's mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
+          "text": "The patient's mental status was assessed as [customDropdown:Mental Status], with an initial GCS of [text:Initial GCS], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
         },
         {
-          "text": "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
+          "text": "Primary assessment findings, documented in the assessment section, revealed [text:Assessment Status]."
         },
+        { "QuickSentence": "IV Access" },
+        { "QuickSentence": "Ventilator" },
+        { "QuickSentence": "Skin Assessment" },
+        { "QuickSentence": "Lung Assessment" },
+        { "QuickSentence": "Vitals Assessment" },
         {
           "text": "Advanced Life Support (ALS) assessment was performed by [customDropdown:Provider]."
         },
@@ -178,14 +185,14 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient's vital signs, along with any performed interventions, are detailed in the treatment section."
+          "text": "The patient's vital signs, along with any performed interventions, are detailed in the flowchart section."
         },
         { "QuickSentence": "Facility Meds" },
         { "QuickSentence": "Meds Administered" },
         { "QuickSentence": "GCS" },
         { "QuickSentence": "Ventilator" },
         { "QuickSentence": "O2 Therapy" },
-        { "QuickSentence": "IV Placement" },
+        { "QuickSentence": "IV Access" },
         { "QuickSentence": "Cardiac Monitor" },
         {
           "tabs": [

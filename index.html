@@ -312,17 +312,45 @@
         // Assign stable IDs on defaultNarrativeSections so locks persist across resets
         assignInitialIDs(defaultNarrativeSections);
 
-        // Handle both old format (string) and new format (object with name/text)
-        commonSentences = rawCommonSentences.map((s) => {
-          const sentenceText = typeof s === 'string' ? s : s.text;
-          const sentenceName = typeof s === 'string' ? null : s.name;
-          return {
-            original: sentenceText,
-            display: shortPlaceholderString(sentenceText),
-            searchable: expandedPlaceholderString(sentenceText),
-            name: sentenceName
-          };
-        });
+        // Handle both old format (string) and new format (object with name/text or tabs)
+        // Support both regular sentences and tabbed sentences
+        commonSentences = rawCommonSentences
+          .filter((s) => {
+            // Keep strings, objects with text property, and objects with tabs array
+            return typeof s === 'string' || (s && (s.text || (s.tabs && Array.isArray(s.tabs))));
+          })
+          .map((s) => {
+            if (typeof s === 'string') {
+              return {
+                original: s,
+                display: shortPlaceholderString(s),
+                searchable: expandedPlaceholderString(s),
+                name: null
+              };
+            }
+            
+            // Handle tabbed sentences
+            if (s.tabs && Array.isArray(s.tabs)) {
+              // For tabbed sentences, use the first tab's text for display/search
+              const firstTabText = s.tabs.length > 0 && s.tabs[0]?.text ? s.tabs[0].text : '';
+              return {
+                originalObject: s, // Store the full object including tabs
+                original: firstTabText,
+                display: s.name || (firstTabText ? shortPlaceholderString(firstTabText) : '(unnamed tab)'),
+                searchable: expandedPlaceholderString(firstTabText),
+                name: s.name,
+                hasTabs: true
+              };
+            }
+            
+            // Handle regular sentences with text
+            return {
+              original: s.text,
+              display: shortPlaceholderString(s.text),
+              searchable: expandedPlaceholderString(s.text),
+              name: s.name
+            };
+          });
         fuse = new Fuse(commonSentences, fuseOptions);
 
         currentConfigName = configName;
@@ -582,6 +610,22 @@
             (typeof valStore === 'object' && !Array.isArray(valStore) && valStore !== null) ? valStore : {}
           );
         }
+        
+        // Initialize incremental values for tabs that have incremental text
+        if (!sentenceObj.tabIncrementalValues) {
+          sentenceObj.tabIncrementalValues = sentenceObj.tabs.map(() => ({}));
+        }
+        
+        // Initialize increment counts for each tab
+        if (!sentenceObj.tabIncrementCounts) {
+          sentenceObj.tabIncrementCounts = sentenceObj.tabs.map((tab) => {
+            const tabText = tab.text || "";
+            if (tabText.startsWith('+') || tabText.startsWith('++')) {
+              return 1; // Start at 1 for incremental tabs
+            }
+            return 0; // Use 0 for non-incremental tabs (will be filtered out)
+          });
+        }
       } else { // Initialize for non-tabbed sentences
         if (!sentenceObj.values || Array.isArray(sentenceObj.values)) {
           sentenceObj.values = {};
@@ -605,6 +649,10 @@
 
     // --- String Manipulation Helpers ---
     function shortPlaceholderString(sentence) {
+      // Handle undefined or null sentences
+      if (!sentence) {
+        return '';
+      }
       // Remove leading + or ++ for display purposes
       let cleanSentence = sentence;
       if (sentence.startsWith('++')) {
@@ -621,6 +669,10 @@
     }
     
     function expandedPlaceholderString(sentence) {
+      // Handle undefined or null sentences
+      if (!sentence) {
+        return '';
+      }
       // Remove leading + or ++ for search purposes
       let cleanSentence = sentence;
       if (sentence.startsWith('++')) {
@@ -695,7 +747,7 @@
         btn.dataset.quickSentenceName = qs.name;
         
         btn.addEventListener("click", () => {
-          handleQuickAddSentence(partLabel, sentence.original, qs.name);
+          handleQuickAddSentence(partLabel, sentence, qs.name);
         });
         
         container.appendChild(btn);
@@ -704,9 +756,19 @@
       return container;
     }
 
-    function handleQuickAddSentence(partLabel, sentenceText, quickSentenceName) {
-      // Create a sentence object from the text
-      const sentenceData = { text: sentenceText };
+    function handleQuickAddSentence(partLabel, sentence, quickSentenceName) {
+      // Create a sentence object from the sentence data
+      let sentenceData;
+      
+      // Handle tabbed sentences
+      if (sentence && sentence.hasTabs && sentence.originalObject) {
+        // Clone the original object with tabs
+        sentenceData = JSON.parse(JSON.stringify(sentence.originalObject));
+      } else {
+        // Regular sentence with text
+        const sentenceText = typeof sentence === 'string' ? sentence : (sentence && sentence.original) || '';
+        sentenceData = { text: sentenceText };
+      }
       
       // Find the position of the QuickSentence placeholder in defaultNarrativeSections
       // (not narrativeSections, which may have been modified by user actions)
@@ -818,6 +880,13 @@
       // Check if this is an incremental sentence (either + or ++)
       const isIncremental = sentenceObj.text && (sentenceObj.text.startsWith('+') || sentenceObj.text.startsWith('++'));
       
+      // Check if this is a tabbed sentence with any incremental tabs
+      const hasIncrementalTab = sentenceObj.tabs && Array.isArray(sentenceObj.tabs) && 
+        sentenceObj.tabs.some(tab => {
+          const tabText = tab.text || "";
+          return tabText.startsWith('+') || tabText.startsWith('++');
+        });
+      
       // Drag Handle
       const handle = document.createElement("span");
       handle.classList.add("drag-handle");
@@ -863,8 +932,8 @@
       topControls.append(...topButtons);
       li.appendChild(topControls);
 
-      // Bottom-right Controls (Increment controls for incremental sentences)
-      if (isIncremental) {
+      // Bottom-right Controls (Increment controls for incremental sentences or tabbed incremental sentences)
+      if (isIncremental || hasIncrementalTab) {
         li.style.setProperty('min-height', '4.5em'); // Ensure enough height for increment controls
         const bottomControls = document.createElement('div');
         bottomControls.classList.add('sentence-controls-bottom');
@@ -899,12 +968,27 @@
 
       let tabContent = sentenceObj.tabs[tabIndex].text || "";
       
+      // Check if this tab is incremental
+      const isTabIncremental = tabContent.startsWith('+') || tabContent.startsWith('++');
+      
+      // Process incremental text if needed
+      if (isTabIncremental) {
+        const tabIncrementCount = sentenceObj.tabIncrementCounts?.[tabIndex];
+        // Only process if we have a valid count > 0
+        if (tabIncrementCount && tabIncrementCount > 0) {
+          tabContent = processIncrementalText(tabContent, tabIncrementCount);
+        }
+      }
+      
       // Convert \n to <br> BEFORE calling buildInlineFields
       // Use \\n to match literal backslash-n characters from JSON
-      tabContent = tabContent.replace(/\\n/g, '<br>');
+      if (tabContent) {
+        tabContent = tabContent.replace(/\\n/g, '<br>');
+      }
       
       const tabValues = sentenceObj.tabValues[tabIndex] || {}; // Ensure tabValues for this index exists
-      tabPane.innerHTML = buildInlineFields(tabContent, tabValues);
+      const tabIncrementalValues = isTabIncremental ? (sentenceObj.tabIncrementalValues?.[tabIndex] || {}) : undefined;
+      tabPane.innerHTML = buildInlineFields(tabContent, tabValues, tabIncrementalValues);
       return tabPane;
     }
 
@@ -1090,22 +1174,52 @@
       const controlsContainer = document.createElement('div');
       controlsContainer.classList.add('increment-controls', 'd-flex', 'align-items-center');
       
+      // Determine if this is a tabbed sentence
+      const isTabbed = sentenceObj.tabs && Array.isArray(sentenceObj.tabs);
+      
+      // Get the current increment count and check if incremental
+      let currentCount = 1;
+      let isCurrentTabIncremental = false;
+      
+      if (isTabbed) {
+        const activeTabIndex = sentenceObj.activeTabIndex || 0;
+        const activeTabText = sentenceObj.tabs[activeTabIndex]?.text || "";
+        isCurrentTabIncremental = activeTabText.startsWith('+') || activeTabText.startsWith('++');
+        currentCount = sentenceObj.tabIncrementCounts?.[activeTabIndex] || 1;
+      } else {
+        isCurrentTabIncremental = true; // Non-tabbed incremental sentence
+        currentCount = sentenceObj.incrementCount || 1;
+      }
+      
       // Decrement button
       const decrementBtn = document.createElement('button');
       decrementBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'increment-btn');
       decrementBtn.innerHTML = '<i class="bi bi-dash"></i>';
       decrementBtn.title = 'Decrease count';
       decrementBtn.addEventListener('click', () => {
-        if (sentenceObj.incrementCount > 1) {
-          sentenceObj.incrementCount--;
-          updateIncrementalSentence(sentenceObj, partLabel);
+        if (isTabbed) {
+          const activeTabIndex = sentenceObj.activeTabIndex || 0;
+          const activeTabText = sentenceObj.tabs[activeTabIndex]?.text || "";
+          const isIncremental = activeTabText.startsWith('+') || activeTabText.startsWith('++');
+          if (!isIncremental) return; // Don't allow decrement for non-incremental tabs
+          
+          const currentTabCount = sentenceObj.tabIncrementCounts[activeTabIndex] || 1;
+          if (currentTabCount > 1) {
+            sentenceObj.tabIncrementCounts[activeTabIndex]--;
+            updateIncrementalSentence(sentenceObj, partLabel);
+          }
+        } else {
+          if (sentenceObj.incrementCount > 1) {
+            sentenceObj.incrementCount--;
+            updateIncrementalSentence(sentenceObj, partLabel);
+          }
         }
       });
       
       // Count display
       const countDisplay = document.createElement('span');
       countDisplay.classList.add('increment-count', 'mx-2', 'fw-bold');
-      countDisplay.textContent = sentenceObj.incrementCount || 1;
+      countDisplay.textContent = currentCount;
       
       // Increment button
       const incrementBtn = document.createElement('button');
@@ -1113,8 +1227,18 @@
       incrementBtn.innerHTML = '<i class="bi bi-plus"></i>';
       incrementBtn.title = 'Increase count';
       incrementBtn.addEventListener('click', () => {
-        sentenceObj.incrementCount = (sentenceObj.incrementCount || 1) + 1;
-        updateIncrementalSentence(sentenceObj, partLabel);
+        if (isTabbed) {
+          const activeTabIndex = sentenceObj.activeTabIndex || 0;
+          const activeTabText = sentenceObj.tabs[activeTabIndex]?.text || "";
+          const isIncremental = activeTabText.startsWith('+') || activeTabText.startsWith('++');
+          if (!isIncremental) return; // Don't allow increment for non-incremental tabs
+          
+          sentenceObj.tabIncrementCounts[activeTabIndex] = (sentenceObj.tabIncrementCounts[activeTabIndex] || 1) + 1;
+          updateIncrementalSentence(sentenceObj, partLabel);
+        } else {
+          sentenceObj.incrementCount = (sentenceObj.incrementCount || 1) + 1;
+          updateIncrementalSentence(sentenceObj, partLabel);
+        }
       });
       
       controlsContainer.appendChild(decrementBtn);
@@ -1128,62 +1252,131 @@
       const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
       if (!li) return;
       
-      // Store current values before rebuilding - but store them properly for incremental sentences
-      const existingIncrementalValues = {};
+      // Check if this is a tabbed sentence
+      const isTabbed = sentenceObj.tabs && Array.isArray(sentenceObj.tabs);
       
-      // Get all fields grouped by label with their index positions
-      const fieldsByLabel = {};
-      li.querySelectorAll('.sentence-content .inline-field[data-label]').forEach((field, globalIndex) => {
-        const label = field.dataset.label;
-        if (!fieldsByLabel[label]) {
-          fieldsByLabel[label] = [];
+      if (isTabbed) {
+        // For tabbed sentences, we need to update only the active tab
+        const activeTabIndex = sentenceObj.activeTabIndex || 0;
+        const activeTabText = sentenceObj.tabs[activeTabIndex]?.text || "";
+        const isTabIncremental = activeTabText.startsWith('+') || activeTabText.startsWith('++');
+        
+        if (!isTabIncremental) {
+          // This tab is not incremental, nothing to update
+          return;
         }
-        fieldsByLabel[label].push({
-          field: field,
-          value: field.value,
-          index: fieldsByLabel[label].length // This gives us the position within this label group
+        
+        // Store current values from the active tab before rebuilding
+        const existingIncrementalValues = {};
+        const activeTabPane = li.querySelector(`.tab-pane[data-tab-index="${activeTabIndex}"]`);
+        
+        if (activeTabPane) {
+          const fieldsByLabel = {};
+          activeTabPane.querySelectorAll('.inline-field[data-label]').forEach((field) => {
+            const label = field.dataset.label;
+            if (!fieldsByLabel[label]) {
+              fieldsByLabel[label] = [];
+            }
+            fieldsByLabel[label].push({
+              field: field,
+              value: field.value,
+              index: fieldsByLabel[label].length
+            });
+          });
+          
+          // Store values in the incremental format
+          Object.keys(fieldsByLabel).forEach(label => {
+            existingIncrementalValues[label] = fieldsByLabel[label].map(item => item.value);
+          });
+        }
+        
+        // Update the count display
+        const countDisplay = li.querySelector('.increment-count');
+        if (countDisplay) {
+          countDisplay.textContent = sentenceObj.tabIncrementCounts[activeTabIndex];
+        }
+        
+        // Ensure tabIncrementalValues is initialized
+        if (!sentenceObj.tabIncrementalValues) {
+          sentenceObj.tabIncrementalValues = sentenceObj.tabs.map(() => ({}));
+        }
+        
+        // Store the current state in tabIncrementalValues for the active tab
+        Object.keys(existingIncrementalValues).forEach(label => {
+          sentenceObj.tabIncrementalValues[activeTabIndex][label] = existingIncrementalValues[label].map(value => 
+            (value && value.trim()) ? value : ''
+          );
         });
-      });
-      
-      // Store values in the incremental format - but preserve empty positions
-      Object.keys(fieldsByLabel).forEach(label => {
-        existingIncrementalValues[label] = fieldsByLabel[label].map(item => item.value);
-      });
-      
-      // Update the count display
-      const countDisplay = li.querySelector('.increment-count');
-      if (countDisplay) {
-        countDisplay.textContent = sentenceObj.incrementCount;
-      }
-      
-      // Update the sentence object's incremental values before rebuilding the UI
-      if (!sentenceObj.incrementalValues) {
-        sentenceObj.incrementalValues = {};
-      }
-      
-      // Store the current state in incrementalValues
-      Object.keys(existingIncrementalValues).forEach(label => {
-        sentenceObj.incrementalValues[label] = existingIncrementalValues[label].map(value => 
-          (value && value.trim()) ? value : '' // Ensure empty strings for blank fields
-        );
-      });
-      
-      // Update the content with the new incremental text
-      const contentDiv = li.querySelector('.sentence-content');
-      if (contentDiv && sentenceObj.text) {
-        let processedText = processIncrementalText(sentenceObj.text, sentenceObj.incrementCount);
         
-        // Convert \n to <br> BEFORE calling buildInlineFields
-        if (processedText) {
-          processedText = processedText.replace(/\\n/g, '<br>');
+        // Rebuild the tab pane with the new increment count
+        const contentDiv = li.querySelector('.sentence-content');
+        if (contentDiv && activeTabPane) {
+          const newTabPane = createTabPaneElement(sentenceObj, activeTabIndex);
+          activeTabPane.replaceWith(newTabPane);
+          
+          // Reattach event listeners for the updated tab pane
+          attachAllEventListenersForElement(newTabPane);
+          adjustAllInitialSizesForElement(newTabPane);
+        }
+      } else {
+        // Original logic for non-tabbed incremental sentences
+        // Store current values before rebuilding - but store them properly for incremental sentences
+        const existingIncrementalValues = {};
+        
+        // Get all fields grouped by label with their index positions
+        const fieldsByLabel = {};
+        li.querySelectorAll('.sentence-content .inline-field[data-label]').forEach((field, globalIndex) => {
+          const label = field.dataset.label;
+          if (!fieldsByLabel[label]) {
+            fieldsByLabel[label] = [];
+          }
+          fieldsByLabel[label].push({
+            field: field,
+            value: field.value,
+            index: fieldsByLabel[label].length // This gives us the position within this label group
+          });
+        });
+        
+        // Store values in the incremental format - but preserve empty positions
+        Object.keys(fieldsByLabel).forEach(label => {
+          existingIncrementalValues[label] = fieldsByLabel[label].map(item => item.value);
+        });
+        
+        // Update the count display
+        const countDisplay = li.querySelector('.increment-count');
+        if (countDisplay) {
+          countDisplay.textContent = sentenceObj.incrementCount;
         }
         
-        // Pass incrementalValues to buildInlineFields so existing values are preserved
-        contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values, sentenceObj.incrementalValues);
+        // Update the sentence object's incremental values before rebuilding the UI
+        if (!sentenceObj.incrementalValues) {
+          sentenceObj.incrementalValues = {};
+        }
         
-        // Reattach event listeners for the updated content
-        attachAllEventListenersForElement(contentDiv);
-        adjustAllInitialSizesForElement(contentDiv);
+        // Store the current state in incrementalValues
+        Object.keys(existingIncrementalValues).forEach(label => {
+          sentenceObj.incrementalValues[label] = existingIncrementalValues[label].map(value => 
+            (value && value.trim()) ? value : '' // Ensure empty strings for blank fields
+          );
+        });
+        
+        // Update the content with the new incremental text
+        const contentDiv = li.querySelector('.sentence-content');
+        if (contentDiv && sentenceObj.text) {
+          let processedText = processIncrementalText(sentenceObj.text, sentenceObj.incrementCount);
+          
+          // Convert \n to <br> BEFORE calling buildInlineFields
+          if (processedText) {
+            processedText = processedText.replace(/\\n/g, '<br>');
+          }
+          
+          // Pass incrementalValues to buildInlineFields so existing values are preserved
+          contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values, sentenceObj.incrementalValues);
+          
+          // Reattach event listeners for the updated content
+          attachAllEventListenersForElement(contentDiv);
+          adjustAllInitialSizesForElement(contentDiv);
+        }
       }
       
       saveState();
@@ -1509,15 +1702,25 @@
           const isActive = index === tabIndex;
           pane.classList.toggle('active', isActive);
           if (isActive) {
-            // Rebuild content for the newly active tab
-            const tabContent = sentenceObj.tabs[index].text || "";
-            const tabValues = sentenceObj.tabValues[index] || {};
-            pane.innerHTML = buildInlineFields(tabContent, tabValues);
+            // Rebuild the tab pane to handle incremental content
+            const newTabPane = createTabPaneElement(sentenceObj, index);
+            pane.replaceWith(newTabPane);
             // Re-attach listeners and adjust sizes for the new content in the active tab
-            attachAllEventListenersForElement(pane);
-            adjustAllInitialSizesForElement(pane);
+            attachAllEventListenersForElement(newTabPane);
+            adjustAllInitialSizesForElement(newTabPane);
           }
         });
+        
+        // Update increment controls count display if they exist
+        const countDisplay = li.querySelector('.increment-count');
+        if (countDisplay && sentenceObj.tabIncrementCounts) {
+          const newTabText = sentenceObj.tabs[tabIndex]?.text || "";
+          const isNewTabIncremental = newTabText.startsWith('+') || newTabText.startsWith('++');
+          if (isNewTabIncremental) {
+            const newCount = sentenceObj.tabIncrementCounts[tabIndex] || 1;
+            countDisplay.textContent = newCount;
+          }
+        }
       } else { // Fallback if sentence <li> not found
         buildSectionsUI();
         attachAllEventListeners();
@@ -1564,10 +1767,38 @@
 
       if (tabPane) { // Value is within a tab
         const tabIndex = parseInt(tabPane.dataset.tabIndex);
-        if (!isNaN(tabIndex) && sentenceObj.tabValues?.[tabIndex]) {
-          if (sentenceObj.tabValues[tabIndex][label] !== value) {
-            sentenceObj.tabValues[tabIndex][label] = value;
-            valueChanged = true;
+        if (!isNaN(tabIndex)) {
+          // Check if this tab has incremental text
+          const tabText = sentenceObj.tabs?.[tabIndex]?.text || "";
+          const isTabIncremental = tabText.startsWith('+') || tabText.startsWith('++');
+          
+          if (isTabIncremental) {
+            // For incremental tabs, store values as arrays in tabIncrementalValues
+            const allFieldsWithSameLabel = tabPane.querySelectorAll(`.inline-field[data-label="${label}"]`);
+            const fieldIndex = Array.from(allFieldsWithSameLabel).indexOf(field);
+            
+            if (!sentenceObj.tabIncrementalValues) {
+              sentenceObj.tabIncrementalValues = sentenceObj.tabs.map(() => ({}));
+            }
+            if (!sentenceObj.tabIncrementalValues[tabIndex]) {
+              sentenceObj.tabIncrementalValues[tabIndex] = {};
+            }
+            if (!sentenceObj.tabIncrementalValues[tabIndex][label]) {
+              sentenceObj.tabIncrementalValues[tabIndex][label] = [];
+            }
+            
+            if (sentenceObj.tabIncrementalValues[tabIndex][label][fieldIndex] !== value) {
+              sentenceObj.tabIncrementalValues[tabIndex][label][fieldIndex] = value;
+              valueChanged = true;
+            }
+          } else {
+            // Regular non-incremental tab
+            if (sentenceObj.tabValues?.[tabIndex]) {
+              if (sentenceObj.tabValues[tabIndex][label] !== value) {
+                sentenceObj.tabValues[tabIndex][label] = value;
+                valueChanged = true;
+              }
+            }
           }
         }
       } else if (sentenceObj.values) { // Value is in a non-tabbed sentence
@@ -1623,16 +1854,57 @@
             sentenceObj.tabs.forEach((tab, tabIndex) => {
               const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
               if (!tabPane) return;
-              if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {}; // Should be initialized already
-
-              tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
-                const label = field.dataset.label;
-                const newValue = field.value;
-                if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
-                  sentenceObj.tabValues[tabIndex][label] = newValue;
-                  changesMade = true;
+              
+              // Check if this tab has incremental text
+              const tabText = tab.text || "";
+              const isTabIncremental = tabText.startsWith('+') || tabText.startsWith('++');
+              
+              if (isTabIncremental) {
+                // For incremental tabs, store values as arrays in tabIncrementalValues
+                if (!sentenceObj.tabIncrementalValues) {
+                  sentenceObj.tabIncrementalValues = sentenceObj.tabs.map(() => ({}));
                 }
-              });
+                if (!sentenceObj.tabIncrementalValues[tabIndex]) {
+                  sentenceObj.tabIncrementalValues[tabIndex] = {};
+                }
+                
+                // Group fields by label
+                const fieldsByLabel = {};
+                tabPane.querySelectorAll(".inline-field[data-label]").forEach((field) => {
+                  const label = field.dataset.label;
+                  if (!fieldsByLabel[label]) {
+                    fieldsByLabel[label] = [];
+                  }
+                  fieldsByLabel[label].push(field.value);
+                });
+                
+                // Store the values in tabIncrementalValues
+                Object.keys(fieldsByLabel).forEach(label => {
+                  const currentValues = sentenceObj.tabIncrementalValues[tabIndex][label] || [];
+                  const newValues = fieldsByLabel[label];
+                  
+                  // Check if values have changed
+                  const hasChanged = currentValues.length !== newValues.length ||
+                    newValues.some((val, idx) => val !== currentValues[idx]);
+                  
+                  if (hasChanged) {
+                    sentenceObj.tabIncrementalValues[tabIndex][label] = newValues;
+                    changesMade = true;
+                  }
+                });
+              } else {
+                // Regular non-incremental tab
+                if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {};
+                
+                tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
+                  const label = field.dataset.label;
+                  const newValue = field.value;
+                  if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
+                    sentenceObj.tabValues[tabIndex][label] = newValue;
+                    changesMade = true;
+                  }
+                });
+              }
             });
           } else { // Non-tabbed sentence
             if (!sentenceObj.values) sentenceObj.values = {}; // Should be initialized already
@@ -2248,13 +2520,14 @@
             if (activeTabIndex < sentenceObj.tabs.length) {
               const tabText = sentenceObj.tabs[activeTabIndex].text || "";
               const tabValues = sentenceObj.tabValues?.[activeTabIndex] || {};
-              processedText = processSentence(tabText, tabValues);
+              const tabIncrementalValues = sentenceObj.tabIncrementalValues?.[activeTabIndex] || {};
+              processedText = processSentence(tabText, tabValues, tabIncrementalValues, sentenceObj, activeTabIndex);
             } else {
               processedText = "";
             }
           } else {
             // For non-tabbed sentences
-            processedText = processSentence(sentenceObj.text || "", sentenceObj.values || {});
+            processedText = processSentence(sentenceObj.text || "", sentenceObj.values || {}, sentenceObj.incrementalValues, sentenceObj);
           }
 
           if (processedText.trim()) {
@@ -2411,7 +2684,7 @@
      * Fix: Show [placeholder] when values are empty or missing
      * Also handle line breaks properly in final output
      */
-    function processSentence(text, values) {
+    function processSentence(text, values, incrementalValues, sentenceObj, tabIndex) {
       if (!text) return "";
       if (!values) values = {};
 
@@ -2424,39 +2697,35 @@
         processedText = processedText.substring(1);
       }
 
-      // For incremental sentences, we need to find the sentence object to get incrementalValues
-      // This is a bit of a hack, but we need to identify if this is an incremental sentence
+      // Check if this is an incremental sentence
       const isIncremental = text.startsWith('+') || text.startsWith('++');
       
       if (isIncremental) {
-        // Find the sentence object that matches this text to get incremental values
-        let sentenceObj = null;
-        for (const section of narrativeSections) {
-          if (!section.sentences) continue;
-          for (const sentence of section.sentences) {
-            if (sentence.text === text) {
-              sentenceObj = sentence;
-              break;
-            }
+        // Get increment count based on whether this is a tabbed or non-tabbed sentence
+        let incrementCount = 1;
+        if (sentenceObj) {
+          if (typeof tabIndex === 'number' && sentenceObj.tabIncrementCounts) {
+            incrementCount = sentenceObj.tabIncrementCounts[tabIndex] || 1;
+          } else if (sentenceObj.incrementCount) {
+            incrementCount = sentenceObj.incrementCount;
           }
-          if (sentenceObj) break;
         }
         
-        if (sentenceObj && sentenceObj.incrementalValues) {
-          // Process incremental text first to get the expanded version
-          processedText = processIncrementalText(text, sentenceObj.incrementCount);
-          
-          // Remove the leading markers again after processing
-          if (processedText.startsWith('++')) {
-            processedText = processedText.substring(2);
-          } else if (processedText.startsWith('+')) {
-            processedText = processedText.substring(1);
-          }
-          
-          // Remove [+content] markers
-          processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
-          
-          // Replace placeholders with incremental values
+        // Process incremental text first to get the expanded version
+        processedText = processIncrementalText(text, incrementCount);
+        
+        // Remove the leading markers again after processing
+        if (processedText.startsWith('++')) {
+          processedText = processedText.substring(2);
+        } else if (processedText.startsWith('+')) {
+          processedText = processedText.substring(1);
+        }
+        
+        // Remove [+content] markers
+        processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
+        
+        // Replace placeholders with incremental values
+        if (incrementalValues && Object.keys(incrementalValues).length > 0) {
           const placeholderCounts = {};
           processedText = processedText.replace(placeholderRegex, (match, type, label) => {
             // Track how many times we've seen this placeholder
@@ -2468,16 +2737,15 @@
             placeholderCounts[label]++;
             
             // Get the value for this specific instance
-            const incrementalValues = sentenceObj.incrementalValues[label];
-            if (incrementalValues && incrementalValues[index] && incrementalValues[index].trim()) {
-              return incrementalValues[index].trim();
+            const incrementalValuesForLabel = incrementalValues[label];
+            if (incrementalValuesForLabel && incrementalValuesForLabel[index] && incrementalValuesForLabel[index].trim()) {
+              return incrementalValuesForLabel[index].trim();
             } else {
               return `[${label}]`;
             }
           });
         } else {
           // Fallback for incremental sentences without proper incrementalValues
-          processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
           processedText = processedText.replace(placeholderRegex, (match, type, label) => {
             const value = values[label];
             return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
