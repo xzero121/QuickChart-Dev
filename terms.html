@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Use - QuickChart</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <style>
+    .policy-header {
+      color: #6c757d; /* Bootstrap's text-muted color */
+      font-weight: 500;
+    }
+
+    .policy-header, .section-title {
+      color: #000;
+    }
+    
+    .policy-divider {
+      border-top: 1px solid #dee2e6;
+    }
+    
+    [data-bs-theme="dark"] .policy-header, [data-bs-theme="dark"] .section-title {
+      color: #eee; /* Lighter shade for dark mode */
+    }
+    
+    [data-bs-theme="dark"] .policy-divider {
+      border-top: 1px solid #495057;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-4 header-bar">
+      <h1 class="m-0">
+        <img src="QuickChartLogoWide.svg" alt="QuickChart" class="img-fluid"
+          style="max-width: 200px; height: auto; vertical-align: middle; margin-right: 0.5em;"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <span style="display:none;">QuickChart</span>
+      </h1>
+      <div class="header-controls">
+        <a href="index.html" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-left"></i> Back to App
+        </a>
+        <button id="darkModeToggle" class="btn btn-outline-secondary">
+          <i class="bi bi-moon-fill"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="narrative-section">
+      <div class="section-header d-flex justify-content-between align-items-center">
+        <span class="section-title-wrapper">
+          <h2 class="section-title m-0">Terms of Use</h2>
+        </span>
+        <span class="text-muted small fw-bold">Effective Date: May 23, 2025</span>
+      </div>
+
+      <div class="p-3">
+        <hr class="policy-divider">
+
+        <p class="text-center"><strong>QuickChart Software License</strong><br>
+        Copyright © 2025, B. Brown, EMT-B. All rights reserved.</p>
+
+        <h4 class="mt-4 policy-header">1. License Grant</h4>
+        <p>Subject to the terms of this License, the Licensor grants you a non-exclusive, non-transferable, revocable license to use the QuickChart software (the "Software") as follows:</p>
+        <p><strong>Individual Use (Free):</strong> Individual users may use the Software free of charge for personal, professional, or educational purposes. This includes individual EMS providers, healthcare professionals, students, and educators using the Software for their own documentation, training, or learning.</p>
+        <p><strong>Commercial/Organizational Use:</strong> EMS agencies, healthcare organizations, companies, or any commercial entities wishing to deploy or use the Software for business operations must contact the Licensor to obtain a commercial license. Unauthorized commercial use is prohibited.</p>
+        <p>No ownership rights are transferred.</p>
+
+        <h4 class="mt-4 policy-header">2. Restrictions</h4>
+        <p>You may not, without prior written authorization from the Licensor:</p>
+        <ul>
+          <li>Copy, reproduce, distribute, sublicense, sell, rent, lease, or otherwise transfer the Software.</li>
+          <li>Make the Software available to third parties outside your organization.</li>
+          <li>Modify, adapt, create derivative works of, decompile, reverse engineer, or attempt to derive the source code.</li>
+          <li>Remove or alter any copyright, license, or attribution notices.</li>
+          <li>Use the Software in any unlawful or harmful manner.</li>
+        </ul>
+
+        <h4 class="mt-4 policy-header">3. Intellectual Property</h4>
+        <p>All rights, title, and interest in and to the Software, including all intellectual property rights, remain exclusively with the Licensor.</p>
+
+        <h4 class="mt-4 policy-header">4. Fees and Licensing</h4>
+        <p><strong>Individual Users:</strong> The Software is currently provided free of charge for individual, non-commercial use. The Licensor reserves the right to modify these terms for future versions.</p>
+        <p><strong>Commercial Entities:</strong> Organizations, agencies, and companies must obtain a commercial license prior to use. Contact the Licensor for licensing options and pricing.</p>
+        <p>Unauthorized commercial use may result in license termination and legal action.</p>
+
+        <h4 class="mt-4 policy-header">5. Support and Maintenance</h4>
+        <p>The Licensor is not obligated to provide support, maintenance, updates, or bug fixes unless explicitly agreed to in writing.</p>
+        <p>Any support, customization, or maintenance services may be offered separately and subject to additional terms or fees.</p>
+
+        <h4 class="mt-4 policy-header">6. No Warranty / As-Is</h4>
+        <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.</p>
+
+        <h4 class="mt-4 policy-header">7. Limitation of Liability</h4>
+        <p>IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, CONSEQUENTIAL, OR SPECIAL DAMAGES ARISING OUT OF OR IN CONNECTION WITH THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+
+        <h4 class="mt-4 policy-header">8. Termination</h4>
+        <p>This License automatically terminates if you fail to comply with any of its terms. Upon termination, all use must cease and all copies must be destroyed.</p>
+
+        <h4 class="mt-4 policy-header">9. Governing Law</h4>
+        <p>This License is governed by the laws of the State of Indiana, United States, without regard to conflict-of-law principles.</p>
+
+        <h4 class="mt-4 policy-header">Contact Us</h4>
+        <p>For any questions or concerns regarding these Terms of Use, please contact us at <a href="mailto:bbrown216@protonmail.com">bbrown216@protonmail.com</a>.</p>
+      </div>
+    </div>
+
+    <div id="disclaimer" class="alert alert-secondary py-1 text-center small" role="alert">
+      <strong>Disclaimer:</strong> By using QuickChart, you agree to our <a href="terms.html">Terms of Use</a> and <a href="privacy.html">Privacy Policy</a>.
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize dark mode
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      
+      if (darkModeToggle) {
+        // Check localStorage for user preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Apply initial theme based on user preference
+        if (isDarkMode) {
+          document.documentElement.setAttribute('data-bs-theme', 'dark');
+          darkModeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        } else {
+          document.documentElement.setAttribute('data-bs-theme', 'light');
+          darkModeToggle.innerHTML = '<i class="bi bi-moon-fill"></i>';
+        }
+        
+        // Add event listener for toggle button
+        darkModeToggle.addEventListener('click', () => {
+          const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          
+          // Update theme attribute
+          document.documentElement.setAttribute('data-bs-theme', newTheme);
+          
+          // Update button icon
+          darkModeToggle.innerHTML = newTheme === 'dark' 
+            ? '<i class="bi bi-sun-fill"></i>' 
+            : '<i class="bi bi-moon-fill"></i>';
+          
+          // Save preference to localStorage
+          localStorage.setItem('darkMode', newTheme === 'dark');
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>
