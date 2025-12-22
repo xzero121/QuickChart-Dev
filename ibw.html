@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IBW Calculator</title>
+  <style>
+    /* Minimal structural styles - colors handled by parent when loaded in modal */
+    .row { display:flex; gap:10px; }
+    .row > * { flex:1; }
+    .bubbleRow { display:flex; gap:10px; margin-top: 12px; }
+    .bubble { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 style="margin:0 0 6px; text-align: center;">IBW Calculator</h2>
+
+    <label for="method">Method</label>
+    <select id="method">
+      <option value="Devine">Devine</option>
+      <option value="Hamwi">Hamwi</option>
+      <option value="Robinson">Robinson</option>
+      <option value="Broca">Broca</option>
+      <option value="Miller">Miller</option>
+      <option value="McLaren">McLaren - Pediatric</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label for="height">Height</label>
+        <input id="height" type="number" inputmode="decimal" step="0.1" placeholder="e.g. 70 or 178" />
+      </div>
+      <div>
+        <label for="unit">Unit</label>
+        <select id="unit">
+          <option value="in">in</option>
+          <option value="cm">cm</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="gender">Gender</label>
+    <select id="gender">
+      <option value="male">male</option>
+      <option value="female">female</option>
+    </select>
+
+    <button id="calcBtn" type="button">Calculate</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script src="./calcs.js"></script>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+
+    const resultBox = el("result");
+
+    function showError(msg) {
+      resultBox.innerHTML = `<div class="err"><strong>Error:</strong> ${msg}</div>`;
+    }
+
+    function toHeightCm(height, unit) {
+      if (unit === "cm") return height;
+      if (unit === "in") return height * 2.54;
+      throw new Error("Invalid unit.");
+    }
+
+    function clamp(n, lo, hi) {
+      return Math.min(hi, Math.max(lo, n));
+    }
+
+    function showResult({ ibwKg, ibwLb, ettCm, vtLowMl, vtHighMl }) {
+      resultBox.innerHTML = `
+        <div class="bubbleRow">
+          <div class="bubble">
+            <div class="bubbleTitle">IBW</div>
+            <div class="bubbleValue">${ibwKg.toFixed(1)} kg</div>
+            <div class="bubbleSub">${ibwLb.toFixed(1)} lb</div>
+          </div>
+
+          <div class="bubble">
+            <div class="bubbleTitle">ETT depth (est.)</div>
+            <div class="bubbleValue">${ettCm.toFixed(1)} cm</div>
+            <div class="bubbleSub">at teeth</div>
+          </div>
+
+          <div class="bubble">
+            <div class="bubbleTitle">Tidal Volume</div>
+            <div class="bubbleValue">${Math.round(vtLowMl)}–${Math.round(vtHighMl)} mL</div>
+            <div class="bubbleSub">6–8 mL/kg (IBW)</div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function init() {
+      try {
+        if (typeof loadMcLarenTables === "function") {
+          console.log("Loading McLaren tables…");
+          await loadMcLarenTables();
+          console.log("McLaren tables loaded. Ready.");
+        } else {
+          console.log("Ready. (McLaren loader not found.)");
+        }
+      } catch (e) {
+        console.log("Ready, but McLaren tables failed to load.");
+        showError(e?.message || String(e));
+      }
+    }
+
+    el("calcBtn").addEventListener("click", async () => {
+      resultBox.innerHTML = "";
+      const method = el("method").value;
+      const height = Number(el("height").value);
+      const unit = el("unit").value;
+      const gender = el("gender").value;
+
+      if (!Number.isFinite(height) || height <= 0) {
+        showError("Enter a valid height.");
+        return;
+      }
+
+      try {
+        // Ensure McLaren tables exist if chosen
+        if (method === "McLaren" && typeof loadMcLarenTables === "function") {
+          if (!window.mcLarenMaleTable || !window.mcLarenFemaleTable) {
+            console.log("Loading McLaren tables…");
+            await loadMcLarenTables();
+            console.log("McLaren tables loaded. Ready.");
+          }
+        }
+
+        // Core IBW
+        const out = calculateIdealWeight(method, height, unit, gender);
+
+        // Derived vent helpers
+        const heightCm = toHeightCm(height, unit);
+
+        // ETT depth estimate: (height_cm / 10) + 5
+        // Clamp to avoid nonsense extremes if someone fat-fingers height
+        const ettCm = clamp((heightCm / 10) + 5, 12, 28);
+
+        // Tidal volume range (6–8 mL/kg IBW)
+        const vtLowMl  = out.kg * 6;
+        const vtHighMl = out.kg * 8;
+
+        showResult({
+          ibwKg: out.kg,
+          ibwLb: out.lb,
+          ettCm,
+          vtLowMl,
+          vtHighMl
+        });
+      } catch (e) {
+        showError(e?.message || String(e));
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

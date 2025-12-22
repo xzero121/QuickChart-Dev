@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IV Drip Calculator</title>
+  <style>
+    /* Minimal structural styles - colors handled by parent when loaded in modal */
+    .row { display:flex; gap:10px; }
+    .row > * { flex:1; }
+    .bubbleRow { display:flex; gap:10px; margin-top: 12px; }
+    .bubble { flex: 1; text-align: center; }
+    .comboWrap { position: relative; }
+    .comboInput { padding-right: 38px; }
+    .comboBtn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      user-select: none;
+      cursor: pointer;
+    }
+    .dropdown {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      overflow: hidden;
+      display: none;
+      z-index: 1000;
+    }
+    .dropdown.open { display: block; }
+    .dropdownItem {
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 style="margin:0 0 6px; text-align:center;">IV Drip Calculator</h2>
+
+    <div class="row">
+      <div>
+        <label for="volumeInput">Volume (mL)</label>
+        <div class="comboWrap">
+          <input id="volumeInput" class="comboInput" type="text" placeholder="e.g. 1000" autocomplete="off" />
+          <div id="volumeBtn" class="comboBtn">▾</div>
+
+          <div id="volumeDropdown" class="dropdown"></div>
+        </div>
+      </div>
+
+      <div>
+        <label for="duration">Duration (min)</label>
+        <input id="duration" type="number" step="1" placeholder="e.g. 60" />
+      </div>
+    </div>
+
+    <label for="dropSetInput">Drop set (gtt/mL)</label>
+    <div class="comboWrap">
+      <input id="dropSetInput" class="comboInput" type="text" placeholder="e.g. 15" autocomplete="off" />
+      <div id="dropSetBtn" class="comboBtn">▾</div>
+
+      <div id="dropSetDropdown" class="dropdown"></div>
+    </div>
+
+    <button id="calcBtn" type="button">Calculate</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script src="./calcs.js"></script>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+    const resultBox = el("result");
+
+    const VOLUMES = [100, 250, 500, 1000];
+    const DROPSETS = [
+      { value: 10, hint: "macro" },
+      { value: 12, hint: "macro" },
+      { value: 15, hint: "macro" },
+      { value: 20, hint: "macro" },
+      { value: 60, hint: "micro" },
+    ];
+
+    const volumeInput = el("volumeInput");
+    const volumeBtn = el("volumeBtn");
+    const volumeDropdown = el("volumeDropdown");
+
+    const dropSetInput = el("dropSetInput");
+    const dropSetBtn = el("dropSetBtn");
+    const dropSetDropdown = el("dropSetDropdown");
+
+    function showError(msg) {
+      resultBox.innerHTML = `<div class="err"><strong>Error:</strong> ${msg}</div>`;
+    }
+
+    function showResult(value) {
+      resultBox.innerHTML = `
+        <div class="bubbleRow">
+          <div class="bubble">
+            <div class="bubbleTitle">Drip rate</div>
+            <div class="bubbleValue">${value} gtt/min</div>
+          </div>
+        </div>`;
+    }
+
+    function parseNumber(input, label) {
+      const match = input.value.match(/(\d+(\.\d+)?)/);
+      const n = match ? Number(match[1]) : NaN;
+      if (!Number.isFinite(n) || n <= 0) throw new Error(`Enter a valid ${label}.`);
+      return n;
+    }
+
+    function buildVolumeDropdown() {
+      volumeDropdown.innerHTML = VOLUMES.map(v => `
+        <div class="dropdownItem" data-value="${v}">
+          <span>${v}</span>
+          <span class="itemHint">mL</span>
+        </div>
+      `).join("");
+    }
+
+    function buildDropSetDropdown() {
+      dropSetDropdown.innerHTML = DROPSETS.map(d => `
+        <div class="dropdownItem" data-value="${d.value}">
+          <span>${d.value}</span>
+          <span class="itemHint">${d.hint}</span>
+        </div>
+      `).join("");
+    }
+
+    volumeBtn.onclick = () => volumeDropdown.classList.toggle("open");
+    dropSetBtn.onclick = () => dropSetDropdown.classList.toggle("open");
+
+    volumeDropdown.onclick = (e) => {
+      const item = e.target.closest(".dropdownItem");
+      if (!item) return;
+      volumeInput.value = item.dataset.value;
+      volumeDropdown.classList.remove("open");
+    };
+
+    dropSetDropdown.onclick = (e) => {
+      const item = e.target.closest(".dropdownItem");
+      if (!item) return;
+      dropSetInput.value = item.dataset.value;
+      dropSetDropdown.classList.remove("open");
+    };
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".comboWrap")) {
+        volumeDropdown.classList.remove("open");
+        dropSetDropdown.classList.remove("open");
+      }
+    });
+
+    // Defaults
+    volumeInput.value = "1000";
+    dropSetInput.value = "15";
+    buildVolumeDropdown();
+    buildDropSetDropdown();
+
+    el("calcBtn").onclick = () => {
+      resultBox.innerHTML = "";
+
+      let volume, duration, dropSet;
+      try {
+        volume = parseNumber(volumeInput, "volume");
+        duration = parseNumber(el("duration"), "duration");
+        dropSet = parseNumber(dropSetInput, "drop set");
+      } catch (e) {
+        return showError(e.message);
+      }
+
+      if (typeof calculateDripRates !== "function") {
+        return showError("calculateDripRates() not found.");
+      }
+
+      const gtt = calculateDripRates(volume, dropSet, duration);
+      showResult(Math.round(gtt));
+    };
+  </script>
+</body>
+</html>

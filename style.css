@@ -7,7 +7,7 @@ html,
       padding: 1rem;
     }
 
-    /* Header Styles */
+    /* ===== HEADER ===== */
     .header-bar {
       display: flex;
       justify-content: space-between;
@@ -15,6 +15,29 @@ html,
       flex-wrap: wrap;
       gap: 1rem;
       margin-bottom: 1.5rem !important;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .header-center {
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    #sectionTitlesToggle {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    #sectionTitlesToggle .form-check-label {
+      font-size: 0.9rem;
+    }
+
+    .mobile-section-toggle {
+      display: none !important;
     }
 
     .header-right {
@@ -26,6 +49,13 @@ html,
 
     #jsonFileInputGroup {
       min-width: 250px;
+      max-width: 400px;
+    }
+
+    .header-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .toggle-newrun-row {
@@ -42,7 +72,7 @@ html,
     }
 
 
-    /* Sections */
+    /* ===== NARRATIVE SECTIONS ===== */
     .narrative-section {
       background-color: #f8f9fa;
       padding: 1rem;
@@ -86,7 +116,6 @@ html,
       margin-bottom: 0;
     }
 
-    /* Quick-add buttons container */
     .quick-add-container {
       display: flex;
       flex-wrap: nowrap;
@@ -96,10 +125,9 @@ html,
       -ms-overflow-style: none;
       padding: 0.25rem 0.5rem;
       flex: 1;
-      min-width: 0; /* Allow flex item to shrink below content size */
+      min-width: 0;
     }
 
-    /* Inner wrapper for centering buttons without clipping */
     .quick-add-container::before,
     .quick-add-container::after {
       content: '';
@@ -136,14 +164,12 @@ html,
       border-radius: .25rem;
       position: relative;
       padding: 0.75rem 6rem 0.75rem 2rem;
-      /* Adjusted padding to make space for controls if they were larger */
     }
 
     .sentence-content {
       line-height: 1.8;
     }
 
-    /* Drag handle for reordering */
     .drag-handle {
       position: absolute;
       left: .5rem;
@@ -154,60 +180,41 @@ html,
       user-select: none;
     }
 
-    /* --- Sentence Controls ------------------------------------------------ */
+    /* ===== SENTENCE CONTROLS ===== */
     .sentence-controls {
       position: absolute;
       top: 4px;
-      /* Adjust as needed for vertical alignment */
       right: 0;
-      /* Adjust as needed for horizontal alignment */
       display: flex;
       align-items: center;
-      /* Ensures buttons align nicely if heights vary slightly */
     }
 
     .sentence-controls .btn {
       border: 1px solid #ced4da;
-      /* Base border for all buttons in the group */
       background-color: #fff;
-      /* Default background */
       color: #212529;
-      /* Default text color */
       padding: 0.25rem 0.5rem;
-      /* Consistent with btn-sm */
       margin-left: -1px;
-      /* Key for overlapping borders */
       border-radius: 0;
-      /* Middle buttons have no radius */
       line-height: 1.5;
-      /* Bootstrap's default for .btn */
       vertical-align: middle;
-      /* Helps with alignment, especially with icons */
       box-shadow: none;
-      /* Remove any default browser or Bootstrap shadows */
       margin-top: -4px;
     }
 
     .sentence-controls .btn:first-child {
       margin-left: 0;
-      /* No negative margin for the first button */
       border-bottom-left-radius: .25rem;
-      /* Rounded bottom-left corner */
     }
 
     .sentence-controls .btn:last-child {
       border-top-right-radius: .25rem;
-      /* Rounded top-right corner */
     }
 
-    /* Styling for the Edit button */
     .sentence-controls .edit-sentence-btn {
       background-color: #ffc107;
-      /* Bootstrap warning yellow */
       border-color: #ffc107;
-      /* Match border to background for seamless look */
       color: #000;
-      /* Dark text for yellow background for better contrast */
     }
 
     .sentence-controls .edit-sentence-btn:hover {
@@ -219,44 +226,29 @@ html,
 
     .sentence-controls .lock-sentence-btn:hover {
       background-color: #e9ecef;
-      /* Slight grey for hover, adjust as needed */
     }
 
-
-    /* Ensure the primary color for the locked icon is applied */
     .sentence-controls .lock-sentence-btn i.bi-lock-fill.text-primary {
       color: #0d6efd !important;
-      /* Bootstrap's primary blue, or your preferred color */
     }
 
-    /* Styling for the Remove button */
     .sentence-controls .remove-sentence-btn {
       background-color: #dc3545;
-      /* Bootstrap danger red */
       border-color: #dc3545;
-      /* Match border to background */
       color: #fff;
     }
 
     .sentence-controls .remove-sentence-btn:hover {
       background-color: #c82333;
-      /* Darker red for hover */
       border-color: #bd2130;
     }
-
-    /* --- End Sentence Controls --- */
-
-    /* --- Sentence Controls Bottom --- */
 
     .sentence-controls-bottom {
       position: absolute;
       bottom: 0;
-      /* Adjust as needed for vertical alignment */
       right: 0;
-      /* Adjust as needed for horizontal alignment */
       display: flex;
       align-items: center;
-      /* Ensures buttons align nicely if heights vary slightly */
     }
 
       .sentence-controls-bottom .btn {
@@ -271,12 +263,8 @@ html,
 
     .sentence-controls-bottom .btn:last-child {
       border-bottom-right-radius: .25rem;
-      /* Rounded top-right corner */
     }
 
-    /* --- End Sentence Controls Bottom --- */
-
-    /* Disabled increment controls styling */
     .increment-controls .increment-btn:disabled,
     .increment-controls .increment-btn.disabled {
       opacity: 0.5;
@@ -284,7 +272,7 @@ html,
       pointer-events: none;
     }
 
-    /* Optional: Add a subtle visual indication that controls are locked */
+    /* Visual indication that controls are locked during editing */
     .sentence-content.editing + .sentence-controls-bottom {
       opacity: 0.6;
     }
@@ -309,7 +297,7 @@ html,
       background: rgba(33, 37, 41, 0.9);
     }
 
-    /* Add item form and group */
+    /* ===== ADD ITEM FORM ===== */
     .add-item-form {
       width: 100%;
       position: relative;
@@ -343,7 +331,7 @@ html,
     }
 
 
-    /* Suggestions box for autocomplete (Add Sentence) */
+    /* ===== SUGGESTIONS & AUTOCOMPLETE ===== */
     .suggestions-box {
       position: absolute;
       top: 100%;
@@ -389,7 +377,7 @@ html,
     }
 
 
-    /* Inline fields: input and static display */
+    /* ===== INLINE FIELDS ===== */
     .inline-field {
       display: inline-block;
       width: auto;
@@ -423,7 +411,6 @@ html,
       text-overflow: clip;
     }
 
-    /* Empty field highlighting */
     .inline-field.empty-field {
       box-shadow: none !important;
       background-color: transparent;
@@ -443,24 +430,18 @@ html,
       opacity: 0.7;
     }
 
-    /* Custom dropdown container */
+    /* ===== CUSTOM DROPDOWNS ===== */
     .custom-dropdown {
       display: contents;
-      /* Allows input to flow inline with text but container can be positioned */
     }
 
-    /* Input within custom dropdown */
     .custom-dropdown .inline-field.custom-dropdown-input {
       min-width: 80px;
-      /* Ensure it has a minimum width */
       display: inline-block;
-      /* Ensure it behaves like other inline fields */
     }
 
-    /* Suggestions list specifically for custom dropdowns */
     .custom-dropdown .suggestions {
       position: absolute;
-      /* Positioned relative to its closest positioned ancestor (the li) */
       z-index: 1000;
       display: none;
       background-color: #fff;
@@ -468,15 +449,12 @@ html,
       border-radius: .25rem;
       box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
       width: auto;
-      /* Auto width based on content */
       max-width: 350px;
-      /* Prevent it from becoming too wide */
       max-height: 200px;
       overflow-y: auto;
       list-style: none;
       padding: 0;
       margin: 0;
-      /* Reset margin */
     }
 
     .custom-dropdown .suggestions ul {
@@ -486,19 +464,12 @@ html,
     }
 
     .custom-dropdown .suggestions li {
-      padding: .5rem 1rem;
-      /* Consistent padding */
+      padding: .5rem .75rem;
       cursor: pointer;
       border-bottom: 1px solid #eee;
-      /* Separator */
       margin: 0;
-      /* Reset margin */
-      padding: .5rem .75rem;
-      /* Adjusted padding */
       white-space: normal;
-      /* Allow text to wrap if needed */
       overflow: visible;
-      /* Ensure content isn't clipped */
       text-overflow: clip;
       line-height: 1.4;
     }
@@ -513,66 +484,52 @@ html,
     }
 
 
-    /* Tabs */
+    /* ===== TABS ===== */
     .has-tabs {
       margin-top: 2rem;
-      /* Space for tabs above */
     }
 
     li.has-tabs:first-child {
       margin-top: 1.6rem;
-      /* Slightly less if it's the very first item */
     }
 
     .tabs-container {
       position: absolute;
       top: -1.7rem;
-      /* Position above the sentence content */
       left: 2.5rem;
-      /* Align with sentence content, past drag handle */
       display: flex;
       gap: 0.25rem;
-      /* Space between tab buttons */
     }
 
     .tab-button {
       padding: 2px 8px;
-      /* Small padding */
       background-color: #e9ecef;
       border: 1px solid #ced4da;
       border-radius: .25rem .25rem 0 0;
-      /* Rounded top corners */
       font-size: 0.85rem;
       cursor: pointer;
       position: relative;
       top: 1px;
-      /* Align with top border of li */
       border-bottom: none;
-      /* No bottom border for inactive tab */
       color: #000;
     }
 
     .tab-button.active {
       background-color: #fff;
-      /* Match li background */
       border-bottom-color: #fff;
-      /* Make bottom border "disappear" */
       z-index: 2;
-      /* Bring active tab to front */
       font-weight: 500;
     }
 
     .tab-pane {
       display: none;
-      /* Hide inactive panes */
     }
 
     .tab-pane.active {
       display: block;
-      /* Show active pane */
     }
 
-    /* License and buttons */
+    /* ===== LICENSE & UTILITY BUTTONS ===== */
     #license {
       font-size: 0.9rem;
     }
@@ -597,7 +554,7 @@ html,
       font-variant: small-caps;
     }
 
-    /* Hidden span for measuring input width */
+    /* Hidden element for measuring dynamic input width */
     #width-measurer {
       position: absolute;
       top: -9999px;
@@ -605,64 +562,12 @@ html,
       white-space: pre;
       visibility: hidden;
       font: inherit;
-      /* Ensure it matches the input's font */
       font-size: 1em;
-      /* Ensure it matches the input's font size */
       padding: 0 .25rem;
-      /* Match input padding */
       border: none;
-      /* No border */
       display: inline-block;
-      /* For scrollWidth calculation */
     }
 
-    body.dark-mode {
-      background-color: #121212;
-      color: #e0e0e0;
-    }
-
-    body.dark-mode .narrative-section
-    {
-      background-color: #1e1e1e;
-      border-color: #333;
-    }
-
-    body.dark-mode .sentence-list li {
-      background-color: #2a2a2a;
-      border-color: #444;
-    }
-
-    body.dark-mode textarea,
-    body.dark-mode .inline-field,
-    body.dark-mode .form-control {
-      background-color: #2a2a2a !important;
-      /* Important to override Bootstrap */
-      color: #e0e0e0 !important;
-      border-color: #666 !important;
-    }
-
-    body.dark-mode .alert,
-    body.dark-mode .input-group .form-control {
-      /* Ensure input group elements are styled */
-      background-color: #2a2a2a;
-      color: #e0e0e0;
-      border-color: #444;
-    }
-
-    /* Tabs in Dark Mode */
-    body.dark-mode .tabs-container .tab-button {
-      background-color: #2a2a2a;
-      border-color: #444;
-      color: #e0e0e0;
-    }
-
-    body.dark-mode .tabs-container .tab-button.active {
-      background-color: #444;
-      /* Or a slightly lighter shade of #1e1e1e */
-      color: #fff;
-    }
-
-    /* Bug report (fix icon & position) */
     #bugReportTab {
       border-radius: 4px;
       padding: 8px 12px;
@@ -672,74 +577,7 @@ html,
       margin-right: 4px;
     }
 
-    body.dark-mode .modal-content {
-      background-color: #2a2a2a !important;
-      color: #e0e0e0;
-    }
-
-    body.darkmode .text-muted {
-      color: #b0b0b0 !important;
-    }
-
-    /* Dark mode toggle (floating) */
-    #darkModeToggle {
-      width: 38px;
-      height: 38px;
-      border-radius: 4px;  /* Changed from 50% (circle) to 4px to match bug report button */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      padding: 8px 12px;  /* Added padding to match bug report button */
-    }
-
-    body.dark-mode *::placeholder {
-      /* modern browser */
-      color: rgb(230,230,230);
-    }
-
-    /* Dark mode empty field styling */
-    body.dark-mode .inline-field.empty-field::placeholder {
-      color: rgba(150, 0, 0, 1) !important;
-    }
-
-    body.dark-mode .inline-field.empty-field:focus::placeholder {
-      color: rgba(150, 0, 0, 0.7) !important;
-    }
-
-    body.dark-mode .custom-dropdown .suggestions
-    {
-      background-color: #666 !important;
-    }
-
-    body.dark-mode .custom-dropdown .suggestions li,
-    body.dark-mode .custom-dropdown .suggestions
-    {
-      border-color: #666 !important;
-    }
-
-    body.dark-mode .custom-dropdown .suggestions li:hover {
-      background-color: #333 !important;
-    }
-
-    /* Dark mode styling for lock button */
-    body.dark-mode .sentence-controls .lock-sentence-btn {
-      background-color: #333;
-      border-color: #555;
-      color: #e0e0e0;
-    }
-
-    body.dark-mode .sentence-controls .lock-sentence-btn:hover {
-      background-color: #444;
-      border-color: #666;
-    }
-
-    /* Inverted lock icon color in dark mode */
-    body.dark-mode .sentence-controls .lock-sentence-btn i.bi-lock-fill.text-primary {
-      color: #7cb0ff !important; /* Lighter blue for dark mode */
-    }
-
-    /* Dark mode styles based on data-bs-theme attribute */
+    /* ===== DARK MODE ===== */
     [data-bs-theme="dark"] {
       background-color: #121212;
       color: #e0e0e0;
@@ -770,20 +608,17 @@ html,
     [data-bs-theme="dark"] .inline-field,
     [data-bs-theme="dark"] .form-control {
       background-color: #2a2a2a !important;
-      /* Important to override Bootstrap */
       color: #e0e0e0 !important;
       border-color: #666 !important;
     }
 
     [data-bs-theme="dark"] .alert,
     [data-bs-theme="dark"] .input-group .form-control {
-      /* Ensure input group elements are styled */
       background-color: #2a2a2a;
       color: #e0e0e0;
       border-color: #444;
     }
 
-    /* Tabs in Dark Mode */
     [data-bs-theme="dark"] .tabs-container .tab-button {
       background-color: #2a2a2a;
       border-color: #444;
@@ -792,11 +627,9 @@ html,
 
     [data-bs-theme="dark"] .tabs-container .tab-button.active {
       background-color: #444;
-      /* Or a slightly lighter shade of #1e1e1e */
       color: #fff;
     }
 
-    /* Fixed dark mode modal styling */
     [data-bs-theme="dark"] .modal-content {
       background-color: #2a2a2a !important;
       color: #e0e0e0;
@@ -806,13 +639,10 @@ html,
       color: #b0b0b0 !important;
     }
 
-    /* Dark mode placeholders */
     [data-bs-theme="dark"] *::placeholder {
-      /* modern browser */
       color: rgb(230, 230, 230);
     }
 
-    /* Fixed dark mode styling for dropdowns */
     [data-bs-theme="dark"] .custom-dropdown .suggestions,
     [data-bs-theme="dark"] .suggestions-box li:hover,
     [data-bs-theme="dark"] .suggestions-box {
@@ -832,7 +662,6 @@ html,
       background-color: #333 !important;
     }
 
-    /* Dark mode styling for lock button */
     [data-bs-theme="dark"] .sentence-controls .lock-sentence-btn {
       background-color: #333;
       border-color: #555;
@@ -844,50 +673,10 @@ html,
       border-color: #666;
     }
 
-    /* Inverted lock icon color in dark mode */
     [data-bs-theme="dark"] .sentence-controls .lock-sentence-btn i.bi-lock-fill.text-primary {
-      color: #7cb0ff !important; /* Lighter blue for dark mode */
+      color: #7cb0ff !important;
     }
 
-    /* Fixed positioning for dark mode toggle button */
-    #darkModeToggle {
-      width: 38px;
-      height: 38px;
-      border-radius: 4px;  /* Changed from 50% (circle) to 4px to match bug report button */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      padding: 8px 12px;  /* Added padding to match bug report button */
-    }
-
-    /* Bug report button styling */
-    #bugReportBtn {
-      border-radius: 4px;
-      padding: 8px 12px;
-    }
-
-    #bugReportBtn i {
-      margin-right: 4px;
-    }
-
-    /* Bug report button styling to match dark mode toggle */
-    #bugReportBtn {
-      width: 38px;
-      height: 38px;
-      border-radius: 4px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      padding: 0;
-    }
-
-    #bugReportBtn i {
-      margin-right: 0; /* Remove margin since we're centering the icon */
-    }
-
-    /* Header controls - ensure consistent spacing */
     .header-controls {
       display: flex;
       align-items: center;
@@ -906,7 +695,700 @@ html,
       margin-right: 0.25rem;
     }
 
+    /* Floating version text */
+    .version-text {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-size: 0.85rem;
+      color: rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    [data-bs-theme="dark"] .version-text {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
     .has-empty-placeholders {
       border-color: #dc3545 !important;
       box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+
+    /* ===== TOOL MENU & MODALS ===== */
+    #toolMenuButton {
+      transition: transform 0.2s ease;
+    }
+
+    #toolMenuButton:hover {
+      transform: scale(1.05);
+    }
+
+    #toolMenu {
+      animation: slideUp 0.15s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .tool-modal-content {
+      font-family: system-ui, sans-serif;
+      padding: 0;
+      background: transparent;
+    }
+
+    .tool-modal-content .card {
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      max-width: 100%;
+      background: transparent;
+      margin: 0 auto;
+    }
+
+    .tool-modal-content label {
+      display: block;
+      margin: 10px 0 4px;
+      font-size: 0.95rem;
+      color: inherit;
+    }
+
+    .tool-modal-content input,
+    .tool-modal-content select {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ced4da;
+      border-radius: 10px;
+      background: #fff;
+      box-sizing: border-box;
+      color: #212529;
+    }
+
+    .tool-modal-content input:focus,
+    .tool-modal-content select:focus {
+      border-color: #86b7fe;
+      outline: 0;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .tool-modal-content button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 10px;
+      box-sizing: border-box;
+      margin-top: 12px;
+      cursor: pointer;
+      background-color: #0d6efd;
+      color: #fff;
+      border: 1px solid #0d6efd;
+      font-weight: 500;
+    }
+
+    .tool-modal-content button:hover {
+      background-color: #0b5ed7;
+      border-color: #0a58ca;
+    }
+
+    .tool-modal-content .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tool-modal-content .row > * {
+      flex: 1;
+    }
+
+    .tool-modal-content .bubbleRow {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .tool-modal-content .bubble {
+      flex: 1;
+      padding: 14px;
+      background: #f7f7f7;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .tool-modal-content .bubbleTitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .tool-modal-content .bubbleValue {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #333;
+    }
+
+    .tool-modal-content .bubbleSub {
+      font-size: 0.95rem;
+      margin-top: 6px;
+      color: #666;
+    }
+
+    .tool-modal-content .err {
+      margin-top: 12px;
+      padding: 10px;
+      background: #ffecec;
+      border: 1px solid #ffb3b3;
+      border-radius: 8px;
+      color: #cc0000;
+    }
+
+    .tool-modal-content .tiny,
+    .tool-modal-content .note {
+      color: #666;
+      font-size: 0.85rem;
+      margin-top: 10px;
+    }
+
+    .tool-modal-content .comboWrap {
+      position: relative;
+    }
+
+    .tool-modal-content .comboInput {
+      padding-right: 38px;
+    }
+
+    .tool-modal-content .comboBtn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid #ced4da;
+      background: #f8f9fa;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      user-select: none;
+      color: #212529;
+    }
+
+    .tool-modal-content .comboBtn:hover {
+      background: #e9ecef;
+    }
+
+    .tool-modal-content .dropdown {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      background: #fff;
+      border: 1px solid #ced4da;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+      overflow: hidden;
+      display: none;
+      z-index: 1000;
+    }
+
+    .tool-modal-content .dropdown.open {
+      display: block;
+    }
+
+    .tool-modal-content .dropdownItem {
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      color: #212529;
+      background: #fff;
+    }
+
+    .tool-modal-content .dropdownItem:hover {
+      background: #f8f9fa;
+    }
+
+    .tool-modal-content .itemHint {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .card {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content label {
+      color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content input,
+    [data-bs-theme="dark"] .tool-modal-content select {
+      background: #2b2b2b !important;
+      border-color: #444 !important;
+      color: #e0e0e0 !important;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content input:focus,
+    [data-bs-theme="dark"] .tool-modal-content select:focus {
+      border-color: #0d6efd !important;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content input::placeholder {
+      color: #888 !important;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content button {
+      background: #0d6efd;
+      border-color: #0d6efd;
+      color: #fff;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content button:hover {
+      background: #0b5ed7;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .bubble {
+      background: #333;
+      border-color: #555;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .bubbleTitle,
+    [data-bs-theme="dark"] .tool-modal-content .bubbleSub,
+    [data-bs-theme="dark"] .tool-modal-content .tiny,
+    [data-bs-theme="dark"] .tool-modal-content .note,
+    [data-bs-theme="dark"] .tool-modal-content .itemHint {
+      color: #aaa;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .bubbleValue {
+      color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .comboBtn {
+      background: #444;
+      border-color: #555;
+      color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .comboBtn:hover {
+      background: #555;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .dropdown {
+      background: #333;
+      border-color: #555;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .dropdownItem {
+      background: #333;
+      color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .dropdownItem:hover {
+      background: #444;
+    }
+
+    [data-bs-theme="dark"] .tool-modal-content .err {
+      background: #4a2020;
+      border-color: #6a3030;
+      color: #ff9999;
+    }
+
+    [data-bs-theme="dark"] #toolMenu {
+      background: #333 !important;
+      border-color: #555 !important;
+    }
+
+    [data-bs-theme="dark"] #toolMenu button {
+      background: #333 !important;
+      color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] #toolMenu button:hover {
+      background: #444 !important;
+    }
+
+    [data-bs-theme="dark"] .tool-menu-separator {
+      background: #555 !important;
+    }
+
+    /* ===== RESPONSIVE STYLES ===== */
+
+    /* Medium devices (tablets, 769px to 1024px) */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .header-bar {
+        gap: 0.75rem;
+      }
+
+      #jsonFileInputGroup {
+        min-width: 200px;
+        max-width: 300px;
+      }
+    }
+
+    /* Mobile devices (max-width: 768px) */
+    @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .header-bar {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem !important;
+      }
+
+      .header-logo {
+        justify-content: center;
+      }
+
+      /* Keep logo readable on mobile */
+      .header-logo img {
+        max-width: 180px !important;
+      }
+
+      .header-right {
+        width: 100%;
+        align-items: stretch;
+        gap: 0.5rem;
+        order: 1; /* Show before header-center on mobile */
+      }
+
+      .header-controls-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.35rem;
+      }
+
+      #jsonFileInputGroup {
+        min-width: unset;
+        max-width: none;
+        flex: 1 1 auto;
+        min-width: 150px;
+      }
+
+      #newRunBtn {
+        white-space: nowrap;
+      }
+
+      .toggle-newrun-row {
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .toggle-newrun-row .form-check {
+        margin: 0;
+      }
+
+      .narrative-section {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .section-header {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+
+      .quick-add-container {
+        padding: 0.25rem 0;
+        justify-content: flex-start;
+      }
+
+      .quick-add-container::before,
+      .quick-add-container::after {
+        display: none;
+      }
+
+      .quick-add-btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+      }
+
+      .sentence-list li {
+        padding: 0.5rem;
+        padding-left: 1.75rem;
+        padding-right: 0.5rem;
+        padding-bottom: 3rem;
+        min-height: auto;
+      }
+
+      .drag-handle {
+        left: 0.25rem;
+        font-size: 1.1rem;
+      }
+
+      .sentence-controls {
+        position: absolute;
+        top: auto;
+        bottom: 0.35rem;
+        right: 0.35rem;
+        flex-direction: row;
+        gap: 0.35rem;
+      }
+
+      .sentence-controls .btn {
+        margin-left: 0;
+        margin-top: 0;
+        border-radius: 0.3rem !important;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.95rem;
+      }
+
+      .sentence-controls .btn:first-child,
+      .sentence-controls .btn:last-child {
+        border-radius: 0.3rem !important;
+      }
+
+      .sentence-controls-bottom {
+        position: absolute;
+        bottom: 0.35rem;
+        left: 1.75rem;
+        right: auto;
+      }
+
+      .sentence-controls-bottom .btn {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.95rem;
+        border-radius: 0.3rem !important;
+      }
+
+      .sentence-controls-bottom .btn:first-child,
+      .sentence-controls-bottom .btn:last-child {
+        border-radius: 0.3rem !important;
+      }
+
+      .toggle-newrun-row {
+        display: none !important;
+      }
+
+      .header-center {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        order: 3; /* Show at bottom */
+      }
+
+      .header-center #bugReportBtn,
+      .header-center #darkModeToggle {
+        flex: 1;
+        width: auto;
+        height: auto;
+        padding: 0.5rem;
+        font-size: 1rem;
+      }
+
+      .header-center .mobile-section-toggle {
+        display: flex !important;
+        flex: 0 0 100%;
+        justify-content: center;
+        margin: 0;
+      }
+
+      .header-center .mobile-section-toggle .form-check-label {
+        font-size: 0.9rem;
+      }
+
+      .tabs-container {
+        position: absolute;
+        top: -1.5rem;
+        left: 1.75rem;
+        right: 0.5rem;
+        margin-bottom: 0;
+        flex-wrap: nowrap;
+        gap: 0.2rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .tabs-container::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      .tabs-container::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 2px;
+      }
+
+      .has-tabs {
+        margin-top: 1.75rem;
+      }
+
+      li.has-tabs:first-child {
+        margin-top: 1.5rem;
+      }
+
+      .tab-button {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+        border-radius: 0.25rem 0.25rem 0 0;
+        border: 1px solid #ced4da;
+        border-bottom: none;
+        top: 1px;
+        background-color: #e9ecef;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .tab-button.active {
+        background-color: #fff;
+        border-bottom-color: #fff;
+      }
+
+      .sentence-content {
+        line-height: 1.7;
+        font-size: 1rem;
+      }
+
+      .inline-field {
+        min-width: 45px;
+        margin: 0 0.2rem;
+        font-size: 1rem;
+      }
+
+      .add-item-group {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .add-item-form textarea.auto-height-textarea {
+        width: 100%;
+        font-size: 1rem;
+      }
+
+      .add-item-form .btn {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+      }
+
+      #generateBtn,
+      #validateBtn,
+      #copyBtn {
+        width: 100%;
+        margin-left: 0 !important;
+        margin-bottom: 0.5rem;
+        padding: 0.6rem;
+        font-size: 1rem;
+      }
+
+      #finalText {
+        font-size: 1rem;
+      }
+
+      #disclaimer {
+        font-size: 0.8rem;
+      }
+
+      #toolMenuButton {
+        bottom: 15px;
+        left: 15px;
+      }
+
+      #toolMenuButton #toolMenuBtn {
+        width: 48px;
+        height: 48px;
+      }
+
+      #toolMenu button {
+        width: 48px;
+        height: 48px;
+      }
+
+      .sentence-edit-textarea {
+        width: 100% !important;
+        font-size: 1rem;
+      }
+    }
+
+    /* Extra small devices (phones, max-width: 480px) */
+    @media (max-width: 480px) {
+      body {
+        padding: 0.25rem;
+      }
+
+      .header-logo img {
+        max-width: 160px !important;
+      }
+
+      .header-controls-row {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      #jsonFileInputGroup {
+        width: 100%;
+      }
+
+      #newRunBtn {
+        width: 100%;
+      }
+
+      .narrative-section {
+        padding: 0.5rem;
+      }
+
+      .section-header {
+        font-size: 0.95rem;
+      }
+
+      .sentence-list li {
+        padding: 0.4rem;
+        padding-left: 1.5rem;
+        padding-bottom: 2.75rem;
+      }
+
+      .drag-handle {
+        font-size: 1rem;
+        left: 0.15rem;
+      }
+
+      .sentence-content {
+        font-size: 0.95rem;
+        line-height: 1.6;
+      }
+
+      .inline-field {
+        font-size: 0.95rem;
+        min-width: 40px;
+      }
+
+      .tab-button {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.75rem;
+      }
+
+      .tabs-container {
+        left: 1.5rem;
+        right: 0.25rem;
+      }
+
+      .sentence-controls .btn,
+      .sentence-controls-bottom .btn {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .quick-add-btn {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+      }
     }

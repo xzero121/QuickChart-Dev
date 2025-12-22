@@ -68,11 +68,11 @@
     },
     {
       "name": "PTA Medications",
-      "text": "+Prior to EMS arrival the patient received the following medications [+\\n[text:Dosage] of [customDropdown:Medication] via [text:Route]]"
+      "text": "++Prior to EMS arrival the patient received the following medications [+[text:Dosage] of [customDropdown:Medication] via [text:Route]]."
     },
     {
       "name": "PTA Treatments",
-      "text": "+Prior to EMS arrival the patient received the following treatments: [+\\n[text:Treatment]]"
+      "text": "+Prior to EMS arrival the patient received the following treatments: [+[text:Treatment]]."
     },
     {
       "name": "ET Tube",
