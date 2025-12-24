@@ -82,10 +82,10 @@
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center">
           <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
-          <div class="d-flex align-items-center">
-            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="confirmationLockToggle" 
+          <div class="d-flex align-items-center gap-2 ms-auto">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="confirmationLockToggle" 
                     title="Toggle: Reset locked sentences" style="display: none;">
               <i class="bi bi-lock-fill"></i>
             </button>
@@ -109,7 +109,7 @@
   <div class="modal fade" id="bugReportModal" tabindex="-1" aria-labelledby="bugReportModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center">
           <h5 class="modal-title" id="bugReportModalLabel">Report an Issue</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -3089,7 +3089,7 @@
     }
 
     /**
-     * Shows or hides the unadded sentence warning
+     * Shows or hides the unadded sentence warning and highlights offending sentences
      * @param {boolean} show Whether to show the warning
      */
     function showUnaddedSentenceWarning(show) {
@@ -3097,9 +3097,42 @@
 
       if (show) {
         warningContainer.style.display = "block";
+        highlightUnaddedSentences();
       } else {
         warningContainer.style.display = "none";
+        clearUnaddedSentenceHighlighting();
       }
+    }
+
+    /**
+     * Highlights sentences that have unadded content in the add sentence form
+     */
+    function highlightUnaddedSentences() {
+      const addSentenceForms = document.querySelectorAll('.add-item-form');
+      
+      addSentenceForms.forEach(form => {
+        const textarea = form.querySelector('textarea');
+        if (textarea && textarea.value.trim() !== '') {
+          form.style.borderLeft = '4px solid #dc3545';
+          form.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+          form.style.paddingLeft = '8px';
+          form.style.marginLeft = '-4px';
+        }
+      });
+    }
+
+    /**
+     * Removes highlighting from unadded sentence items
+     */
+    function clearUnaddedSentenceHighlighting() {
+      const addSentenceForms = document.querySelectorAll('.add-item-form');
+      
+      addSentenceForms.forEach(form => {
+        form.style.borderLeft = '';
+        form.style.backgroundColor = '';
+        form.style.paddingLeft = '';
+        form.style.marginLeft = '';
+      });
     }
 
     // --- Utility Functions ---
