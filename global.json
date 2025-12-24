@@ -22,7 +22,7 @@
       "tabs": [
         {
           "title": "Facility Ventilator",
-          "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], EtCO2 [text:ETco2], and tidal volume [text:Tidal Volume]."
+          "text": "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP,BL] with the following settings: tidal volume [text:Tidal Volume], pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], and EtCO2 [text:ETco2]."
         },
         {
           "title": "Vent Adjustment",
@@ -125,7 +125,7 @@
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "immediate", "non-immediate"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
-    "Mental Status": ["alert and oriented", "confused", "unresponsive", "altered level of consciousness"],
+    "Mental Status": ["alert and oriented", "confused", "unresponsive", "altered level of consciousness", "sedated"],
     "Method": ["sheet draw", "stand and pivot", "self ambulation"],
     "Skin Appearance": ["warm, pink, and dry"],
     "Assistance Info": [
