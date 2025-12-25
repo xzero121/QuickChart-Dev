@@ -881,9 +881,7 @@ html,
       place-items: center;
       user-select: none;
       color: #212529;
-    }
-
-    .tool-modal-content .comboBtn:hover {
+    }    .tool-modal-content .comboBtn:hover {
       background: #e9ecef;
     }
 
@@ -896,9 +894,10 @@ html,
       border: 1px solid #ced4da;
       border-radius: 12px;
       box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-      overflow: hidden;
+      overflow-y: auto;
       display: none;
       z-index: 1000;
+      max-height: 200px;
     }
 
     .tool-modal-content .dropdown.open {
@@ -908,10 +907,23 @@ html,
     .tool-modal-content .dropdownItem {
       padding: 10px 12px;
       cursor: pointer;
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 50px 1fr 50px;
+      align-items: center;
       color: #212529;
       background: #fff;
+    }
+
+    .tool-modal-content .dropdownItem > span:first-child {
+      text-align: left;
+    }
+
+    .tool-modal-content .dropdownItem > span:nth-child(2) {
+      text-align: center;
+    }
+
+    .tool-modal-content .dropdownItem > span:last-child {
+      text-align: right;
     }
 
     .tool-modal-content .dropdownItem:hover {
@@ -921,6 +933,11 @@ html,
     .tool-modal-content .itemHint {
       color: #666;
       font-size: 0.9rem;
+    }
+
+    .tool-modal-content .fio2Hint {
+      font-weight: 500;
+      white-space: nowrap;
     }
 
     [data-bs-theme="dark"] .tool-modal-content .card {
