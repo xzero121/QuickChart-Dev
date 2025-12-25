@@ -3440,11 +3440,10 @@
       toolMenuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         toolMenu.style.display = toolMenu.style.display === 'none' ? 'block' : 'none';
-      });
-
-      // Menu items
+      });      // Menu items
       const dripBtn = document.getElementById('dripToolBtn');
       const ibwBtn = document.getElementById('ibwToolBtn');
+      const o2Btn = document.getElementById('o2ToolBtn');
 
       dripBtn?.addEventListener('click', () => {
         loadToolContent('drip.html', 'Drip Calculator');
@@ -3453,6 +3452,11 @@
 
       ibwBtn?.addEventListener('click', () => {
         loadToolContent('ibw.html', 'IBW Calculator');
+        toolMenu.style.display = 'none';
+      });
+
+      o2Btn?.addEventListener('click', () => {
+        loadToolContent('oxygen.html', 'Oxygen Duration Calculator');
         toolMenu.style.display = 'none';
       });
 
@@ -3556,11 +3560,14 @@
               title="Drip Calculator"
               style="width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #dee2e6;">
         <i class="bi bi-droplet-fill" style="font-size: 1.5rem;"></i>
-      </button>
-      <button id="ibwToolBtn" class="btn btn-light border-0" 
+      </button>      <button id="ibwToolBtn" class="btn btn-light border-0" 
               title="IBW Calculator"
               style="width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #dee2e6;">
         <i class="fa-solid fa-weight-scale" style="font-size: 1.5rem;"></i>
+      </button>      <button id="o2ToolBtn" class="btn btn-light border-0" 
+              title="Oxygen Duration Calculator"
+              style="width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #dee2e6;">
+        <img src="./icons/oxygen.svg" alt="O2" style="width: 24px; height: 24px;" />
       </button>
       <div class="tool-menu-separator" style="height: 1px; background: #adb5bd; margin: 4px 8px;"></div>
       <button id="bugReportBtn" class="btn btn-light border-0" 

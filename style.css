@@ -1014,14 +1014,19 @@ html,
     [data-bs-theme="dark"] #toolMenu button {
       background: #333 !important;
       color: #e0e0e0;
-    }
-
+    }    
+    
     [data-bs-theme="dark"] #toolMenu button:hover {
       background: #444 !important;
     }
 
     [data-bs-theme="dark"] .tool-menu-separator {
       background: #555 !important;
+    }
+
+    /* Oxygen SVG icon dark mode styling */
+    [data-bs-theme="dark"] #o2ToolBtn img {
+      filter: brightness(0) invert(1);
     }
 
     /* ===== RESPONSIVE STYLES ===== */

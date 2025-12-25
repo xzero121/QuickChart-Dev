@@ -126,6 +126,13 @@ function calculateDripRates(volume_ml, drop_set, duration_min) {
   return rate_drops_per_min;
 }
 
+function calculateOxygenDuration(tankSize, CurrentPSI, FlowRateLPM) {
+  const tankConstant = {"D": 0.16, "E": 0.28, "M": 1.56, "H": 3.14};
+
+  const duration = ((CurrentPSI - 200) * tankConstant[tankSize]) / FlowRateLPM;
+  return duration;
+}
+
 
 
 

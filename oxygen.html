@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Oxygen Duration Calculator</title>
+  <style>
+    /* Minimal structural styles - colors handled by parent when loaded in modal */
+    .row { display:flex; gap:10px; }
+    .row > * { flex:1; }
+    .bubbleRow { display:flex; gap:10px; margin-top: 12px; }
+    .bubble { flex: 1; text-align: center; }
+    .comboWrap { position: relative; }
+    .comboInput { padding-right: 38px; }
+    .comboBtn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      user-select: none;
+      cursor: pointer;
+    }    .dropdown {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      overflow: hidden;
+      display: none;
+      z-index: 1000;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .dropdown.open { display: block; }
+    .dropdownItem {
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 style="margin:0 0 6px; text-align:center;">Oxygen Duration Calculator</h2>    <label for="tankSize">Tank Size</label>
+    <select id="tankSize">
+      <option value="D" selected>Portable - Class D (M-15)</option>
+      <option value="E">Large Portable - Class E (M-22)</option>
+      <option value="M">Main - Class M (M-122)</option>
+      <option value="H">Large Main - Class H (M-250)</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label for="currentPSIInput">Current PSI</label>
+        <div class="comboWrap">
+          <input id="currentPSIInput" class="comboInput" type="text" placeholder="e.g. 2000" autocomplete="off" />
+          <div id="currentPSIBtn" class="comboBtn">▾</div>
+
+          <div id="currentPSIDropdown" class="dropdown"></div>
+        </div>
+      </div>
+
+      <div>
+        <label for="flowRateInput">Flow Rate (LPM)</label>
+        <div class="comboWrap">
+          <input id="flowRateInput" class="comboInput" type="text" placeholder="e.g. 15" autocomplete="off" />
+          <div id="flowRateBtn" class="comboBtn">▾</div>
+
+          <div id="flowRateDropdown" class="dropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <button id="calcBtn" type="button">Calculate</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script src="./calcs.js"></script>
+  <script>
+    const el = (id) => document.getElementById(id);
+    const resultBox = el("result");
+
+    const PSI_VALUES = Array.from({ length: 25 }, (_, i) => (i + 1) * 100);
+    const FLOW_RATE_VALUES = [0.25, 0.5, 0.75, 1, 2, 3, 4, 5, 6, 8, 10, 12.5, 15, 25];
+
+    const tankSize = el("tankSize");
+    const currentPSIInput = el("currentPSIInput");
+    const currentPSIBtn = el("currentPSIBtn");
+    const currentPSIDropdown = el("currentPSIDropdown");
+
+    const flowRateInput = el("flowRateInput");
+    const flowRateBtn = el("flowRateBtn");
+    const flowRateDropdown = el("flowRateDropdown");
+
+    function showError(msg) {
+      resultBox.innerHTML = `<div class="err"><strong>Error:</strong> ${msg}</div>`;
+    }
+
+    function showResult(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const mins = Math.round(minutes % 60);
+      let timeStr = "";
+      if (hours > 0) {
+        timeStr = `${hours}h ${mins}m`;
+      } else {
+        timeStr = `${mins}m`;
+      }
+
+      resultBox.innerHTML = `
+        <div class="bubbleRow">
+          <div class="bubble">
+            <div class="bubbleTitle">Duration</div>
+            <div class="bubbleValue">${timeStr}</div>
+          </div>
+        </div>`;
+    }
+
+    function parseNumber(input, label) {
+      const match = input.value.match(/(\d+(\.\d+)?)/);
+      const n = match ? Number(match[1]) : NaN;
+      if (!Number.isFinite(n) || n <= 0) throw new Error(`Enter a valid ${label}.`);
+      return n;
+    }
+
+    function buildPSIDropdown() {
+      currentPSIDropdown.innerHTML = PSI_VALUES.map(v => `
+        <div class="dropdownItem" data-value="${v}">
+          <span>${v}</span>
+          <span class="itemHint">PSI</span>
+        </div>
+      `).join("");
+    }
+
+    function buildFlowRateDropdown() {
+      flowRateDropdown.innerHTML = FLOW_RATE_VALUES.map(v => `
+        <div class="dropdownItem" data-value="${v}">
+          <span>${v}</span>
+          <span class="itemHint">LPM</span>
+        </div>
+      `).join("");
+    }
+
+    currentPSIBtn.onclick = () => currentPSIDropdown.classList.toggle("open");
+    flowRateBtn.onclick = () => flowRateDropdown.classList.toggle("open");
+
+    currentPSIDropdown.onclick = (e) => {
+      const item = e.target.closest(".dropdownItem");
+      if (!item) return;
+      currentPSIInput.value = item.dataset.value;
+      currentPSIDropdown.classList.remove("open");
+    };
+
+    flowRateDropdown.onclick = (e) => {
+      const item = e.target.closest(".dropdownItem");
+      if (!item) return;
+      flowRateInput.value = item.dataset.value;
+      flowRateDropdown.classList.remove("open");
+    };
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".comboWrap")) {
+        currentPSIDropdown.classList.remove("open");
+        flowRateDropdown.classList.remove("open");
+      }
+    });
+
+    // Defaults
+    currentPSIInput.value = "2000";
+    flowRateInput.value = "15";
+    buildPSIDropdown();
+    buildFlowRateDropdown();
+
+    el("calcBtn").onclick = () => {
+      resultBox.innerHTML = "";
+
+      let tankSizeVal, currentPSI, flowRate;
+      try {
+        tankSizeVal = tankSize.value.trim().toUpperCase();
+        if (!["D", "E", "M", "H"].includes(tankSizeVal)) {
+          throw new Error("Tank size must be D, E, M, or H.");
+        }
+        currentPSI = parseNumber(currentPSIInput, "current PSI");
+        flowRate = parseNumber(flowRateInput, "flow rate");
+      } catch (e) {
+        return showError(e.message);
+      }
+
+      if (typeof calculateOxygenDuration !== "function") {
+        return showError("calculateOxygenDuration() not found.");
+      }
+
+      const minutes = calculateOxygenDuration(tankSizeVal, currentPSI, flowRate);
+      showResult(minutes);
+    };
+  </script>
+</body>
+</html>
