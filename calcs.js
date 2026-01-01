@@ -129,12 +129,22 @@ function calculateDripRates(volume_ml, drop_set, duration_min) {
 function calculateOxygenDuration(tankSize, CurrentPSI, FlowRateLPM) {
   const tankConstant = {"D": 0.16, "E": 0.28, "M": 1.56, "H": 3.14};
 
+  if (!tankConstant[tankSize]) {
+    throw new Error("Invalid tank size.");
+  }
+
+  if (FlowRateLPM <= 0) {
+    throw new Error("Flow rate must be greater than zero.");
+  }
+
+  if (CurrentPSI < 0 || CurrentPSI > 5000) {
+    throw new Error("Current PSI must be between 0 and 5000.");
+  }
+
   const duration = (CurrentPSI * tankConstant[tankSize]) / FlowRateLPM;
-  return duration;
+  const durationResidual = (CurrentPSI - 200) * tankConstant[tankSize] / FlowRateLPM;
+  return {max: duration, safe: durationResidual > 0 ? durationResidual : 0};
 }
-
-
-
 
 let mcLarenMaleTable = null;
 let mcLarenFemaleTable = null;
