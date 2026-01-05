@@ -48,8 +48,10 @@
     [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { background-color: #2a2a2a; color: #e0e0e0; border-color: #444; }
     /* Ensure modals are hidden by default */
     .modal { display: none; }
-    .modal.show { display: block; background-color: rgba(0,0,0,0.5); }
+    .modal.show { display: block; background-color: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; overflow: auto; }
+    .modal.show .modal-dialog { position: relative; z-index: 1060; margin: 1.75rem auto; }
     .modal-backdrop { display: none; }
+    .modal-backdrop-fallback { z-index: 1040 !important; }
   </style>
 </head>
 <body>
@@ -776,7 +778,6 @@
     // ==================== SECTION OPERATIONS ====================
     function openSectionModal(index = null) {
       editingIndex = index;
-      const modal = new bootstrap.Modal(document.getElementById('sectionModal'));
       
       document.getElementById('sectionModalTitle').textContent = index !== null ? 'Edit Section' : 'Add Section';
       
@@ -793,7 +794,7 @@
         document.getElementById('sectionIncludeTitle').checked = true;
       }
       
-      modal.show();
+      ModalHelper.show('sectionModal');
     }
 
     function saveSection() {
@@ -820,7 +821,7 @@
         templateData.narrativeSections.push(section);
       }
       
-      bootstrap.Modal.getInstance(document.getElementById('sectionModal')).hide();
+      ModalHelper.hide('sectionModal');
       renderSections();
       updatePreview();
     }
@@ -838,7 +839,6 @@
       editingSectionIndex = sectionIndex;
       editingIndex = sentenceIndex;
       
-      const modal = new bootstrap.Modal(document.getElementById('sentenceModal'));
       document.getElementById('sentenceModalTitle').textContent = sentenceIndex !== null ? 'Edit Sentence' : 'Add Sentence';
       
       // Reset form
@@ -850,19 +850,16 @@
       document.getElementById('tabsContainer').innerHTML = '';
       
       // Switch to simple tab by default
-      const simpleTab = document.querySelector('[data-bs-target="#simpleTab"]');
-      bootstrap.Tab.getOrCreateInstance(simpleTab).show();
+      switchTab('sentenceTypeTabs', 'simpleTab');
       
       if (sentenceIndex !== null) {
         const sentence = templateData.narrativeSections[sectionIndex].sentences[sentenceIndex];
         
         if (sentence.QuickSentence) {
-          const quickTab = document.querySelector('[data-bs-target="#quickTab"]');
-          bootstrap.Tab.getOrCreateInstance(quickTab).show();
+          switchTab('sentenceTypeTabs', 'quickTab');
           document.getElementById('quickSentenceName').value = sentence.QuickSentence;
         } else if (sentence.tabs) {
-          const tabbedTab = document.querySelector('[data-bs-target="#tabbedTab"]');
-          bootstrap.Tab.getOrCreateInstance(tabbedTab).show();
+          switchTab('sentenceTypeTabs', 'tabbedTab');
           sentence.tabs.forEach(tab => addTabToEditor('tabsContainer', tab.title, tab.text));
         } else {
           let text = sentence.text || '';
@@ -880,14 +877,14 @@
         }
       }
       
-      modal.show();
+      ModalHelper.show('sentenceModal');
     }
 
     function saveSentence() {
-      const activeTab = document.querySelector('#sentenceTypeTabs .nav-link.active').dataset.bsTarget;
+      const activeTab = getActiveTabId('sentenceTypeTabs');
       let sentence = {};
       
-      if (activeTab === '#simpleTab') {
+      if (activeTab === 'simpleTab') {
         let text = document.getElementById('sentenceText').value.trim();
         if (!text) {
           alert('Sentence text is required');
@@ -897,7 +894,7 @@
           text = (document.getElementById('sentenceIncrementalNewline').checked ? '++' : '+') + text;
         }
         sentence = { text };
-      } else if (activeTab === '#tabbedTab') {
+      } else if (activeTab === 'tabbedTab') {
         const tabs = [];
         document.querySelectorAll('#tabsContainer .tab-editor-item').forEach(item => {
           const title = item.querySelector('.tab-title').value.trim();
@@ -911,7 +908,7 @@
           return;
         }
         sentence = { tabs };
-      } else if (activeTab === '#quickTab') {
+      } else if (activeTab === 'quickTab') {
         const name = document.getElementById('quickSentenceName').value.trim();
         if (!name) {
           alert('QuickSentence name is required');
@@ -930,7 +927,7 @@
         templateData.narrativeSections[editingSectionIndex].sentences.push(sentence);
       }
       
-      bootstrap.Modal.getInstance(document.getElementById('sentenceModal')).hide();
+      ModalHelper.hide('sentenceModal');
       renderSections();
       updatePreview();
     }
@@ -946,7 +943,6 @@
     // ==================== GLOBAL SENTENCE OPERATIONS ====================
     function openGlobalSentenceModal(index = null) {
       editingIndex = index;
-      const modal = new bootstrap.Modal(document.getElementById('globalSentenceModal'));
       
       document.getElementById('globalSentenceModalTitle').textContent = index !== null ? 'Edit Global Sentence' : 'Add Global Sentence';
       
@@ -958,8 +954,7 @@
       document.getElementById('globalIncrementalNewlineOption').style.display = 'none';
       document.getElementById('globalTabsContainer').innerHTML = '';
       
-      const simpleTab = document.querySelector('[data-bs-target="#globalSimpleTab"]');
-      bootstrap.Tab.getOrCreateInstance(simpleTab).show();
+      switchTab('globalSentenceTypeTabs', 'globalSimpleTab');
       
       if (index !== null) {
         const sentence = globalData.commonSentences[index];
@@ -970,8 +965,7 @@
           document.getElementById('globalSentenceName').value = sentence.name || '';
           
           if (sentence.tabs) {
-            const tabbedTab = document.querySelector('[data-bs-target="#globalTabbedTab"]');
-            bootstrap.Tab.getOrCreateInstance(tabbedTab).show();
+            switchTab('globalSentenceTypeTabs', 'globalTabbedTab');
             sentence.tabs.forEach(tab => addTabToEditor('globalTabsContainer', tab.title, tab.text));
           } else {
             let text = sentence.text || '';
@@ -990,15 +984,15 @@
         }
       }
       
-      modal.show();
+      ModalHelper.show('globalSentenceModal');
     }
 
     function saveGlobalSentence() {
       const name = document.getElementById('globalSentenceName').value.trim();
-      const activeTab = document.querySelector('#globalSentenceTypeTabs .nav-link.active').dataset.bsTarget;
+      const activeTab = getActiveTabId('globalSentenceTypeTabs');
       let sentence;
       
-      if (activeTab === '#globalSimpleTab') {
+      if (activeTab === 'globalSimpleTab') {
         let text = document.getElementById('globalSentenceText').value.trim();
         if (!text) {
           alert('Sentence text is required');
@@ -1030,7 +1024,7 @@
         globalData.commonSentences.push(sentence);
       }
       
-      bootstrap.Modal.getInstance(document.getElementById('globalSentenceModal')).hide();
+      ModalHelper.hide('globalSentenceModal');
       renderGlobalSentences();
       updatePreview();
     }
@@ -1048,7 +1042,6 @@
       editingDropdownType = type;
       editingDropdownName = name;
       
-      const modal = new bootstrap.Modal(document.getElementById('dropdownModal'));
       document.getElementById('dropdownModalTitle').textContent = name ? 'Edit Dropdown' : 'Add Dropdown';
       
       document.getElementById('dropdownName').value = name || '';
@@ -1064,7 +1057,7 @@
         addDropdownOption();
       }
       
-      modal.show();
+      ModalHelper.show('dropdownModal');
     }
 
     function addDropdownOption(value = '') {
@@ -1116,7 +1109,7 @@
         renderGlobalDropdowns();
       }
       
-      bootstrap.Modal.getInstance(document.getElementById('dropdownModal')).hide();
+      ModalHelper.hide('dropdownModal');
       updatePreview();
     }
 
@@ -1169,6 +1162,117 @@
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
       textarea.focus();
     }
+
+    // ==================== TAB HELPER (fallback for when Bootstrap isn't available) ====================
+    function switchTab(tabGroupId, targetTabId) {
+      const tabGroup = document.getElementById(tabGroupId);
+      if (!tabGroup) return;
+      
+      // Try Bootstrap first
+      if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+        const tabBtn = document.querySelector(`[data-bs-target="#${targetTabId}"]`);
+        if (tabBtn) {
+          bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+          return;
+        }
+      }
+      
+      // Fallback: switch tabs manually
+      const tabButtons = tabGroup.querySelectorAll('.nav-link');
+      tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+        const target = btn.dataset.bsTarget;
+        if (target) {
+          const pane = document.querySelector(target);
+          if (pane) {
+            pane.classList.remove('show', 'active');
+          }
+        }
+      });
+      
+      // Activate the target tab
+      const activeBtn = document.querySelector(`[data-bs-target="#${targetTabId}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        const pane = document.getElementById(targetTabId);
+        if (pane) {
+          pane.classList.add('show', 'active');
+        }
+      }
+    }
+
+    function getActiveTabId(tabGroupId) {
+      const tabGroup = document.getElementById(tabGroupId);
+      if (!tabGroup) return null;
+      
+      const activeBtn = tabGroup.querySelector('.nav-link.active');
+      if (activeBtn && activeBtn.dataset.bsTarget) {
+        return activeBtn.dataset.bsTarget.replace('#', '');
+      }
+      return null;
+    }
+
+    // ==================== MODAL HELPER (fallback for when Bootstrap isn't available) ====================
+    const ModalHelper = {
+      show: function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+          const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+          bsModal.show();
+        } else {
+          // Fallback: show modal manually (the modal itself has background from CSS)
+          modal.style.display = 'block';
+          modal.classList.add('show');
+          document.body.style.overflow = 'hidden';
+          
+          // Add click handler to close when clicking outside modal-dialog
+          modal.onclick = function(e) {
+            if (e.target === modal) {
+              ModalHelper.hide(modalId);
+            }
+          };
+        }
+      },
+      hide: function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+          const bsModal = bootstrap.Modal.getInstance(modal);
+          if (bsModal) bsModal.hide();
+        } else {
+          // Fallback: hide modal manually
+          modal.style.display = 'none';
+          modal.classList.remove('show');
+          document.body.style.overflow = '';
+          modal.onclick = null;
+        }
+      }
+    };
+
+    // Setup close buttons for fallback modal
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        if (modal) ModalHelper.hide(modal.id);
+      });
+    });
+
+    // Setup tab click handlers for fallback (when Bootstrap Tab isn't available)
+    document.querySelectorAll('.nav-tabs .nav-link').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        if (typeof bootstrap === 'undefined' || !bootstrap.Tab) {
+          e.preventDefault();
+          const tabGroupId = this.closest('.nav-tabs').id;
+          const targetId = this.dataset.bsTarget?.replace('#', '');
+          if (targetId) {
+            switchTab(tabGroupId, targetId);
+          }
+        }
+      });
+    });
   </script>
 </body>
 </html>
