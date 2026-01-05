@@ -23,6 +23,7 @@
     .syntax-helper { background: var(--bs-info-bg-subtle); border: 1px solid var(--bs-info-border-subtle); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; }
     .syntax-helper code { background: var(--bs-body-bg); padding: 0.125rem 0.25rem; border-radius: 0.125rem; }
     .insert-btn { font-size: 0.75rem; padding: 0.125rem 0.5rem; }
+    .insert-tab-btn { font-size: 0.7rem; padding: 0.1rem 0.3rem; }
     .json-preview { font-family: var(--bs-font-monospace); font-size: 0.75rem; max-height: 400px; overflow: auto; white-space: pre; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.25rem; }
     .common-sentence-item { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
     .tab-editor-item { background: var(--bs-secondary-bg); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
@@ -494,10 +495,11 @@
           const data = JSON.parse(event.target.result);
           const filename = file.name.toLowerCase();
           
-          // Detect file type: check filename first, then structure
-          const isGlobalFile = filename === 'global.json' || 
-            (data.commonSentences !== undefined && !data.narrativeSections) ||
-            (data.globalDropdownOptions !== undefined && !data.localDropdownOptions && !data.narrativeSections);
+          // Detect file type using clear conditions
+          const isNamedGlobal = filename === 'global.json';
+          const hasGlobalStructure = data.narrativeSections === undefined && 
+            (data.commonSentences !== undefined || data.globalDropdownOptions !== undefined);
+          const isGlobalFile = isNamedGlobal || hasGlobalStructure;
           
           if (isGlobalFile) {
             globalData = {
@@ -521,10 +523,15 @@
       e.target.value = '';
     }
 
+    function hasGlobalData() {
+      return globalData.commonSentences.length > 0 || 
+        Object.keys(globalData.globalDropdownOptions).length > 0;
+    }
+
     function handleExport() {
       downloadJson(templateData, 'template.json');
       
-      if (globalData.commonSentences.length > 0 || Object.keys(globalData.globalDropdownOptions).length > 0) {
+      if (hasGlobalData()) {
         if (confirm('Do you also want to download the global.json file?')) {
           setTimeout(() => downloadJson(globalData, 'global.json'), 500);
         }
@@ -655,7 +662,7 @@
         let content = '';
         
         if (sentence.QuickSentence) {
-          badges = '<span class="badge bg-purple me-1">QuickSentence</span>';
+          badges = '<span class="badge text-bg-info me-1">QuickSentence</span>';
           content = `<div class="sentence-text">${escapeHtml(sentence.QuickSentence)}</div>`;
         } else if (sentence.tabs) {
           badges = '<span class="badge bg-primary me-1">Tabbed</span>';
@@ -851,16 +858,14 @@
         return;
       }
       
-      const section = {
-        part: part,
-        subpart: document.getElementById('sectionSubpart').value.trim() || undefined,
-        tooltip: document.getElementById('sectionTooltip').value.trim() || undefined,
-        includeTitle: document.getElementById('sectionIncludeTitle').checked,
-        sentences: editingIndex !== null ? templateData.narrativeSections[editingIndex].sentences : []
-      };
+      const subpart = document.getElementById('sectionSubpart').value.trim();
+      const tooltip = document.getElementById('sectionTooltip').value.trim();
+      const includeTitle = document.getElementById('sectionIncludeTitle').checked;
+      const sentences = editingIndex !== null ? templateData.narrativeSections[editingIndex].sentences : [];
       
-      // Clean undefined values
-      Object.keys(section).forEach(key => section[key] === undefined && delete section[key]);
+      const section = { part, includeTitle, sentences };
+      if (subpart) section.subpart = subpart;
+      if (tooltip) section.tooltip = tooltip;
       
       if (editingIndex !== null) {
         templateData.narrativeSections[editingIndex] = section;
@@ -1195,9 +1200,9 @@
         <textarea class="form-control form-control-sm tab-text" rows="3" placeholder="Tab content with placeholders...">${escapeHtml(text)}</textarea>
         <div class="mt-2">
           <small class="text-muted">Insert:</small>
-          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" data-insert="[text:Label]">Text</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" data-insert="[customDropdown:Label]">Dropdown</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" data-insert="[+]">Incremental</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[text:Label]">Text</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[customDropdown:Label]">Dropdown</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[+]">Incremental</button>
         </div>
       `;
       
