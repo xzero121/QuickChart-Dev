@@ -15,6 +15,8 @@
     .section-card-header h5 { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
     .drag-handle { cursor: move; color: var(--bs-secondary); }
     .sentence-item { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
+    .sentence-item.has-warning { border-color: var(--bs-warning); }
+    .sentence-item.has-error { border-color: var(--bs-danger); }
     .sentence-item-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .sentence-item .drag-handle { margin-right: 0.5rem; }
     .sentence-text { font-family: var(--bs-font-monospace); font-size: 0.875rem; background: var(--bs-tertiary-bg); padding: 0.5rem; border-radius: 0.25rem; margin-top: 0.5rem; word-break: break-word; }
@@ -27,6 +29,10 @@
     .json-preview { font-family: var(--bs-font-monospace); font-size: 0.75rem; max-height: 400px; overflow: auto; white-space: pre; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.25rem; }
     .common-sentence-item { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
     .tab-editor-item { background: var(--bs-secondary-bg); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
+    .validation-error { color: var(--bs-danger); font-size: 0.75rem; margin-top: 0.25rem; }
+    .validation-warning { color: var(--bs-warning); font-size: 0.75rem; margin-top: 0.25rem; }
+    .reference-panel { background: var(--bs-light-bg-subtle); border: 1px dashed var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; }
+    .reference-badge { font-size: 0.65rem; }
   </style>
 </head>
 <body>
@@ -38,11 +44,14 @@
         <button class="btn btn-outline-secondary btn-sm" id="darkModeToggle" title="Toggle dark mode">
           <i class="bi bi-moon-fill"></i>
         </button>
+        <button class="btn btn-outline-info btn-sm" id="loadGlobalRefBtn" title="Load global.json for reference">
+          <i class="bi bi-link-45deg me-1"></i>Load Reference Global
+        </button>
         <button class="btn btn-outline-primary btn-sm" id="importBtn">
-          <i class="bi bi-upload me-1"></i>Import JSON
+          <i class="bi bi-upload me-1"></i>Import Template
         </button>
         <button class="btn btn-primary btn-sm" id="exportBtn">
-          <i class="bi bi-download me-1"></i>Export JSON
+          <i class="bi bi-download me-1"></i>Export Template
         </button>
         <a href="index.html" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-arrow-left me-1"></i>Back to QuickChart
@@ -50,6 +59,21 @@
       </div>
     </div>
     <input type="file" id="importFile" accept=".json" style="display: none;">
+    <input type="file" id="globalRefFile" accept=".json" style="display: none;">
+
+    <!-- Reference Global Panel (shown when global.json is loaded) -->
+    <div class="reference-panel" id="referencePanel" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong><i class="bi bi-link-45deg me-1"></i>Reference: global.json</strong>
+          <span class="badge bg-info reference-badge ms-2" id="refDropdownCount">0 dropdowns</span>
+          <span class="badge bg-secondary reference-badge" id="refSentenceCount">0 sentences</span>
+        </div>
+        <button class="btn btn-outline-danger btn-sm" id="clearGlobalRefBtn">
+          <i class="bi bi-x-lg"></i> Clear
+        </button>
+      </div>
+    </div>
 
     <!-- Nav Tabs -->
     <ul class="nav nav-tabs mb-3" id="editorTabs" role="tablist">
@@ -59,18 +83,8 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="global-sentences-tab" data-bs-toggle="tab" data-bs-target="#global-sentences-panel" type="button" role="tab">
-          <i class="bi bi-chat-square-text me-1"></i>Global Sentences
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
         <button class="nav-link" id="local-dropdowns-tab" data-bs-toggle="tab" data-bs-target="#local-dropdowns-panel" type="button" role="tab">
           <i class="bi bi-list-ul me-1"></i>Local Dropdowns
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="global-dropdowns-tab" data-bs-toggle="tab" data-bs-target="#global-dropdowns-panel" type="button" role="tab">
-          <i class="bi bi-globe me-1"></i>Global Dropdowns
         </button>
       </li>
       <li class="nav-item" role="presentation">
@@ -121,18 +135,6 @@
         <div id="sectionsContainer"></div>
       </div>
 
-      <!-- Global Sentences Panel -->
-      <div class="tab-pane fade" id="global-sentences-panel" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="mb-0">Global Sentences (commonSentences)</h4>
-          <button class="btn btn-success btn-sm" id="addGlobalSentenceBtn">
-            <i class="bi bi-plus-lg me-1"></i>Add Global Sentence
-          </button>
-        </div>
-        <p class="text-muted small">These sentences are available in the "Add Sentence" search across all sections. They are stored in global.json.</p>
-        <div id="globalSentencesContainer"></div>
-      </div>
-
       <!-- Local Dropdowns Panel -->
       <div class="tab-pane fade" id="local-dropdowns-panel" role="tabpanel">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -141,35 +143,14 @@
             <i class="bi bi-plus-lg me-1"></i>Add Dropdown
           </button>
         </div>
-        <p class="text-muted small">These dropdown options are specific to this template and override global options with the same name.</p>
+        <p class="text-muted small">These dropdown options are specific to this template. They override global options with the same name.</p>
         <div id="localDropdownsContainer"></div>
-      </div>
-
-      <!-- Global Dropdowns Panel -->
-      <div class="tab-pane fade" id="global-dropdowns-panel" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="mb-0">Global Dropdown Options</h4>
-          <button class="btn btn-success btn-sm" id="addGlobalDropdownBtn">
-            <i class="bi bi-plus-lg me-1"></i>Add Dropdown
-          </button>
-        </div>
-        <p class="text-muted small">These dropdown options are shared across all templates. They are stored in global.json.</p>
-        <div id="globalDropdownsContainer"></div>
       </div>
 
       <!-- Preview Panel -->
       <div class="tab-pane fade" id="preview-panel" role="tabpanel">
         <h4 class="mb-3">JSON Preview</h4>
-        <div class="row">
-          <div class="col-md-6">
-            <h5>Template JSON (e.g., default.json)</h5>
-            <div class="json-preview" id="templateJsonPreview"></div>
-          </div>
-          <div class="col-md-6">
-            <h5>Global JSON (global.json)</h5>
-            <div class="json-preview" id="globalJsonPreview"></div>
-          </div>
-        </div>
+        <div class="json-preview" id="templateJsonPreview"></div>
       </div>
     </div>
   </div>
@@ -236,6 +217,7 @@
               <div class="mb-3">
                 <label class="form-label">Sentence Text</label>
                 <textarea class="form-control" id="sentenceText" rows="4" placeholder="Enter sentence text with placeholders..."></textarea>
+                <div id="sentenceValidation"></div>
               </div>
               <div class="mb-3">
                 <label class="form-label">Insert Placeholder:</label>
@@ -271,80 +253,15 @@
               <div class="mb-3">
                 <label class="form-label">QuickSentence Name</label>
                 <input type="text" class="form-control" id="quickSentenceName" placeholder="e.g., IV Access, Ventilator">
-                <div class="form-text">This should match the name of a Global Sentence</div>
+                <div class="form-text">This should match the name of a Global Sentence in global.json</div>
               </div>
+              <div id="availableQuickSentences"></div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" id="saveSentenceBtn">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add/Edit Global Sentence Modal -->
-  <div class="modal fade" id="globalSentenceModal" tabindex="-1" aria-labelledby="globalSentenceModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="globalSentenceModalTitle">Add Global Sentence</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Name (for QuickSentence reference)</label>
-            <input type="text" class="form-control" id="globalSentenceName" placeholder="e.g., IV Access, GCS">
-            <div class="form-text">Used to reference this sentence in QuickSentence placeholders</div>
-          </div>
-          <ul class="nav nav-tabs mb-3" id="globalSentenceTypeTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="global-simple-tab" data-bs-toggle="tab" data-bs-target="#globalSimpleTab" type="button" role="tab">Simple Text</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="global-tabbed-tab" data-bs-toggle="tab" data-bs-target="#globalTabbedTab" type="button" role="tab">Tabbed</button>
-            </li>
-          </ul>
-          <div class="tab-content">
-            <div class="tab-pane fade show active" id="globalSimpleTab" role="tabpanel">
-              <div class="mb-3">
-                <label class="form-label">Sentence Text</label>
-                <textarea class="form-control" id="globalSentenceText" rows="4" placeholder="Enter sentence text..."></textarea>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Insert Placeholder:</label>
-                <div class="d-flex gap-2 flex-wrap">
-                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[text:Label]">Text Input</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[number:Label]">Number Input</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[customDropdown:Label]">Dropdown</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[customDropdown:Label:option1,option2]">Dropdown w/Options</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[+]">Incremental Block</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="\\n">Line Break</button>
-                </div>
-              </div>
-              <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="globalSentenceIncremental">
-                <label class="form-check-label" for="globalSentenceIncremental">Make incremental</label>
-              </div>
-              <div class="form-check mb-3" id="globalIncrementalNewlineOption" style="display: none;">
-                <input type="checkbox" class="form-check-input" id="globalSentenceIncrementalNewline">
-                <label class="form-check-label" for="globalSentenceIncrementalNewline">Separate with newlines (++)</label>
-              </div>
-            </div>
-            <div class="tab-pane fade" id="globalTabbedTab" role="tabpanel">
-              <div class="mb-3">
-                <button type="button" class="btn btn-outline-success btn-sm" id="addGlobalTabBtn">
-                  <i class="bi bi-plus-lg me-1"></i>Add Tab
-                </button>
-              </div>
-              <div id="globalTabsContainer"></div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="saveGlobalSentenceBtn">Save</button>
         </div>
       </div>
     </div>
@@ -392,25 +309,24 @@
       narrativeSections: []
     };
     
-    let globalData = {
+    // Reference data from global.json (read-only)
+    let globalReference = {
       commonSentences: [],
       globalDropdownOptions: {}
     };
 
     let editingIndex = null;
     let editingSectionIndex = null;
-    let editingDropdownType = null;
     let editingDropdownName = null;
 
     // Modal instances
-    let sectionModal, sentenceModal, globalSentenceModal, dropdownModal;
+    let sectionModal, sentenceModal, dropdownModal;
 
     // ==================== INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', () => {
       // Initialize Bootstrap modals
       sectionModal = new bootstrap.Modal(document.getElementById('sectionModal'));
       sentenceModal = new bootstrap.Modal(document.getElementById('sentenceModal'));
-      globalSentenceModal = new bootstrap.Modal(document.getElementById('globalSentenceModal'));
       dropdownModal = new bootstrap.Modal(document.getElementById('dropdownModal'));
 
       initializeDarkMode();
@@ -445,18 +361,14 @@
       document.getElementById('sentenceIncremental').addEventListener('change', (e) => {
         document.getElementById('incrementalNewlineOption').style.display = e.target.checked ? 'block' : 'none';
       });
-
-      // Global sentence modal
-      document.getElementById('addGlobalSentenceBtn').addEventListener('click', () => openGlobalSentenceModal());
-      document.getElementById('saveGlobalSentenceBtn').addEventListener('click', saveGlobalSentence);
-      document.getElementById('addGlobalTabBtn').addEventListener('click', () => addTabToEditor('globalTabsContainer'));
-      document.getElementById('globalSentenceIncremental').addEventListener('change', (e) => {
-        document.getElementById('globalIncrementalNewlineOption').style.display = e.target.checked ? 'block' : 'none';
+      
+      // Real-time validation for sentence text
+      document.getElementById('sentenceText').addEventListener('input', (e) => {
+        validateAndShowErrors(e.target.value, 'sentenceValidation');
       });
 
-      // Dropdown modals
-      document.getElementById('addLocalDropdownBtn').addEventListener('click', () => openDropdownModal('local'));
-      document.getElementById('addGlobalDropdownBtn').addEventListener('click', () => openDropdownModal('global'));
+      // Dropdown modal
+      document.getElementById('addLocalDropdownBtn').addEventListener('click', () => openDropdownModal());
       document.getElementById('saveDropdownBtn').addEventListener('click', saveDropdown);
       document.getElementById('addDropdownOptionBtn').addEventListener('click', () => addDropdownOption());
 
@@ -464,13 +376,7 @@
       document.querySelectorAll('.insert-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           insertAtCursor(document.getElementById('sentenceText'), btn.dataset.insert);
-        });
-      });
-
-      // Insert buttons for global sentence modal
-      document.querySelectorAll('.insert-global-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          insertAtCursor(document.getElementById('globalSentenceText'), btn.dataset.insert);
+          validateAndShowErrors(document.getElementById('sentenceText').value, 'sentenceValidation');
         });
       });
 
@@ -478,14 +384,108 @@
       document.getElementById('importBtn').addEventListener('click', () => {
         document.getElementById('importFile').click();
       });
-
       document.getElementById('importFile').addEventListener('change', handleImport);
       document.getElementById('exportBtn').addEventListener('click', handleExport);
+
+      // Global reference
+      document.getElementById('loadGlobalRefBtn').addEventListener('click', () => {
+        document.getElementById('globalRefFile').click();
+      });
+      document.getElementById('globalRefFile').addEventListener('change', handleGlobalRefImport);
+      document.getElementById('clearGlobalRefBtn').addEventListener('click', clearGlobalReference);
 
       // Update preview when switching to preview tab
       document.getElementById('preview-tab').addEventListener('shown.bs.tab', updatePreview);
     }
 
+    // ==================== VALIDATION ====================
+    function validateSentenceSyntax(text) {
+      const errors = [];
+      const warnings = [];
+      
+      if (!text || text.trim() === '') {
+        return { errors, warnings, isValid: true };
+      }
+      
+      // Remove incremental prefixes for validation
+      let cleanText = text;
+      if (cleanText.startsWith('++')) cleanText = cleanText.substring(2);
+      else if (cleanText.startsWith('+')) cleanText = cleanText.substring(1);
+      
+      // Check for unclosed brackets
+      const openBrackets = (cleanText.match(/\[/g) || []).length;
+      const closeBrackets = (cleanText.match(/\]/g) || []).length;
+      if (openBrackets !== closeBrackets) {
+        errors.push('Unclosed or extra brackets detected');
+      }
+      
+      // Validate placeholder syntax
+      const placeholderRegex = /\[([^\]]+)\]/g;
+      let match;
+      while ((match = placeholderRegex.exec(cleanText)) !== null) {
+        const content = match[1];
+        
+        // Check for valid placeholder types
+        if (content === '+' || content === '+content') {
+          // Valid incremental block
+          continue;
+        }
+        
+        if (!content.includes(':')) {
+          errors.push(`Invalid placeholder: [${content}] - missing type (text, number, or customDropdown)`);
+          continue;
+        }
+        
+        const [type, ...rest] = content.split(':');
+        const validTypes = ['text', 'number', 'customDropdown'];
+        
+        if (!validTypes.includes(type)) {
+          errors.push(`Unknown placeholder type: "${type}" in [${content}]`);
+        }
+        
+        if (type === 'customDropdown') {
+          const label = rest[0];
+          if (!label || label.trim() === '') {
+            errors.push(`Dropdown missing label in [${content}]`);
+          }
+          
+          // Check if dropdown exists in local or global reference
+          if (label && !templateData.localDropdownOptions[label] && !globalReference.globalDropdownOptions[label]) {
+            // Check if it has inline options
+            if (rest.length < 2 || !rest[1]) {
+              warnings.push(`Dropdown "${label}" not found in local or global options`);
+            }
+          }
+        }
+        
+        if ((type === 'text' || type === 'number') && (!rest[0] || rest[0].trim() === '')) {
+          errors.push(`${type} placeholder missing label in [${content}]`);
+        }
+      }
+      
+      return {
+        errors,
+        warnings,
+        isValid: errors.length === 0
+      };
+    }
+
+    function validateAndShowErrors(text, containerId) {
+      const container = document.getElementById(containerId);
+      const { errors, warnings } = validateSentenceSyntax(text);
+      
+      let html = '';
+      errors.forEach(err => {
+        html += `<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>${escapeHtml(err)}</div>`;
+      });
+      warnings.forEach(warn => {
+        html += `<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>${escapeHtml(warn)}</div>`;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    // ==================== IMPORT/EXPORT ====================
     function handleImport(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -493,27 +493,11 @@
       reader.onload = (event) => {
         try {
           const data = JSON.parse(event.target.result);
-          const filename = file.name.toLowerCase();
-          
-          // Detect file type using clear conditions
-          const isNamedGlobal = filename === 'global.json';
-          const hasGlobalStructure = data.narrativeSections === undefined && 
-            (data.commonSentences !== undefined || data.globalDropdownOptions !== undefined);
-          const isGlobalFile = isNamedGlobal || hasGlobalStructure;
-          
-          if (isGlobalFile) {
-            globalData = {
-              commonSentences: data.commonSentences || [],
-              globalDropdownOptions: data.globalDropdownOptions || {}
-            };
-            alert('Global configuration imported successfully!');
-          } else {
-            templateData = {
-              localDropdownOptions: data.localDropdownOptions || {},
-              narrativeSections: data.narrativeSections || []
-            };
-            alert('Template configuration imported successfully!');
-          }
+          templateData = {
+            localDropdownOptions: data.localDropdownOptions || {},
+            narrativeSections: data.narrativeSections || []
+          };
+          alert('Template imported successfully!');
           renderAll();
         } catch (err) {
           alert('Error parsing JSON: ' + err.message);
@@ -523,19 +507,46 @@
       e.target.value = '';
     }
 
-    function hasGlobalData() {
-      return globalData.commonSentences.length > 0 || 
-        Object.keys(globalData.globalDropdownOptions).length > 0;
+    function handleGlobalRefImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          globalReference = {
+            commonSentences: data.commonSentences || [],
+            globalDropdownOptions: data.globalDropdownOptions || {}
+          };
+          updateReferencePanel();
+          alert('Global reference loaded! Dropdown names and QuickSentences are now available for validation.');
+        } catch (err) {
+          alert('Error parsing JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function clearGlobalReference() {
+      globalReference = { commonSentences: [], globalDropdownOptions: {} };
+      updateReferencePanel();
+    }
+
+    function updateReferencePanel() {
+      const panel = document.getElementById('referencePanel');
+      const hasData = globalReference.commonSentences.length > 0 || 
+        Object.keys(globalReference.globalDropdownOptions).length > 0;
+      
+      panel.style.display = hasData ? 'block' : 'none';
+      document.getElementById('refDropdownCount').textContent = 
+        Object.keys(globalReference.globalDropdownOptions).length + ' dropdowns';
+      document.getElementById('refSentenceCount').textContent = 
+        globalReference.commonSentences.length + ' sentences';
     }
 
     function handleExport() {
       downloadJson(templateData, 'template.json');
-      
-      if (hasGlobalData()) {
-        if (confirm('Do you also want to download the global.json file?')) {
-          setTimeout(() => downloadJson(globalData, 'global.json'), 500);
-        }
-      }
     }
 
     function downloadJson(data, filename) {
@@ -551,9 +562,7 @@
     // ==================== RENDERING ====================
     function renderAll() {
       renderSections();
-      renderGlobalSentences();
       renderLocalDropdowns();
-      renderGlobalDropdowns();
       updatePreview();
     }
 
@@ -660,30 +669,55 @@
       return sentences.map((sentence, sentenceIndex) => {
         let badges = '';
         let content = '';
+        let validationClass = '';
+        let validationHtml = '';
         
         if (sentence.QuickSentence) {
           badges = '<span class="badge text-bg-info me-1">QuickSentence</span>';
           content = `<div class="sentence-text">${escapeHtml(sentence.QuickSentence)}</div>`;
+          
+          // Check if QuickSentence exists in global reference
+          const exists = globalReference.commonSentences.some(s => 
+            (typeof s === 'object' && s.name === sentence.QuickSentence) || s === sentence.QuickSentence
+          );
+          if (!exists && globalReference.commonSentences.length > 0) {
+            validationClass = 'has-warning';
+            validationHtml = '<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>QuickSentence not found in global reference</div>';
+          }
         } else if (sentence.tabs) {
           badges = '<span class="badge bg-primary me-1">Tabbed</span>';
-          content = `<div class="mt-2">${sentence.tabs.map((tab, i) => `
-            <div class="tab-item">
+          content = `<div class="mt-2">${sentence.tabs.map((tab, i) => {
+            const tabValidation = validateSentenceSyntax(tab.text || '');
+            return `
+            <div class="tab-item ${tabValidation.errors.length > 0 ? 'border-danger' : ''}">
               <strong>${escapeHtml(tab.title || 'Tab ' + (i+1))}:</strong>
               <div class="sentence-text mt-1">${escapeHtml(tab.text || '')}</div>
+              ${tabValidation.errors.length > 0 ? '<div class="validation-error small"><i class="bi bi-exclamation-circle me-1"></i>Syntax errors detected</div>' : ''}
             </div>
-          `).join('')}</div>`;
+          `}).join('')}</div>`;
         } else {
           const text = sentence.text || '';
+          const validation = validateSentenceSyntax(text);
+          
           if (text.startsWith('++')) {
             badges = '<span class="badge bg-success me-1">++ Incremental</span>';
           } else if (text.startsWith('+')) {
             badges = '<span class="badge bg-success me-1">+ Incremental</span>';
           }
-          content = `<div class="sentence-text">${escapeHtml(text)}</div>`;
+          
+          if (validation.errors.length > 0) {
+            validationClass = 'has-error';
+            validationHtml = '<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>Syntax errors - click edit to fix</div>';
+          } else if (validation.warnings.length > 0) {
+            validationClass = 'has-warning';
+            validationHtml = '<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>' + escapeHtml(validation.warnings[0]) + '</div>';
+          }
+          
+          content = `<div class="sentence-text">${escapeHtml(text)}</div>${validationHtml}`;
         }
         
         return `
-          <div class="sentence-item" data-index="${sentenceIndex}">
+          <div class="sentence-item ${validationClass}" data-index="${sentenceIndex}">
             <div class="sentence-item-header">
               <div class="d-flex align-items-start">
                 <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
@@ -700,82 +734,18 @@
       }).join('');
     }
 
-    function renderGlobalSentences() {
-      const container = document.getElementById('globalSentencesContainer');
+    function renderLocalDropdowns() {
+      const container = document.getElementById('localDropdownsContainer');
       container.innerHTML = '';
       
-      if (!globalData.commonSentences || globalData.commonSentences.length === 0) {
-        container.innerHTML = '<p class="text-muted">No global sentences defined. Click "Add Global Sentence" to create one.</p>';
-        return;
-      }
-      
-      globalData.commonSentences.forEach((sentence, index) => {
-        const item = document.createElement('div');
-        item.className = 'common-sentence-item';
-        
-        let badges = '';
-        let content = '';
-        
-        if (typeof sentence === 'string') {
-          content = `<div class="sentence-text">${escapeHtml(sentence)}</div>`;
-        } else if (sentence.tabs) {
-          badges = '<span class="badge bg-primary me-1">Tabbed</span>';
-          if (sentence.name) badges = `<span class="badge bg-secondary me-1">${escapeHtml(sentence.name)}</span>` + badges;
-          content = `<div class="mt-2">${sentence.tabs.map((tab, i) => `
-            <div class="tab-item">
-              <strong>${escapeHtml(tab.title || 'Tab ' + (i+1))}:</strong>
-              <div class="sentence-text mt-1">${escapeHtml(tab.text || '')}</div>
-            </div>
-          `).join('')}</div>`;
-        } else {
-          const text = sentence.text || '';
-          if (sentence.name) badges = `<span class="badge bg-secondary me-1">${escapeHtml(sentence.name)}</span>`;
-          if (text.startsWith('++')) {
-            badges += '<span class="badge bg-success me-1">++ Incremental</span>';
-          } else if (text.startsWith('+')) {
-            badges += '<span class="badge bg-success me-1">+ Incremental</span>';
-          }
-          content = `<div class="sentence-text">${escapeHtml(text)}</div>`;
-        }
-        
-        item.innerHTML = `
-          <div class="d-flex justify-content-between align-items-start">
-            <div>${badges}</div>
-            <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-primary btn-sm" data-action="edit-global" data-index="${index}"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-outline-danger btn-sm" data-action="delete-global" data-index="${index}"><i class="bi bi-trash"></i></button>
-            </div>
-          </div>
-          ${content}
-        `;
-        
-        container.appendChild(item);
-      });
-
-      // Add event delegation
-      container.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-action]');
-        if (!btn) return;
-        const index = parseInt(btn.dataset.index);
-        if (btn.dataset.action === 'edit-global') {
-          openGlobalSentenceModal(index);
-        } else if (btn.dataset.action === 'delete-global') {
-          deleteGlobalSentence(index);
-        }
-      });
-    }
-
-    function renderDropdowns(container, dropdowns, type) {
-      container.innerHTML = '';
-      
-      const keys = Object.keys(dropdowns);
+      const keys = Object.keys(templateData.localDropdownOptions);
       if (keys.length === 0) {
-        container.innerHTML = `<p class="text-muted">No ${type} dropdowns defined.</p>`;
+        container.innerHTML = '<p class="text-muted">No local dropdowns defined.</p>';
         return;
       }
       
       keys.forEach(name => {
-        const options = dropdowns[name];
+        const options = templateData.localDropdownOptions[name];
         const item = document.createElement('div');
         item.className = 'common-sentence-item';
         
@@ -789,8 +759,8 @@
               ${hiddenCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${hiddenCount} hidden</span>` : ''}
             </div>
             <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-primary btn-sm" data-action="edit-dropdown" data-type="${type}" data-name="${escapeHtml(name)}"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-outline-danger btn-sm" data-action="delete-dropdown" data-type="${type}" data-name="${escapeHtml(name)}"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-outline-primary btn-sm" data-action="edit-dropdown" data-name="${escapeHtml(name)}"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger btn-sm" data-action="delete-dropdown" data-name="${escapeHtml(name)}"><i class="bi bi-trash"></i></button>
             </div>
           </div>
           <div class="small text-muted">
@@ -806,27 +776,17 @@
       container.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-action]');
         if (!btn) return;
-        const dropdownType = btn.dataset.type;
         const name = btn.dataset.name;
         if (btn.dataset.action === 'edit-dropdown') {
-          openDropdownModal(dropdownType, name);
+          openDropdownModal(name);
         } else if (btn.dataset.action === 'delete-dropdown') {
-          deleteDropdown(dropdownType, name);
+          deleteDropdown(name);
         }
       });
     }
 
-    function renderLocalDropdowns() {
-      renderDropdowns(document.getElementById('localDropdownsContainer'), templateData.localDropdownOptions, 'local');
-    }
-
-    function renderGlobalDropdowns() {
-      renderDropdowns(document.getElementById('globalDropdownsContainer'), globalData.globalDropdownOptions, 'global');
-    }
-
     function updatePreview() {
       document.getElementById('templateJsonPreview').textContent = JSON.stringify(templateData, null, 2);
-      document.getElementById('globalJsonPreview').textContent = JSON.stringify(globalData, null, 2);
     }
 
     // ==================== SECTION OPERATIONS ====================
@@ -895,11 +855,15 @@
       
       // Reset form
       document.getElementById('sentenceText').value = '';
+      document.getElementById('sentenceValidation').innerHTML = '';
       document.getElementById('sentenceIncremental').checked = false;
       document.getElementById('sentenceIncrementalNewline').checked = false;
       document.getElementById('incrementalNewlineOption').style.display = 'none';
       document.getElementById('quickSentenceName').value = '';
       document.getElementById('tabsContainer').innerHTML = '';
+      
+      // Show available QuickSentences from global reference
+      updateAvailableQuickSentences();
       
       // Switch to simple tab by default
       const simpleTab = new bootstrap.Tab(document.getElementById('simple-tab'));
@@ -929,10 +893,35 @@
             text = text.substring(1);
           }
           document.getElementById('sentenceText').value = text;
+          validateAndShowErrors(text, 'sentenceValidation');
         }
       }
       
       sentenceModal.show();
+    }
+
+    function updateAvailableQuickSentences() {
+      const container = document.getElementById('availableQuickSentences');
+      if (globalReference.commonSentences.length === 0) {
+        container.innerHTML = '<p class="text-muted small">Load a global.json reference to see available QuickSentences</p>';
+        return;
+      }
+      
+      const names = globalReference.commonSentences
+        .filter(s => typeof s === 'object' && s.name)
+        .map(s => s.name);
+      
+      if (names.length === 0) {
+        container.innerHTML = '<p class="text-muted small">No named sentences found in global reference</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <label class="form-label small">Available in global.json:</label>
+        <div class="d-flex flex-wrap gap-1">
+          ${names.map(n => `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('quickSentenceName').value='${escapeHtml(n)}'">${escapeHtml(n)}</button>`).join('')}
+        </div>
+      `;
     }
 
     function saveSentence() {
@@ -946,6 +935,15 @@
           alert('Sentence text is required');
           return;
         }
+        
+        // Validate before saving
+        const validation = validateSentenceSyntax(text);
+        if (validation.errors.length > 0) {
+          if (!confirm('This sentence has syntax errors. Save anyway?')) {
+            return;
+          }
+        }
+        
         if (document.getElementById('sentenceIncremental').checked) {
           text = (document.getElementById('sentenceIncrementalNewline').checked ? '++' : '+') + text;
         }
@@ -996,109 +994,8 @@
       }
     }
 
-    // ==================== GLOBAL SENTENCE OPERATIONS ====================
-    function openGlobalSentenceModal(index = null) {
-      editingIndex = index;
-      
-      document.getElementById('globalSentenceModalTitle').textContent = index !== null ? 'Edit Global Sentence' : 'Add Global Sentence';
-      
-      // Reset form
-      document.getElementById('globalSentenceName').value = '';
-      document.getElementById('globalSentenceText').value = '';
-      document.getElementById('globalSentenceIncremental').checked = false;
-      document.getElementById('globalSentenceIncrementalNewline').checked = false;
-      document.getElementById('globalIncrementalNewlineOption').style.display = 'none';
-      document.getElementById('globalTabsContainer').innerHTML = '';
-      
-      const simpleTab = new bootstrap.Tab(document.getElementById('global-simple-tab'));
-      simpleTab.show();
-      
-      if (index !== null) {
-        const sentence = globalData.commonSentences[index];
-        
-        if (typeof sentence === 'string') {
-          document.getElementById('globalSentenceText').value = sentence;
-        } else {
-          document.getElementById('globalSentenceName').value = sentence.name || '';
-          
-          if (sentence.tabs) {
-            const tabbedTab = new bootstrap.Tab(document.getElementById('global-tabbed-tab'));
-            tabbedTab.show();
-            sentence.tabs.forEach(tab => addTabToEditor('globalTabsContainer', tab.title, tab.text));
-          } else {
-            let text = sentence.text || '';
-            if (text.startsWith('++')) {
-              document.getElementById('globalSentenceIncremental').checked = true;
-              document.getElementById('globalSentenceIncrementalNewline').checked = true;
-              document.getElementById('globalIncrementalNewlineOption').style.display = 'block';
-              text = text.substring(2);
-            } else if (text.startsWith('+')) {
-              document.getElementById('globalSentenceIncremental').checked = true;
-              document.getElementById('globalIncrementalNewlineOption').style.display = 'block';
-              text = text.substring(1);
-            }
-            document.getElementById('globalSentenceText').value = text;
-          }
-        }
-      }
-      
-      globalSentenceModal.show();
-    }
-
-    function saveGlobalSentence() {
-      const name = document.getElementById('globalSentenceName').value.trim();
-      const activeTab = document.querySelector('#globalSentenceTypeTabs .nav-link.active');
-      const activeTabId = activeTab ? activeTab.getAttribute('data-bs-target') : '#globalSimpleTab';
-      let sentence;
-      
-      if (activeTabId === '#globalSimpleTab') {
-        let text = document.getElementById('globalSentenceText').value.trim();
-        if (!text) {
-          alert('Sentence text is required');
-          return;
-        }
-        if (document.getElementById('globalSentenceIncremental').checked) {
-          text = (document.getElementById('globalSentenceIncrementalNewline').checked ? '++' : '+') + text;
-        }
-        sentence = name ? { name, text } : { text };
-      } else {
-        const tabs = [];
-        document.querySelectorAll('#globalTabsContainer .tab-editor-item').forEach(item => {
-          const title = item.querySelector('.tab-title').value.trim();
-          const text = item.querySelector('.tab-text').value.trim();
-          if (title || text) {
-            tabs.push({ title, text });
-          }
-        });
-        if (tabs.length === 0) {
-          alert('At least one tab is required');
-          return;
-        }
-        sentence = name ? { name, tabs } : { tabs };
-      }
-      
-      if (editingIndex !== null) {
-        globalData.commonSentences[editingIndex] = sentence;
-      } else {
-        globalData.commonSentences.push(sentence);
-      }
-      
-      globalSentenceModal.hide();
-      renderGlobalSentences();
-      updatePreview();
-    }
-
-    function deleteGlobalSentence(index) {
-      if (confirm('Are you sure you want to delete this global sentence?')) {
-        globalData.commonSentences.splice(index, 1);
-        renderGlobalSentences();
-        updatePreview();
-      }
-    }
-
     // ==================== DROPDOWN OPERATIONS ====================
-    function openDropdownModal(type, name = null) {
-      editingDropdownType = type;
+    function openDropdownModal(name = null) {
       editingDropdownName = name;
       
       document.getElementById('dropdownModalTitle').textContent = name ? 'Edit Dropdown' : 'Add Dropdown';
@@ -1108,7 +1005,7 @@
       document.getElementById('dropdownOptionsContainer').innerHTML = '';
       
       if (name) {
-        const options = type === 'local' ? templateData.localDropdownOptions[name] : globalData.globalDropdownOptions[name];
+        const options = templateData.localDropdownOptions[name];
         if (options) {
           options.forEach(opt => addDropdownOption(opt));
         }
@@ -1156,33 +1053,20 @@
         return;
       }
       
-      if (editingDropdownType === 'local') {
-        if (editingDropdownName && editingDropdownName !== name) {
-          delete templateData.localDropdownOptions[editingDropdownName];
-        }
-        templateData.localDropdownOptions[name] = options;
-        renderLocalDropdowns();
-      } else {
-        if (editingDropdownName && editingDropdownName !== name) {
-          delete globalData.globalDropdownOptions[editingDropdownName];
-        }
-        globalData.globalDropdownOptions[name] = options;
-        renderGlobalDropdowns();
+      if (editingDropdownName && editingDropdownName !== name) {
+        delete templateData.localDropdownOptions[editingDropdownName];
       }
+      templateData.localDropdownOptions[name] = options;
       
       dropdownModal.hide();
+      renderLocalDropdowns();
       updatePreview();
     }
 
-    function deleteDropdown(type, name) {
+    function deleteDropdown(name) {
       if (confirm(`Are you sure you want to delete the "${name}" dropdown?`)) {
-        if (type === 'local') {
-          delete templateData.localDropdownOptions[name];
-          renderLocalDropdowns();
-        } else {
-          delete globalData.globalDropdownOptions[name];
-          renderGlobalDropdowns();
-        }
+        delete templateData.localDropdownOptions[name];
+        renderLocalDropdowns();
         updatePreview();
       }
     }
@@ -1198,22 +1082,60 @@
           <button type="button" class="btn btn-outline-danger btn-sm" data-action="remove-tab"><i class="bi bi-trash"></i></button>
         </div>
         <textarea class="form-control form-control-sm tab-text" rows="3" placeholder="Tab content with placeholders...">${escapeHtml(text)}</textarea>
+        <div class="tab-validation"></div>
         <div class="mt-2">
           <small class="text-muted">Insert:</small>
           <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[text:Label]">Text</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[number:Label]">Number</button>
           <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[customDropdown:Label]">Dropdown</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[customDropdown:Label:opt1,opt2]">Dropdown w/Opts</button>
           <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[+]">Incremental</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="\\n">Line Break</button>
         </div>
       `;
       
       item.querySelector('[data-action="remove-tab"]').addEventListener('click', () => item.remove());
+      
+      const textarea = item.querySelector('.tab-text');
+      const validationDiv = item.querySelector('.tab-validation');
+      
+      // Add validation on input
+      textarea.addEventListener('input', () => {
+        validateAndShowErrors(textarea.value, validationDiv);
+      });
+      
       item.querySelectorAll('.insert-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          insertAtCursor(item.querySelector('.tab-text'), btn.dataset.insert);
+          insertAtCursor(textarea, btn.dataset.insert);
+          validateAndShowErrors(textarea.value, validationDiv);
         });
       });
       
       container.appendChild(item);
+      
+      // Initial validation if there's text
+      if (text) {
+        validateAndShowErrors(text, validationDiv);
+      }
+    }
+
+    // Modified to accept element or ID
+    function validateAndShowErrors(text, containerOrId) {
+      const container = typeof containerOrId === 'string' 
+        ? document.getElementById(containerOrId) 
+        : containerOrId;
+      
+      const { errors, warnings } = validateSentenceSyntax(text);
+      
+      let html = '';
+      errors.forEach(err => {
+        html += `<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>${escapeHtml(err)}</div>`;
+      });
+      warnings.forEach(warn => {
+        html += `<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>${escapeHtml(warn)}</div>`;
+      });
+      
+      container.innerHTML = html;
     }
 
     // ==================== UTILITY FUNCTIONS ====================
