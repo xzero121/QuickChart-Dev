@@ -470,21 +470,6 @@
       };
     }
 
-    function validateAndShowErrors(text, containerId) {
-      const container = document.getElementById(containerId);
-      const { errors, warnings } = validateSentenceSyntax(text);
-      
-      let html = '';
-      errors.forEach(err => {
-        html += `<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>${escapeHtml(err)}</div>`;
-      });
-      warnings.forEach(warn => {
-        html += `<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>${escapeHtml(warn)}</div>`;
-      });
-      
-      container.innerHTML = html;
-    }
-
     // ==================== IMPORT/EXPORT ====================
     function handleImport(e) {
       const file = e.target.files[0];
