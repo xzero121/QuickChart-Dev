@@ -8,56 +8,31 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
-    body { padding: 1rem; background-color: #f5f5f5; }
+    body { padding: 1rem; }
     .editor-container { max-width: 1400px; margin: 0 auto; }
-    .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
-    .editor-header h1 { margin: 0; font-size: 1.5rem; }
-    .editor-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    .editor-tabs .btn { border-radius: 0.5rem 0.5rem 0 0; }
-    .editor-tabs .btn.active { background-color: #fff; border-bottom-color: #fff; position: relative; z-index: 1; }
-    .editor-panel { background: #fff; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; display: none; }
-    .editor-panel.active { display: block; }
-    .section-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
-    .section-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; cursor: move; }
+    .section-card { background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
+    .section-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
     .section-card-header h5 { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
-    .section-card-header .drag-handle { cursor: move; color: #6c757d; }
-    .sentence-item { background: #fff; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; position: relative; }
+    .drag-handle { cursor: move; color: var(--bs-secondary); }
+    .sentence-item { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
     .sentence-item-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .sentence-item .drag-handle { cursor: move; color: #6c757d; margin-right: 0.5rem; }
-    .sentence-text { font-family: monospace; font-size: 0.875rem; background: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem; margin-top: 0.5rem; word-break: break-word; }
-    .tab-item { background: #e9ecef; border-radius: 0.25rem; padding: 0.5rem; margin-bottom: 0.25rem; }
+    .sentence-item .drag-handle { margin-right: 0.5rem; }
+    .sentence-text { font-family: var(--bs-font-monospace); font-size: 0.875rem; background: var(--bs-tertiary-bg); padding: 0.5rem; border-radius: 0.25rem; margin-top: 0.5rem; word-break: break-word; }
+    .tab-item { background: var(--bs-secondary-bg); border-radius: 0.25rem; padding: 0.5rem; margin-bottom: 0.25rem; }
     .dropdown-option-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; }
-    .dropdown-option-item input { flex: 1; }
-    .syntax-helper { background: #e7f3ff; border: 1px solid #b6d4fe; border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; }
-    .syntax-helper code { background: #fff; padding: 0.125rem 0.25rem; border-radius: 0.125rem; }
+    .syntax-helper { background: var(--bs-info-bg-subtle); border: 1px solid var(--bs-info-border-subtle); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; }
+    .syntax-helper code { background: var(--bs-body-bg); padding: 0.125rem 0.25rem; border-radius: 0.125rem; }
     .insert-btn { font-size: 0.75rem; padding: 0.125rem 0.5rem; }
-    .preview-text { font-family: monospace; font-size: 0.875rem; background: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto; }
-    .common-sentence-item { background: #fff; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
-    .badge-incremental { background-color: #198754; }
-    .badge-tabbed { background-color: #0d6efd; }
-    .badge-quicksentence { background-color: #6f42c1; }
-    .badge-hidden { background-color: #6c757d; }
-    .collapse-content { margin-top: 0.75rem; }
-    .json-preview { font-family: monospace; font-size: 0.75rem; max-height: 400px; overflow: auto; white-space: pre; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.25rem; }
-    [data-bs-theme="dark"] { background-color: #121212; color: #e0e0e0; }
-    [data-bs-theme="dark"] .editor-panel, [data-bs-theme="dark"] .section-card, [data-bs-theme="dark"] .sentence-item, [data-bs-theme="dark"] .common-sentence-item { background-color: #1e1e1e; border-color: #333; }
-    [data-bs-theme="dark"] .section-card { background-color: #2a2a2a; }
-    [data-bs-theme="dark"] .sentence-text, [data-bs-theme="dark"] .preview-text { background-color: #333; color: #e0e0e0; }
-    [data-bs-theme="dark"] .syntax-helper { background-color: #1a3a5c; border-color: #2d5a8c; }
-    [data-bs-theme="dark"] .tab-item { background-color: #333; }
-    [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { background-color: #2a2a2a; color: #e0e0e0; border-color: #444; }
-    /* Ensure modals are hidden by default */
-    .modal { display: none; }
-    .modal.show { display: block; background-color: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; overflow: auto; }
-    .modal.show .modal-dialog { position: relative; z-index: 1060; margin: 1.75rem auto; }
-    .modal-backdrop { display: none; }
-    .modal-backdrop-fallback { z-index: 1040 !important; }
+    .json-preview { font-family: var(--bs-font-monospace); font-size: 0.75rem; max-height: 400px; overflow: auto; white-space: pre; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.25rem; }
+    .common-sentence-item { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
+    .tab-editor-item { background: var(--bs-secondary-bg); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
   </style>
 </head>
 <body>
   <div class="editor-container">
-    <div class="editor-header">
-      <h1><i class="bi bi-pencil-square me-2"></i>QuickChart Template Editor</h1>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <h1 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>QuickChart Template Editor</h1>
       <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-secondary btn-sm" id="darkModeToggle" title="Toggle dark mode">
           <i class="bi bi-moon-fill"></i>
@@ -75,24 +50,34 @@
     </div>
     <input type="file" id="importFile" accept=".json" style="display: none;">
 
-    <!-- Editor Tabs -->
-    <div class="editor-tabs">
-      <button class="btn btn-outline-secondary active" data-tab="sections">
-        <i class="bi bi-layout-text-sidebar me-1"></i>Sections
-      </button>
-      <button class="btn btn-outline-secondary" data-tab="global-sentences">
-        <i class="bi bi-chat-square-text me-1"></i>Global Sentences
-      </button>
-      <button class="btn btn-outline-secondary" data-tab="local-dropdowns">
-        <i class="bi bi-list-ul me-1"></i>Local Dropdowns
-      </button>
-      <button class="btn btn-outline-secondary" data-tab="global-dropdowns">
-        <i class="bi bi-globe me-1"></i>Global Dropdowns
-      </button>
-      <button class="btn btn-outline-secondary" data-tab="preview">
-        <i class="bi bi-eye me-1"></i>Preview JSON
-      </button>
-    </div>
+    <!-- Nav Tabs -->
+    <ul class="nav nav-tabs mb-3" id="editorTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sections-panel" type="button" role="tab">
+          <i class="bi bi-layout-text-sidebar me-1"></i>Sections
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="global-sentences-tab" data-bs-toggle="tab" data-bs-target="#global-sentences-panel" type="button" role="tab">
+          <i class="bi bi-chat-square-text me-1"></i>Global Sentences
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="local-dropdowns-tab" data-bs-toggle="tab" data-bs-target="#local-dropdowns-panel" type="button" role="tab">
+          <i class="bi bi-list-ul me-1"></i>Local Dropdowns
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="global-dropdowns-tab" data-bs-toggle="tab" data-bs-target="#global-dropdowns-panel" type="button" role="tab">
+          <i class="bi bi-globe me-1"></i>Global Dropdowns
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview-panel" type="button" role="tab">
+          <i class="bi bi-eye me-1"></i>Preview JSON
+        </button>
+      </li>
+    </ul>
 
     <!-- Syntax Helper -->
     <div class="syntax-helper">
@@ -122,87 +107,90 @@
       </div>
     </div>
 
-    <!-- Sections Panel -->
-    <div class="editor-panel active" id="sections-panel">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Narrative Sections</h4>
-        <button class="btn btn-success btn-sm" id="addSectionBtn">
-          <i class="bi bi-plus-lg me-1"></i>Add Section
-        </button>
-      </div>
-      <div id="sectionsContainer"></div>
-    </div>
-
-    <!-- Global Sentences Panel -->
-    <div class="editor-panel" id="global-sentences-panel">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Global Sentences (commonSentences)</h4>
-        <button class="btn btn-success btn-sm" id="addGlobalSentenceBtn">
-          <i class="bi bi-plus-lg me-1"></i>Add Global Sentence
-        </button>
-      </div>
-      <p class="text-muted small">These sentences are available in the "Add Sentence" search across all sections. They are stored in global.json.</p>
-      <div id="globalSentencesContainer"></div>
-    </div>
-
-    <!-- Local Dropdowns Panel -->
-    <div class="editor-panel" id="local-dropdowns-panel">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Local Dropdown Options</h4>
-        <button class="btn btn-success btn-sm" id="addLocalDropdownBtn">
-          <i class="bi bi-plus-lg me-1"></i>Add Dropdown
-        </button>
-      </div>
-      <p class="text-muted small">These dropdown options are specific to this template and override global options with the same name.</p>
-      <div id="localDropdownsContainer"></div>
-    </div>
-
-    <!-- Global Dropdowns Panel -->
-    <div class="editor-panel" id="global-dropdowns-panel">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Global Dropdown Options</h4>
-        <button class="btn btn-success btn-sm" id="addGlobalDropdownBtn">
-          <i class="bi bi-plus-lg me-1"></i>Add Dropdown
-        </button>
-      </div>
-      <p class="text-muted small">These dropdown options are shared across all templates. They are stored in global.json.</p>
-      <div id="globalDropdownsContainer"></div>
-    </div>
-
-    <!-- Preview Panel -->
-    <div class="editor-panel" id="preview-panel">
-      <h4 class="mb-3">JSON Preview</h4>
-      <div class="row">
-        <div class="col-md-6">
-          <h5>Template JSON (e.g., default.json)</h5>
-          <div class="json-preview" id="templateJsonPreview"></div>
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Sections Panel -->
+      <div class="tab-pane fade show active" id="sections-panel" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Narrative Sections</h4>
+          <button class="btn btn-success btn-sm" id="addSectionBtn">
+            <i class="bi bi-plus-lg me-1"></i>Add Section
+          </button>
         </div>
-        <div class="col-md-6">
-          <h5>Global JSON (global.json)</h5>
-          <div class="json-preview" id="globalJsonPreview"></div>
+        <div id="sectionsContainer"></div>
+      </div>
+
+      <!-- Global Sentences Panel -->
+      <div class="tab-pane fade" id="global-sentences-panel" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Global Sentences (commonSentences)</h4>
+          <button class="btn btn-success btn-sm" id="addGlobalSentenceBtn">
+            <i class="bi bi-plus-lg me-1"></i>Add Global Sentence
+          </button>
+        </div>
+        <p class="text-muted small">These sentences are available in the "Add Sentence" search across all sections. They are stored in global.json.</p>
+        <div id="globalSentencesContainer"></div>
+      </div>
+
+      <!-- Local Dropdowns Panel -->
+      <div class="tab-pane fade" id="local-dropdowns-panel" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Local Dropdown Options</h4>
+          <button class="btn btn-success btn-sm" id="addLocalDropdownBtn">
+            <i class="bi bi-plus-lg me-1"></i>Add Dropdown
+          </button>
+        </div>
+        <p class="text-muted small">These dropdown options are specific to this template and override global options with the same name.</p>
+        <div id="localDropdownsContainer"></div>
+      </div>
+
+      <!-- Global Dropdowns Panel -->
+      <div class="tab-pane fade" id="global-dropdowns-panel" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Global Dropdown Options</h4>
+          <button class="btn btn-success btn-sm" id="addGlobalDropdownBtn">
+            <i class="bi bi-plus-lg me-1"></i>Add Dropdown
+          </button>
+        </div>
+        <p class="text-muted small">These dropdown options are shared across all templates. They are stored in global.json.</p>
+        <div id="globalDropdownsContainer"></div>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="tab-pane fade" id="preview-panel" role="tabpanel">
+        <h4 class="mb-3">JSON Preview</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Template JSON (e.g., default.json)</h5>
+            <div class="json-preview" id="templateJsonPreview"></div>
+          </div>
+          <div class="col-md-6">
+            <h5>Global JSON (global.json)</h5>
+            <div class="json-preview" id="globalJsonPreview"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Add/Edit Section Modal -->
-  <div class="modal fade" id="sectionModal" tabindex="-1">
+  <div class="modal fade" id="sectionModal" tabindex="-1" aria-labelledby="sectionModalTitle" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="sectionModalTitle">Add Section</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Part (Main Title) <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="sectionPart" placeholder="e.g., D, C, H, A, R, T, M">
-            <small class="text-muted">The main letter/title that appears in bold</small>
+            <div class="form-text">The main letter/title that appears in bold</div>
           </div>
           <div class="mb-3">
             <label class="form-label">Subpart (Title Extension)</label>
             <input type="text" class="form-control" id="sectionSubpart" placeholder="e.g., ispatch:, hief Complaint:">
-            <small class="text-muted">The rest of the title (appears lighter)</small>
+            <div class="form-text">The rest of the title (appears lighter)</div>
           </div>
           <div class="mb-3">
             <label class="form-label">Tooltip</label>
@@ -222,28 +210,28 @@
   </div>
 
   <!-- Add/Edit Sentence Modal -->
-  <div class="modal fade" id="sentenceModal" tabindex="-1">
+  <div class="modal fade" id="sentenceModal" tabindex="-1" aria-labelledby="sentenceModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="sentenceModalTitle">Add Sentence</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <ul class="nav nav-tabs mb-3" id="sentenceTypeTabs">
-            <li class="nav-item">
-              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#simpleTab">Simple Text</button>
+          <ul class="nav nav-tabs mb-3" id="sentenceTypeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="simple-tab" data-bs-toggle="tab" data-bs-target="#simpleTab" type="button" role="tab">Simple Text</button>
             </li>
-            <li class="nav-item">
-              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabbedTab">Tabbed</button>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tabbed-tab" data-bs-toggle="tab" data-bs-target="#tabbedTab" type="button" role="tab">Tabbed</button>
             </li>
-            <li class="nav-item">
-              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#quickTab">QuickSentence</button>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="quick-tab" data-bs-toggle="tab" data-bs-target="#quickTab" type="button" role="tab">QuickSentence</button>
             </li>
           </ul>
           <div class="tab-content">
             <!-- Simple Text Tab -->
-            <div class="tab-pane fade show active" id="simpleTab">
+            <div class="tab-pane fade show active" id="simpleTab" role="tabpanel">
               <div class="mb-3">
                 <label class="form-label">Sentence Text</label>
                 <textarea class="form-control" id="sentenceText" rows="4" placeholder="Enter sentence text with placeholders..."></textarea>
@@ -251,44 +239,38 @@
               <div class="mb-3">
                 <label class="form-label">Insert Placeholder:</label>
                 <div class="d-flex gap-2 flex-wrap">
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[text:Label]">Text Input</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[number:Label]">Number Input</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[customDropdown:Label]">Dropdown</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[customDropdown:Label:option1,option2]">Dropdown w/Options</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[+]">Incremental Block</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="\\n">Line Break</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[text:Label]">Text Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[number:Label]">Number Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[customDropdown:Label]">Dropdown</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[customDropdown:Label:option1,option2]">Dropdown w/Options</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[+]">Incremental Block</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="\\n">Line Break</button>
                 </div>
               </div>
-              <div class="form-check mb-3">
+              <div class="form-check mb-2">
                 <input type="checkbox" class="form-check-input" id="sentenceIncremental">
-                <label class="form-check-label" for="sentenceIncremental">
-                  Make incremental (can add multiple instances)
-                </label>
+                <label class="form-check-label" for="sentenceIncremental">Make incremental (can add multiple instances)</label>
               </div>
               <div class="form-check mb-3" id="incrementalNewlineOption" style="display: none;">
                 <input type="checkbox" class="form-check-input" id="sentenceIncrementalNewline">
-                <label class="form-check-label" for="sentenceIncrementalNewline">
-                  Separate instances with newlines (++ instead of +)
-                </label>
+                <label class="form-check-label" for="sentenceIncrementalNewline">Separate instances with newlines (++ instead of +)</label>
               </div>
             </div>
             <!-- Tabbed Tab -->
-            <div class="tab-pane fade" id="tabbedTab">
-              <div id="tabsEditor">
-                <div class="mb-3">
-                  <button class="btn btn-outline-success btn-sm" id="addTabBtn">
-                    <i class="bi bi-plus-lg me-1"></i>Add Tab
-                  </button>
-                </div>
-                <div id="tabsContainer"></div>
+            <div class="tab-pane fade" id="tabbedTab" role="tabpanel">
+              <div class="mb-3">
+                <button type="button" class="btn btn-outline-success btn-sm" id="addTabBtn">
+                  <i class="bi bi-plus-lg me-1"></i>Add Tab
+                </button>
               </div>
+              <div id="tabsContainer"></div>
             </div>
             <!-- QuickSentence Tab -->
-            <div class="tab-pane fade" id="quickTab">
+            <div class="tab-pane fade" id="quickTab" role="tabpanel">
               <div class="mb-3">
                 <label class="form-label">QuickSentence Name</label>
                 <input type="text" class="form-control" id="quickSentenceName" placeholder="e.g., IV Access, Ventilator">
-                <small class="text-muted">This should match the name of a Global Sentence</small>
+                <div class="form-text">This should match the name of a Global Sentence</div>
               </div>
             </div>
           </div>
@@ -302,29 +284,29 @@
   </div>
 
   <!-- Add/Edit Global Sentence Modal -->
-  <div class="modal fade" id="globalSentenceModal" tabindex="-1">
+  <div class="modal fade" id="globalSentenceModal" tabindex="-1" aria-labelledby="globalSentenceModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="globalSentenceModalTitle">Add Global Sentence</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Name (for QuickSentence reference)</label>
             <input type="text" class="form-control" id="globalSentenceName" placeholder="e.g., IV Access, GCS">
-            <small class="text-muted">Used to reference this sentence in QuickSentence placeholders</small>
+            <div class="form-text">Used to reference this sentence in QuickSentence placeholders</div>
           </div>
-          <ul class="nav nav-tabs mb-3" id="globalSentenceTypeTabs">
-            <li class="nav-item">
-              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#globalSimpleTab">Simple Text</button>
+          <ul class="nav nav-tabs mb-3" id="globalSentenceTypeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="global-simple-tab" data-bs-toggle="tab" data-bs-target="#globalSimpleTab" type="button" role="tab">Simple Text</button>
             </li>
-            <li class="nav-item">
-              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#globalTabbedTab">Tabbed</button>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="global-tabbed-tab" data-bs-toggle="tab" data-bs-target="#globalTabbedTab" type="button" role="tab">Tabbed</button>
             </li>
           </ul>
           <div class="tab-content">
-            <div class="tab-pane fade show active" id="globalSimpleTab">
+            <div class="tab-pane fade show active" id="globalSimpleTab" role="tabpanel">
               <div class="mb-3">
                 <label class="form-label">Sentence Text</label>
                 <textarea class="form-control" id="globalSentenceText" rows="4" placeholder="Enter sentence text..."></textarea>
@@ -332,15 +314,15 @@
               <div class="mb-3">
                 <label class="form-label">Insert Placeholder:</label>
                 <div class="d-flex gap-2 flex-wrap">
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[text:Label]" data-target="globalSentenceText">Text Input</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[number:Label]" data-target="globalSentenceText">Number Input</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[customDropdown:Label]" data-target="globalSentenceText">Dropdown</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[customDropdown:Label:option1,option2]" data-target="globalSentenceText">Dropdown w/Options</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="[+]" data-target="globalSentenceText">Incremental Block</button>
-                  <button class="btn btn-outline-secondary insert-btn" data-insert="\\n" data-target="globalSentenceText">Line Break</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[text:Label]">Text Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[number:Label]">Number Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[customDropdown:Label]">Dropdown</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[customDropdown:Label:option1,option2]">Dropdown w/Options</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="[+]">Incremental Block</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-global-btn" data-insert="\\n">Line Break</button>
                 </div>
               </div>
-              <div class="form-check mb-3">
+              <div class="form-check mb-2">
                 <input type="checkbox" class="form-check-input" id="globalSentenceIncremental">
                 <label class="form-check-label" for="globalSentenceIncremental">Make incremental</label>
               </div>
@@ -349,9 +331,9 @@
                 <label class="form-check-label" for="globalSentenceIncrementalNewline">Separate with newlines (++)</label>
               </div>
             </div>
-            <div class="tab-pane fade" id="globalTabbedTab">
+            <div class="tab-pane fade" id="globalTabbedTab" role="tabpanel">
               <div class="mb-3">
-                <button class="btn btn-outline-success btn-sm" id="addGlobalTabBtn">
+                <button type="button" class="btn btn-outline-success btn-sm" id="addGlobalTabBtn">
                   <i class="bi bi-plus-lg me-1"></i>Add Tab
                 </button>
               </div>
@@ -368,23 +350,23 @@
   </div>
 
   <!-- Add/Edit Dropdown Modal -->
-  <div class="modal fade" id="dropdownModal" tabindex="-1">
+  <div class="modal fade" id="dropdownModal" tabindex="-1" aria-labelledby="dropdownModalTitle" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="dropdownModalTitle">Add Dropdown</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Dropdown Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="dropdownName" placeholder="e.g., Unit #, Provider, Gender">
-            <small class="text-muted">Use this name in [customDropdown:Name] placeholders</small>
+            <div class="form-text">Use this name in [customDropdown:Name] placeholders</div>
           </div>
           <div class="mb-3">
             <label class="form-label">Options</label>
             <div id="dropdownOptionsContainer"></div>
-            <button class="btn btn-outline-success btn-sm mt-2" id="addDropdownOptionBtn">
+            <button type="button" class="btn btn-outline-success btn-sm mt-2" id="addDropdownOptionBtn">
               <i class="bi bi-plus-lg me-1"></i>Add Option
             </button>
           </div>
@@ -419,12 +401,19 @@
     let editingDropdownType = null;
     let editingDropdownName = null;
 
+    // Modal instances
+    let sectionModal, sentenceModal, globalSentenceModal, dropdownModal;
+
     // ==================== INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Bootstrap modals
+      sectionModal = new bootstrap.Modal(document.getElementById('sectionModal'));
+      sentenceModal = new bootstrap.Modal(document.getElementById('sentenceModal'));
+      globalSentenceModal = new bootstrap.Modal(document.getElementById('globalSentenceModal'));
+      dropdownModal = new bootstrap.Modal(document.getElementById('dropdownModal'));
+
       initializeDarkMode();
-      initializeTabs();
-      initializeModals();
-      initializeImportExport();
+      initializeEventListeners();
       renderAll();
     });
 
@@ -444,19 +433,7 @@
       });
     }
 
-    function initializeTabs() {
-      document.querySelectorAll('.editor-tabs .btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.editor-tabs .btn').forEach(b => b.classList.remove('active'));
-          document.querySelectorAll('.editor-panel').forEach(p => p.classList.remove('active'));
-          btn.classList.add('active');
-          document.getElementById(btn.dataset.tab + '-panel').classList.add('active');
-          if (btn.dataset.tab === 'preview') updatePreview();
-        });
-      });
-    }
-
-    function initializeModals() {
+    function initializeEventListeners() {
       // Section modal
       document.getElementById('addSectionBtn').addEventListener('click', () => openSectionModal());
       document.getElementById('saveSectionBtn').addEventListener('click', saveSection);
@@ -480,68 +457,78 @@
       document.getElementById('addLocalDropdownBtn').addEventListener('click', () => openDropdownModal('local'));
       document.getElementById('addGlobalDropdownBtn').addEventListener('click', () => openDropdownModal('global'));
       document.getElementById('saveDropdownBtn').addEventListener('click', saveDropdown);
-      document.getElementById('addDropdownOptionBtn').addEventListener('click', addDropdownOption);
+      document.getElementById('addDropdownOptionBtn').addEventListener('click', () => addDropdownOption());
 
-      // Insert buttons
+      // Insert buttons for sentence modal
       document.querySelectorAll('.insert-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const target = btn.dataset.target || 'sentenceText';
-          const textarea = document.getElementById(target);
-          const insert = btn.dataset.insert;
-          insertAtCursor(textarea, insert);
+          insertAtCursor(document.getElementById('sentenceText'), btn.dataset.insert);
         });
       });
-    }
 
-    function initializeImportExport() {
+      // Insert buttons for global sentence modal
+      document.querySelectorAll('.insert-global-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          insertAtCursor(document.getElementById('globalSentenceText'), btn.dataset.insert);
+        });
+      });
+
+      // Import/Export
       document.getElementById('importBtn').addEventListener('click', () => {
         document.getElementById('importFile').click();
       });
 
-      document.getElementById('importFile').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const data = JSON.parse(event.target.result);
-            // Detect if it's a global.json or template json
-            if (data.commonSentences || (data.globalDropdownOptions && !data.narrativeSections)) {
-              globalData = {
-                commonSentences: data.commonSentences || [],
-                globalDropdownOptions: data.globalDropdownOptions || {}
-              };
-              alert('Global configuration imported successfully!');
-            } else {
-              templateData = {
-                localDropdownOptions: data.localDropdownOptions || {},
-                narrativeSections: data.narrativeSections || []
-              };
-              alert('Template configuration imported successfully!');
-            }
-            renderAll();
-          } catch (err) {
-            alert('Error parsing JSON: ' + err.message);
-          }
-        };
-        reader.readAsText(file);
-        e.target.value = '';
-      });
+      document.getElementById('importFile').addEventListener('change', handleImport);
+      document.getElementById('exportBtn').addEventListener('click', handleExport);
 
-      document.getElementById('exportBtn').addEventListener('click', () => {
-        const templateJson = JSON.stringify(templateData, null, 2);
-        const globalJson = JSON.stringify(globalData, null, 2);
-        
-        // Create download for template
-        downloadJson(templateData, 'template.json');
-        
-        // Ask if user wants to download global too
-        if (globalData.commonSentences.length > 0 || Object.keys(globalData.globalDropdownOptions).length > 0) {
-          if (confirm('Do you also want to download the global.json file?')) {
-            setTimeout(() => downloadJson(globalData, 'global.json'), 500);
+      // Update preview when switching to preview tab
+      document.getElementById('preview-tab').addEventListener('shown.bs.tab', updatePreview);
+    }
+
+    function handleImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          const filename = file.name.toLowerCase();
+          
+          // Detect file type: check filename first, then structure
+          const isGlobalFile = filename === 'global.json' || 
+            (data.commonSentences !== undefined && !data.narrativeSections) ||
+            (data.globalDropdownOptions !== undefined && !data.localDropdownOptions && !data.narrativeSections);
+          
+          if (isGlobalFile) {
+            globalData = {
+              commonSentences: data.commonSentences || [],
+              globalDropdownOptions: data.globalDropdownOptions || {}
+            };
+            alert('Global configuration imported successfully!');
+          } else {
+            templateData = {
+              localDropdownOptions: data.localDropdownOptions || {},
+              narrativeSections: data.narrativeSections || []
+            };
+            alert('Template configuration imported successfully!');
           }
+          renderAll();
+        } catch (err) {
+          alert('Error parsing JSON: ' + err.message);
         }
-      });
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function handleExport() {
+      downloadJson(templateData, 'template.json');
+      
+      if (globalData.commonSentences.length > 0 || Object.keys(globalData.globalDropdownOptions).length > 0) {
+        if (confirm('Do you also want to download the global.json file?')) {
+          setTimeout(() => downloadJson(globalData, 'global.json'), 500);
+        }
+      }
     }
 
     function downloadJson(data, filename) {
@@ -567,6 +554,11 @@
       const container = document.getElementById('sectionsContainer');
       container.innerHTML = '';
       
+      if (templateData.narrativeSections.length === 0) {
+        container.innerHTML = '<p class="text-muted">No sections defined. Click "Add Section" to create one.</p>';
+        return;
+      }
+
       templateData.narrativeSections.forEach((section, sectionIndex) => {
         const card = document.createElement('div');
         card.className = 'section-card';
@@ -580,9 +572,9 @@
               ${section.tooltip ? `<small class="text-muted ms-2" title="${escapeHtml(section.tooltip)}"><i class="bi bi-info-circle"></i></small>` : ''}
             </h5>
             <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-primary" onclick="openSectionModal(${sectionIndex})"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-outline-success" onclick="openSentenceModal(${sectionIndex})"><i class="bi bi-plus-lg"></i></button>
-              <button class="btn btn-outline-danger" onclick="deleteSection(${sectionIndex})"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-outline-primary" data-action="edit-section" data-index="${sectionIndex}" title="Edit section"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-success" data-action="add-sentence" data-index="${sectionIndex}" title="Add sentence"><i class="bi bi-plus-lg"></i></button>
+              <button class="btn btn-outline-danger" data-action="delete-section" data-index="${sectionIndex}" title="Delete section"><i class="bi bi-trash"></i></button>
             </div>
           </div>
           <div class="sentences-container" data-section="${sectionIndex}">
@@ -593,7 +585,10 @@
         container.appendChild(card);
       });
 
-      // Initialize sortable for sections (if Sortable is available)
+      // Add event delegation for section buttons
+      container.addEventListener('click', handleSectionAction);
+
+      // Initialize sortable for sections
       if (typeof Sortable !== 'undefined') {
         new Sortable(container, {
           animation: 150,
@@ -623,9 +618,36 @@
       }
     }
 
+    function handleSectionAction(e) {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      
+      const action = btn.dataset.action;
+      const index = parseInt(btn.dataset.index);
+      const sentenceIndex = btn.dataset.sentenceIndex !== undefined ? parseInt(btn.dataset.sentenceIndex) : null;
+      
+      switch (action) {
+        case 'edit-section':
+          openSectionModal(index);
+          break;
+        case 'add-sentence':
+          openSentenceModal(index);
+          break;
+        case 'delete-section':
+          deleteSection(index);
+          break;
+        case 'edit-sentence':
+          openSentenceModal(index, sentenceIndex);
+          break;
+        case 'delete-sentence':
+          deleteSentence(index, sentenceIndex);
+          break;
+      }
+    }
+
     function renderSentences(sentences, sectionIndex) {
       if (!sentences || sentences.length === 0) {
-        return '<p class="text-muted small">No sentences. Click + to add one.</p>';
+        return '<p class="text-muted small mb-0">No sentences. Click <i class="bi bi-plus-lg"></i> to add one.</p>';
       }
       
       return sentences.map((sentence, sentenceIndex) => {
@@ -633,10 +655,10 @@
         let content = '';
         
         if (sentence.QuickSentence) {
-          badges = '<span class="badge badge-quicksentence me-1">QuickSentence</span>';
+          badges = '<span class="badge bg-purple me-1">QuickSentence</span>';
           content = `<div class="sentence-text">${escapeHtml(sentence.QuickSentence)}</div>`;
         } else if (sentence.tabs) {
-          badges = '<span class="badge badge-tabbed me-1">Tabbed</span>';
+          badges = '<span class="badge bg-primary me-1">Tabbed</span>';
           content = `<div class="mt-2">${sentence.tabs.map((tab, i) => `
             <div class="tab-item">
               <strong>${escapeHtml(tab.title || 'Tab ' + (i+1))}:</strong>
@@ -646,9 +668,9 @@
         } else {
           const text = sentence.text || '';
           if (text.startsWith('++')) {
-            badges = '<span class="badge badge-incremental me-1">++ Incremental</span>';
+            badges = '<span class="badge bg-success me-1">++ Incremental</span>';
           } else if (text.startsWith('+')) {
-            badges = '<span class="badge badge-incremental me-1">+ Incremental</span>';
+            badges = '<span class="badge bg-success me-1">+ Incremental</span>';
           }
           content = `<div class="sentence-text">${escapeHtml(text)}</div>`;
         }
@@ -661,8 +683,8 @@
                 <div>${badges}</div>
               </div>
               <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary btn-sm" onclick="openSentenceModal(${sectionIndex}, ${sentenceIndex})"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-outline-danger btn-sm" onclick="deleteSentence(${sectionIndex}, ${sentenceIndex})"><i class="bi bi-trash"></i></button>
+                <button class="btn btn-outline-primary btn-sm" data-action="edit-sentence" data-index="${sectionIndex}" data-sentence-index="${sentenceIndex}" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger btn-sm" data-action="delete-sentence" data-index="${sectionIndex}" data-sentence-index="${sentenceIndex}" title="Delete"><i class="bi bi-trash"></i></button>
               </div>
             </div>
             ${content}
@@ -690,7 +712,7 @@
         if (typeof sentence === 'string') {
           content = `<div class="sentence-text">${escapeHtml(sentence)}</div>`;
         } else if (sentence.tabs) {
-          badges = '<span class="badge badge-tabbed me-1">Tabbed</span>';
+          badges = '<span class="badge bg-primary me-1">Tabbed</span>';
           if (sentence.name) badges = `<span class="badge bg-secondary me-1">${escapeHtml(sentence.name)}</span>` + badges;
           content = `<div class="mt-2">${sentence.tabs.map((tab, i) => `
             <div class="tab-item">
@@ -702,9 +724,9 @@
           const text = sentence.text || '';
           if (sentence.name) badges = `<span class="badge bg-secondary me-1">${escapeHtml(sentence.name)}</span>`;
           if (text.startsWith('++')) {
-            badges += '<span class="badge badge-incremental me-1">++ Incremental</span>';
+            badges += '<span class="badge bg-success me-1">++ Incremental</span>';
           } else if (text.startsWith('+')) {
-            badges += '<span class="badge badge-incremental me-1">+ Incremental</span>';
+            badges += '<span class="badge bg-success me-1">+ Incremental</span>';
           }
           content = `<div class="sentence-text">${escapeHtml(text)}</div>`;
         }
@@ -713,14 +735,26 @@
           <div class="d-flex justify-content-between align-items-start">
             <div>${badges}</div>
             <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-primary btn-sm" onclick="openGlobalSentenceModal(${index})"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-outline-danger btn-sm" onclick="deleteGlobalSentence(${index})"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-outline-primary btn-sm" data-action="edit-global" data-index="${index}"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger btn-sm" data-action="delete-global" data-index="${index}"><i class="bi bi-trash"></i></button>
             </div>
           </div>
           ${content}
         `;
         
         container.appendChild(item);
+      });
+
+      // Add event delegation
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const index = parseInt(btn.dataset.index);
+        if (btn.dataset.action === 'edit-global') {
+          openGlobalSentenceModal(index);
+        } else if (btn.dataset.action === 'delete-global') {
+          deleteGlobalSentence(index);
+        }
       });
     }
 
@@ -745,11 +779,11 @@
             <div>
               <strong>${escapeHtml(name)}</strong>
               <span class="badge bg-secondary ms-2">${options.length} options</span>
-              ${hiddenCount > 0 ? `<span class="badge badge-hidden ms-1">${hiddenCount} hidden</span>` : ''}
+              ${hiddenCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${hiddenCount} hidden</span>` : ''}
             </div>
             <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-primary btn-sm" onclick="openDropdownModal('${type}', '${escapeHtml(name)}')"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-outline-danger btn-sm" onclick="deleteDropdown('${type}', '${escapeHtml(name)}')"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-outline-primary btn-sm" data-action="edit-dropdown" data-type="${type}" data-name="${escapeHtml(name)}"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger btn-sm" data-action="delete-dropdown" data-type="${type}" data-name="${escapeHtml(name)}"><i class="bi bi-trash"></i></button>
             </div>
           </div>
           <div class="small text-muted">
@@ -759,6 +793,19 @@
         `;
         
         container.appendChild(item);
+      });
+
+      // Add event delegation
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const dropdownType = btn.dataset.type;
+        const name = btn.dataset.name;
+        if (btn.dataset.action === 'edit-dropdown') {
+          openDropdownModal(dropdownType, name);
+        } else if (btn.dataset.action === 'delete-dropdown') {
+          deleteDropdown(dropdownType, name);
+        }
       });
     }
 
@@ -794,7 +841,7 @@
         document.getElementById('sectionIncludeTitle').checked = true;
       }
       
-      ModalHelper.show('sectionModal');
+      sectionModal.show();
     }
 
     function saveSection() {
@@ -821,7 +868,7 @@
         templateData.narrativeSections.push(section);
       }
       
-      ModalHelper.hide('sectionModal');
+      sectionModal.hide();
       renderSections();
       updatePreview();
     }
@@ -850,16 +897,19 @@
       document.getElementById('tabsContainer').innerHTML = '';
       
       // Switch to simple tab by default
-      switchTab('sentenceTypeTabs', 'simpleTab');
+      const simpleTab = new bootstrap.Tab(document.getElementById('simple-tab'));
+      simpleTab.show();
       
       if (sentenceIndex !== null) {
         const sentence = templateData.narrativeSections[sectionIndex].sentences[sentenceIndex];
         
         if (sentence.QuickSentence) {
-          switchTab('sentenceTypeTabs', 'quickTab');
+          const quickTab = new bootstrap.Tab(document.getElementById('quick-tab'));
+          quickTab.show();
           document.getElementById('quickSentenceName').value = sentence.QuickSentence;
         } else if (sentence.tabs) {
-          switchTab('sentenceTypeTabs', 'tabbedTab');
+          const tabbedTab = new bootstrap.Tab(document.getElementById('tabbed-tab'));
+          tabbedTab.show();
           sentence.tabs.forEach(tab => addTabToEditor('tabsContainer', tab.title, tab.text));
         } else {
           let text = sentence.text || '';
@@ -877,14 +927,15 @@
         }
       }
       
-      ModalHelper.show('sentenceModal');
+      sentenceModal.show();
     }
 
     function saveSentence() {
-      const activeTab = getActiveTabId('sentenceTypeTabs');
+      const activeTab = document.querySelector('#sentenceTypeTabs .nav-link.active');
+      const activeTabId = activeTab ? activeTab.getAttribute('data-bs-target') : '#simpleTab';
       let sentence = {};
       
-      if (activeTab === 'simpleTab') {
+      if (activeTabId === '#simpleTab') {
         let text = document.getElementById('sentenceText').value.trim();
         if (!text) {
           alert('Sentence text is required');
@@ -894,7 +945,7 @@
           text = (document.getElementById('sentenceIncrementalNewline').checked ? '++' : '+') + text;
         }
         sentence = { text };
-      } else if (activeTab === 'tabbedTab') {
+      } else if (activeTabId === '#tabbedTab') {
         const tabs = [];
         document.querySelectorAll('#tabsContainer .tab-editor-item').forEach(item => {
           const title = item.querySelector('.tab-title').value.trim();
@@ -908,7 +959,7 @@
           return;
         }
         sentence = { tabs };
-      } else if (activeTab === 'quickTab') {
+      } else if (activeTabId === '#quickTab') {
         const name = document.getElementById('quickSentenceName').value.trim();
         if (!name) {
           alert('QuickSentence name is required');
@@ -927,7 +978,7 @@
         templateData.narrativeSections[editingSectionIndex].sentences.push(sentence);
       }
       
-      ModalHelper.hide('sentenceModal');
+      sentenceModal.hide();
       renderSections();
       updatePreview();
     }
@@ -954,7 +1005,8 @@
       document.getElementById('globalIncrementalNewlineOption').style.display = 'none';
       document.getElementById('globalTabsContainer').innerHTML = '';
       
-      switchTab('globalSentenceTypeTabs', 'globalSimpleTab');
+      const simpleTab = new bootstrap.Tab(document.getElementById('global-simple-tab'));
+      simpleTab.show();
       
       if (index !== null) {
         const sentence = globalData.commonSentences[index];
@@ -965,7 +1017,8 @@
           document.getElementById('globalSentenceName').value = sentence.name || '';
           
           if (sentence.tabs) {
-            switchTab('globalSentenceTypeTabs', 'globalTabbedTab');
+            const tabbedTab = new bootstrap.Tab(document.getElementById('global-tabbed-tab'));
+            tabbedTab.show();
             sentence.tabs.forEach(tab => addTabToEditor('globalTabsContainer', tab.title, tab.text));
           } else {
             let text = sentence.text || '';
@@ -984,15 +1037,16 @@
         }
       }
       
-      ModalHelper.show('globalSentenceModal');
+      globalSentenceModal.show();
     }
 
     function saveGlobalSentence() {
       const name = document.getElementById('globalSentenceName').value.trim();
-      const activeTab = getActiveTabId('globalSentenceTypeTabs');
+      const activeTab = document.querySelector('#globalSentenceTypeTabs .nav-link.active');
+      const activeTabId = activeTab ? activeTab.getAttribute('data-bs-target') : '#globalSimpleTab';
       let sentence;
       
-      if (activeTab === 'globalSimpleTab') {
+      if (activeTabId === '#globalSimpleTab') {
         let text = document.getElementById('globalSentenceText').value.trim();
         if (!text) {
           alert('Sentence text is required');
@@ -1024,7 +1078,7 @@
         globalData.commonSentences.push(sentence);
       }
       
-      ModalHelper.hide('globalSentenceModal');
+      globalSentenceModal.hide();
       renderGlobalSentences();
       updatePreview();
     }
@@ -1057,7 +1111,7 @@
         addDropdownOption();
       }
       
-      ModalHelper.show('dropdownModal');
+      dropdownModal.show();
     }
 
     function addDropdownOption(value = '') {
@@ -1069,8 +1123,10 @@
           <input type="checkbox" class="form-check-input option-hidden" ${value.startsWith('*') ? 'checked' : ''} title="Hidden by default">
         </div>
         <input type="text" class="form-control form-control-sm option-value" value="${escapeHtml(value.replace(/^\*/, ''))}" placeholder="Option value">
-        <button class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+        <button type="button" class="btn btn-outline-danger btn-sm" data-action="remove-option"><i class="bi bi-trash"></i></button>
       `;
+      
+      item.querySelector('[data-action="remove-option"]').addEventListener('click', () => item.remove());
       container.appendChild(item);
     }
 
@@ -1109,7 +1165,7 @@
         renderGlobalDropdowns();
       }
       
-      ModalHelper.hide('dropdownModal');
+      dropdownModal.hide();
       updatePreview();
     }
 
@@ -1130,20 +1186,28 @@
     function addTabToEditor(containerId, title = '', text = '') {
       const container = document.getElementById(containerId);
       const item = document.createElement('div');
-      item.className = 'tab-editor-item tab-item mb-2';
+      item.className = 'tab-editor-item';
       item.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-2">
           <input type="text" class="form-control form-control-sm tab-title" placeholder="Tab title" value="${escapeHtml(title)}" style="max-width: 200px;">
-          <button class="btn btn-outline-danger btn-sm" onclick="this.closest('.tab-editor-item').remove()"><i class="bi bi-trash"></i></button>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-action="remove-tab"><i class="bi bi-trash"></i></button>
         </div>
         <textarea class="form-control form-control-sm tab-text" rows="3" placeholder="Tab content with placeholders...">${escapeHtml(text)}</textarea>
         <div class="mt-2">
           <small class="text-muted">Insert:</small>
-          <button class="btn btn-outline-secondary insert-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" onclick="insertAtCursor(this.closest('.tab-editor-item').querySelector('.tab-text'), '[text:Label]')">Text</button>
-          <button class="btn btn-outline-secondary insert-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" onclick="insertAtCursor(this.closest('.tab-editor-item').querySelector('.tab-text'), '[customDropdown:Label]')">Dropdown</button>
-          <button class="btn btn-outline-secondary insert-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" onclick="insertAtCursor(this.closest('.tab-editor-item').querySelector('.tab-text'), '[+]')">Incremental</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" data-insert="[text:Label]">Text</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" data-insert="[customDropdown:Label]">Dropdown</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;" data-insert="[+]">Incremental</button>
         </div>
       `;
+      
+      item.querySelector('[data-action="remove-tab"]').addEventListener('click', () => item.remove());
+      item.querySelectorAll('.insert-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          insertAtCursor(item.querySelector('.tab-text'), btn.dataset.insert);
+        });
+      });
+      
       container.appendChild(item);
     }
 
@@ -1162,117 +1226,6 @@
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
       textarea.focus();
     }
-
-    // ==================== TAB HELPER (fallback for when Bootstrap isn't available) ====================
-    function switchTab(tabGroupId, targetTabId) {
-      const tabGroup = document.getElementById(tabGroupId);
-      if (!tabGroup) return;
-      
-      // Try Bootstrap first
-      if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
-        const tabBtn = document.querySelector(`[data-bs-target="#${targetTabId}"]`);
-        if (tabBtn) {
-          bootstrap.Tab.getOrCreateInstance(tabBtn).show();
-          return;
-        }
-      }
-      
-      // Fallback: switch tabs manually
-      const tabButtons = tabGroup.querySelectorAll('.nav-link');
-      tabButtons.forEach(btn => {
-        btn.classList.remove('active');
-        const target = btn.dataset.bsTarget;
-        if (target) {
-          const pane = document.querySelector(target);
-          if (pane) {
-            pane.classList.remove('show', 'active');
-          }
-        }
-      });
-      
-      // Activate the target tab
-      const activeBtn = document.querySelector(`[data-bs-target="#${targetTabId}"]`);
-      if (activeBtn) {
-        activeBtn.classList.add('active');
-        const pane = document.getElementById(targetTabId);
-        if (pane) {
-          pane.classList.add('show', 'active');
-        }
-      }
-    }
-
-    function getActiveTabId(tabGroupId) {
-      const tabGroup = document.getElementById(tabGroupId);
-      if (!tabGroup) return null;
-      
-      const activeBtn = tabGroup.querySelector('.nav-link.active');
-      if (activeBtn && activeBtn.dataset.bsTarget) {
-        return activeBtn.dataset.bsTarget.replace('#', '');
-      }
-      return null;
-    }
-
-    // ==================== MODAL HELPER (fallback for when Bootstrap isn't available) ====================
-    const ModalHelper = {
-      show: function(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        
-        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-          const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
-          bsModal.show();
-        } else {
-          // Fallback: show modal manually (the modal itself has background from CSS)
-          modal.style.display = 'block';
-          modal.classList.add('show');
-          document.body.style.overflow = 'hidden';
-          
-          // Add click handler to close when clicking outside modal-dialog
-          modal.onclick = function(e) {
-            if (e.target === modal) {
-              ModalHelper.hide(modalId);
-            }
-          };
-        }
-      },
-      hide: function(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        
-        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-          const bsModal = bootstrap.Modal.getInstance(modal);
-          if (bsModal) bsModal.hide();
-        } else {
-          // Fallback: hide modal manually
-          modal.style.display = 'none';
-          modal.classList.remove('show');
-          document.body.style.overflow = '';
-          modal.onclick = null;
-        }
-      }
-    };
-
-    // Setup close buttons for fallback modal
-    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const modal = this.closest('.modal');
-        if (modal) ModalHelper.hide(modal.id);
-      });
-    });
-
-    // Setup tab click handlers for fallback (when Bootstrap Tab isn't available)
-    document.querySelectorAll('.nav-tabs .nav-link').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        if (typeof bootstrap === 'undefined' || !bootstrap.Tab) {
-          e.preventDefault();
-          const tabGroupId = this.closest('.nav-tabs').id;
-          const targetId = this.dataset.bsTarget?.replace('#', '');
-          if (targetId) {
-            switchTab(tabGroupId, targetId);
-          }
-        }
-      });
-    });
   </script>
 </body>
 </html>
