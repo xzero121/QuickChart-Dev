@@ -84,7 +84,8 @@
       "*Norton Women and Childrens' Hospital",
       "*Norton Children's Hospital",
       "*Norton Pavilion",
-      "*Kindred Hospital"
+      "*Kindred Hospital",
+      "*Maple Manor"
     ]
   },
   "narrativeSections": [
@@ -100,6 +101,7 @@
         {
           "text": "The response was [customDropdown:Response Type]."
         },
+        { "QuickSentence": "PTA Contact" },
         { "QuickSentence": "PTA Medications" },
         { "QuickSentence": "PTA Treatments" },
         {
