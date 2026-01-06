@@ -75,6 +75,10 @@
       "text": "+Prior to EMS arrival the patient received the following treatments: [+[text:Treatment]]."
     },
     {
+      "name": "PTA Contact",
+      "text": "Facility staff was notified prior to EMS arrival by phone, EMS staff spoke with [text:Facility Staff] and advised them of ETA."
+    },
+    {
       "name": "ET Tube",
       "tabs": [
         {
@@ -3189,6 +3193,7 @@
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   }
 }
+
 
 
 
