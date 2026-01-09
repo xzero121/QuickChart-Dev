@@ -13,7 +13,7 @@
      crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
-  <script src="calcs.js"></script>
+  <script src="tools/calcs.js"></script>
 </head>
 
 <body>
@@ -3561,17 +3561,17 @@
       const o2Btn = document.getElementById('o2ToolBtn');
 
       dripBtn?.addEventListener('click', () => {
-        loadToolContent('drip.html', 'Drip Calculator');
+        loadToolContent('tools/drip.html', 'Drip Calculator');
         toolMenu.style.display = 'none';
       });
 
       ibwBtn?.addEventListener('click', () => {
-        loadToolContent('ibw.html', 'IBW Calculator');
+        loadToolContent('tools/ibw.html', 'IBW Calculator');
         toolMenu.style.display = 'none';
       });
 
       o2Btn?.addEventListener('click', () => {
-        loadToolContent('oxygen.html', 'Oxygen Duration Calculator');
+        loadToolContent('tools/oxygen.html', 'Oxygen Duration Calculator');
         toolMenu.style.display = 'none';
       });
 
@@ -3627,7 +3627,7 @@
             if (script.src) {
               // For external scripts, we need to load calcs.js if not already loaded
               if (script.src.includes('calcs.js') && typeof calculateDripRates === 'undefined') {
-                newScript.src = './calcs.js';
+                newScript.src = './tools/calcs.js';
                 modalBody.appendChild(newScript);
               }
             } else {
