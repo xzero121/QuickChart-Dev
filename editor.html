@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuickChart Template Editor</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    body { padding: 1rem; }
+    .editor-container { max-width: 1400px; margin: 0 auto; }
+    .section-card { background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
+    .section-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .section-card-header h5 { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .drag-handle { cursor: move; color: var(--bs-secondary); }
+    .sentence-item { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
+    .sentence-item.has-warning { border-color: var(--bs-warning); }
+    .sentence-item.has-error { border-color: var(--bs-danger); }
+    .sentence-item-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .sentence-item .drag-handle { margin-right: 0.5rem; }
+    .sentence-text { font-family: var(--bs-font-monospace); font-size: 0.875rem; background: var(--bs-tertiary-bg); padding: 0.5rem; border-radius: 0.25rem; margin-top: 0.5rem; word-break: break-word; }
+    .tab-item { background: var(--bs-secondary-bg); border-radius: 0.25rem; padding: 0.5rem; margin-bottom: 0.25rem; }
+    .dropdown-option-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; }
+    .syntax-helper { background: var(--bs-info-bg-subtle); border: 1px solid var(--bs-info-border-subtle); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; }
+    .syntax-helper code { background: var(--bs-body-bg); padding: 0.125rem 0.25rem; border-radius: 0.125rem; }
+    .insert-btn { font-size: 0.75rem; padding: 0.125rem 0.5rem; }
+    .insert-tab-btn { font-size: 0.7rem; padding: 0.1rem 0.3rem; }
+    .json-preview { font-family: var(--bs-font-monospace); font-size: 0.75rem; max-height: 400px; overflow: auto; white-space: pre; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.25rem; }
+    .common-sentence-item { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
+    .tab-editor-item { background: var(--bs-secondary-bg); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 0.5rem; }
+    .validation-error { color: var(--bs-danger); font-size: 0.75rem; margin-top: 0.25rem; }
+    .validation-warning { color: var(--bs-warning); font-size: 0.75rem; margin-top: 0.25rem; }
+    .reference-panel { background: var(--bs-light-bg-subtle); border: 1px dashed var(--bs-border-color); border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; }
+    .reference-badge { font-size: 0.65rem; }
+  </style>
+</head>
+<body>
+  <div class="editor-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <h1 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>QuickChart Template Editor</h1>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-secondary btn-sm" id="darkModeToggle" title="Toggle dark mode">
+          <i class="bi bi-moon-fill"></i>
+        </button>
+        <button class="btn btn-outline-info btn-sm" id="loadGlobalRefBtn" title="Load global.json for reference">
+          <i class="bi bi-link-45deg me-1"></i>Load Reference Global
+        </button>
+        <button class="btn btn-outline-primary btn-sm" id="importBtn">
+          <i class="bi bi-upload me-1"></i>Import Template
+        </button>
+        <button class="btn btn-primary btn-sm" id="exportBtn">
+          <i class="bi bi-download me-1"></i>Export Template
+        </button>
+        <a href="index.html" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i>Back to QuickChart
+        </a>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display: none;">
+    <input type="file" id="globalRefFile" accept=".json" style="display: none;">
+
+    <!-- Reference Global Panel (shown when global.json is loaded) -->
+    <div class="reference-panel" id="referencePanel" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong><i class="bi bi-link-45deg me-1"></i>Reference: global.json</strong>
+          <span class="badge bg-info reference-badge ms-2" id="refDropdownCount">0 dropdowns</span>
+          <span class="badge bg-secondary reference-badge" id="refSentenceCount">0 sentences</span>
+        </div>
+        <button class="btn btn-outline-danger btn-sm" id="clearGlobalRefBtn">
+          <i class="bi bi-x-lg"></i> Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Nav Tabs -->
+    <ul class="nav nav-tabs mb-3" id="editorTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sections-panel" type="button" role="tab">
+          <i class="bi bi-layout-text-sidebar me-1"></i>Sections
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="common-sentences-tab" data-bs-toggle="tab" data-bs-target="#common-sentences-panel" type="button" role="tab">
+          <i class="bi bi-chat-square-text me-1"></i>Common Sentences
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="local-dropdowns-tab" data-bs-toggle="tab" data-bs-target="#local-dropdowns-panel" type="button" role="tab">
+          <i class="bi bi-list-ul me-1"></i>Local Dropdowns
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview-panel" type="button" role="tab">
+          <i class="bi bi-eye me-1"></i>Preview JSON
+        </button>
+      </li>
+    </ul>
+
+    <!-- Syntax Helper -->
+    <div class="syntax-helper">
+      <strong><i class="bi bi-lightbulb me-1"></i>Syntax Reference:</strong>
+      <div class="row mt-2">
+        <div class="col-md-4">
+          <small>
+            <code>[text:Label]</code> - Text input<br>
+            <code>[number:Label]</code> - Number input<br>
+            <code>[customDropdown:Label]</code> - Dropdown
+          </small>
+        </div>
+        <div class="col-md-4">
+          <small>
+            <code>[customDropdown:Label:opt1,opt2]</code> - Inline options<br>
+            <code>+</code> prefix - Incremental sentence<br>
+            <code>++</code> prefix - Incremental with newlines
+          </small>
+        </div>
+        <div class="col-md-4">
+          <small>
+            <code>[+content]</code> - Incremental block<br>
+            <code>*</code> prefix on option - Hidden by default<br>
+            <code>\n</code> - Line break in output
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Sections Panel -->
+      <div class="tab-pane fade show active" id="sections-panel" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Narrative Sections</h4>
+          <button class="btn btn-success btn-sm" id="addSectionBtn">
+            <i class="bi bi-plus-lg me-1"></i>Add Section
+          </button>
+        </div>
+        <div id="sectionsContainer"></div>
+      </div>
+
+      <!-- Common Sentences Panel -->
+      <div class="tab-pane fade" id="common-sentences-panel" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Local Common Sentences</h4>
+          <button class="btn btn-success btn-sm" id="addCommonSentenceBtn">
+            <i class="bi bi-plus-lg me-1"></i>Add Common Sentence
+          </button>
+        </div>
+        <p class="text-muted small">These sentences appear in the "Add Sentence" search dropdown. They are local to this template and supplement any global common sentences.</p>
+        <div id="commonSentencesContainer"></div>
+      </div>
+
+      <!-- Local Dropdowns Panel -->
+      <div class="tab-pane fade" id="local-dropdowns-panel" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Local Dropdown Options</h4>
+          <button class="btn btn-success btn-sm" id="addLocalDropdownBtn">
+            <i class="bi bi-plus-lg me-1"></i>Add Dropdown
+          </button>
+        </div>
+        <p class="text-muted small">These dropdown options are specific to this template. They override global options with the same name.</p>
+        <div id="localDropdownsContainer"></div>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="tab-pane fade" id="preview-panel" role="tabpanel">
+        <h4 class="mb-3">JSON Preview</h4>
+        <div class="json-preview" id="templateJsonPreview"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Section Modal -->
+  <div class="modal fade" id="sectionModal" tabindex="-1" aria-labelledby="sectionModalTitle" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sectionModalTitle">Add Section</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Part (Main Title) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="sectionPart" placeholder="e.g., D, C, H, A, R, T, M">
+            <div class="form-text">The main letter/title that appears in bold</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Subpart (Title Extension)</label>
+            <input type="text" class="form-control" id="sectionSubpart" placeholder="e.g., ispatch:, hief Complaint:">
+            <div class="form-text">The rest of the title (appears lighter)</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tooltip</label>
+            <input type="text" class="form-control" id="sectionTooltip" placeholder="Description shown on hover">
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="sectionIncludeTitle" checked>
+            <label class="form-check-label" for="sectionIncludeTitle">Include title in output</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveSectionBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Sentence Modal -->
+  <div class="modal fade" id="sentenceModal" tabindex="-1" aria-labelledby="sentenceModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sentenceModalTitle">Add Sentence</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs mb-3" id="sentenceTypeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="simple-tab" data-bs-toggle="tab" data-bs-target="#simpleTab" type="button" role="tab">Simple Text</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tabbed-tab" data-bs-toggle="tab" data-bs-target="#tabbedTab" type="button" role="tab">Tabbed</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="quick-tab" data-bs-toggle="tab" data-bs-target="#quickTab" type="button" role="tab">QuickSentence</button>
+            </li>
+          </ul>
+          <div class="tab-content">
+            <!-- Simple Text Tab -->
+            <div class="tab-pane fade show active" id="simpleTab" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Sentence Text</label>
+                <textarea class="form-control" id="sentenceText" rows="4" placeholder="Enter sentence text with placeholders..."></textarea>
+                <div id="sentenceValidation"></div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Insert Placeholder:</label>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[text:Label]">Text Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[number:Label]">Number Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[customDropdown:Label]">Dropdown</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[customDropdown:Label:option1,option2]">Dropdown w/Options</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="[+]">Incremental Block</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-btn" data-insert="\\n">Line Break</button>
+                </div>
+              </div>
+              <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="sentenceIncremental">
+                <label class="form-check-label" for="sentenceIncremental">Make incremental (can add multiple instances)</label>
+              </div>
+              <div class="form-check mb-3" id="incrementalNewlineOption" style="display: none;">
+                <input type="checkbox" class="form-check-input" id="sentenceIncrementalNewline">
+                <label class="form-check-label" for="sentenceIncrementalNewline">Separate instances with newlines (++ instead of +)</label>
+              </div>
+            </div>
+            <!-- Tabbed Tab -->
+            <div class="tab-pane fade" id="tabbedTab" role="tabpanel">
+              <div class="mb-3">
+                <button type="button" class="btn btn-outline-success btn-sm" id="addTabBtn">
+                  <i class="bi bi-plus-lg me-1"></i>Add Tab
+                </button>
+              </div>
+              <div id="tabsContainer"></div>
+            </div>
+            <!-- QuickSentence Tab -->
+            <div class="tab-pane fade" id="quickTab" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">QuickSentence Name</label>
+                <input type="text" class="form-control" id="quickSentenceName" placeholder="e.g., IV Access, Ventilator">
+                <div class="form-text">This should match the name of a Global Sentence in global.json</div>
+              </div>
+              <div id="availableQuickSentences"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveSentenceBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Dropdown Modal -->
+  <div class="modal fade" id="dropdownModal" tabindex="-1" aria-labelledby="dropdownModalTitle" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="dropdownModalTitle">Add Dropdown</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Dropdown Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dropdownName" placeholder="e.g., Unit #, Provider, Gender">
+            <div class="form-text">Use this name in [customDropdown:Name] placeholders</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Options</label>
+            <div id="dropdownOptionsContainer"></div>
+            <button type="button" class="btn btn-outline-success btn-sm mt-2" id="addDropdownOptionBtn">
+              <i class="bi bi-plus-lg me-1"></i>Add Option
+            </button>
+          </div>
+          <div class="alert alert-info small">
+            <i class="bi bi-info-circle me-1"></i>
+            Prefix an option with <code>*</code> to hide it by default (shown when user types to filter)
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveDropdownBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Common Sentence Modal -->
+  <div class="modal fade" id="commonSentenceModal" tabindex="-1" aria-labelledby="commonSentenceModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="commonSentenceModalTitle">Add Common Sentence</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Name (for QuickSentence reference)</label>
+            <input type="text" class="form-control" id="commonSentenceName" placeholder="e.g., IV Access, GCS, Ventilator Settings">
+            <div class="form-text">Used to reference this sentence via QuickSentence placeholders</div>
+          </div>
+          <ul class="nav nav-tabs mb-3" id="commonSentenceTypeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="common-simple-tab" data-bs-toggle="tab" data-bs-target="#commonSimpleTab" type="button" role="tab">Simple Text</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="common-tabbed-tab" data-bs-toggle="tab" data-bs-target="#commonTabbedTab" type="button" role="tab">Tabbed</button>
+            </li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="commonSimpleTab" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Sentence Text</label>
+                <textarea class="form-control" id="commonSentenceText" rows="4" placeholder="Enter sentence text with placeholders..."></textarea>
+                <div id="commonSentenceValidation"></div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Insert Placeholder:</label>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-common-btn" data-insert="[text:Label]">Text Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-common-btn" data-insert="[number:Label]">Number Input</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-common-btn" data-insert="[customDropdown:Label]">Dropdown</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-common-btn" data-insert="[customDropdown:Label:option1,option2]">Dropdown w/Options</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-common-btn" data-insert="[+]">Incremental Block</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm insert-common-btn" data-insert="\\n">Line Break</button>
+                </div>
+              </div>
+              <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="commonSentenceIncremental">
+                <label class="form-check-label" for="commonSentenceIncremental">Make incremental (can add multiple instances)</label>
+              </div>
+              <div class="form-check mb-3" id="commonIncrementalNewlineOption" style="display: none;">
+                <input type="checkbox" class="form-check-input" id="commonSentenceIncrementalNewline">
+                <label class="form-check-label" for="commonSentenceIncrementalNewline">Separate instances with newlines (++ instead of +)</label>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="commonTabbedTab" role="tabpanel">
+              <div class="mb-3">
+                <button type="button" class="btn btn-outline-success btn-sm" id="addCommonTabBtn">
+                  <i class="bi bi-plus-lg me-1"></i>Add Tab
+                </button>
+              </div>
+              <div id="commonTabsContainer"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveCommonSentenceBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ==================== STATE ====================
+    let templateData = {
+      localDropdownOptions: {},
+      narrativeSections: [],
+      commonSentences: []
+    };
+    
+    // Reference data from global.json (read-only)
+    let globalReference = {
+      commonSentences: [],
+      globalDropdownOptions: {}
+    };
+
+    let editingIndex = null;
+    let editingSectionIndex = null;
+    let editingDropdownName = null;
+    let editingCommonSentenceIndex = null;
+
+    // Modal instances
+    let sectionModal, sentenceModal, dropdownModal, commonSentenceModal;
+
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Bootstrap modals
+      sectionModal = new bootstrap.Modal(document.getElementById('sectionModal'));
+      sentenceModal = new bootstrap.Modal(document.getElementById('sentenceModal'));
+      dropdownModal = new bootstrap.Modal(document.getElementById('dropdownModal'));
+      commonSentenceModal = new bootstrap.Modal(document.getElementById('commonSentenceModal'));
+
+      initializeDarkMode();
+      initializeEventListeners();
+      renderAll();
+    });
+
+    function initializeDarkMode() {
+      const toggle = document.getElementById('darkModeToggle');
+      const isDark = localStorage.getItem('darkMode') === 'true';
+      if (isDark) {
+        document.documentElement.setAttribute('data-bs-theme', 'dark');
+        toggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+      }
+      toggle.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-bs-theme');
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-bs-theme', newTheme);
+        toggle.innerHTML = newTheme === 'dark' ? '<i class="bi bi-sun-fill"></i>' : '<i class="bi bi-moon-fill"></i>';
+        localStorage.setItem('darkMode', newTheme === 'dark');
+      });
+    }
+
+    function initializeEventListeners() {
+      // Section modal
+      document.getElementById('addSectionBtn').addEventListener('click', () => openSectionModal());
+      document.getElementById('saveSectionBtn').addEventListener('click', saveSection);
+
+      // Sentence modal
+      document.getElementById('saveSentenceBtn').addEventListener('click', saveSentence);
+      document.getElementById('addTabBtn').addEventListener('click', () => addTabToEditor('tabsContainer'));
+      document.getElementById('sentenceIncremental').addEventListener('change', (e) => {
+        document.getElementById('incrementalNewlineOption').style.display = e.target.checked ? 'block' : 'none';
+      });
+      
+      // Real-time validation for sentence text
+      document.getElementById('sentenceText').addEventListener('input', (e) => {
+        validateAndShowErrors(e.target.value, 'sentenceValidation');
+      });
+
+      // Dropdown modal
+      document.getElementById('addLocalDropdownBtn').addEventListener('click', () => openDropdownModal());
+      document.getElementById('saveDropdownBtn').addEventListener('click', saveDropdown);
+      document.getElementById('addDropdownOptionBtn').addEventListener('click', () => addDropdownOption());
+
+      // Common Sentence modal
+      document.getElementById('addCommonSentenceBtn').addEventListener('click', () => openCommonSentenceModal());
+      document.getElementById('saveCommonSentenceBtn').addEventListener('click', saveCommonSentence);
+      document.getElementById('addCommonTabBtn').addEventListener('click', () => addTabToEditor('commonTabsContainer'));
+      document.getElementById('commonSentenceIncremental').addEventListener('change', (e) => {
+        document.getElementById('commonIncrementalNewlineOption').style.display = e.target.checked ? 'block' : 'none';
+      });
+      document.getElementById('commonSentenceText').addEventListener('input', (e) => {
+        validateAndShowErrors(e.target.value, 'commonSentenceValidation');
+      });
+
+      // Insert buttons for sentence modal
+      document.querySelectorAll('.insert-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          insertAtCursor(document.getElementById('sentenceText'), btn.dataset.insert);
+          validateAndShowErrors(document.getElementById('sentenceText').value, 'sentenceValidation');
+        });
+      });
+
+      // Insert buttons for common sentence modal
+      document.querySelectorAll('.insert-common-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          insertAtCursor(document.getElementById('commonSentenceText'), btn.dataset.insert);
+          validateAndShowErrors(document.getElementById('commonSentenceText').value, 'commonSentenceValidation');
+        });
+      });
+
+      // Import/Export
+      document.getElementById('importBtn').addEventListener('click', () => {
+        document.getElementById('importFile').click();
+      });
+      document.getElementById('importFile').addEventListener('change', handleImport);
+      document.getElementById('exportBtn').addEventListener('click', handleExport);
+
+      // Global reference
+      document.getElementById('loadGlobalRefBtn').addEventListener('click', () => {
+        document.getElementById('globalRefFile').click();
+      });
+      document.getElementById('globalRefFile').addEventListener('change', handleGlobalRefImport);
+      document.getElementById('clearGlobalRefBtn').addEventListener('click', clearGlobalReference);
+
+      // Update preview when switching to preview tab
+      document.getElementById('preview-tab').addEventListener('shown.bs.tab', updatePreview);
+    }
+
+    // ==================== VALIDATION ====================
+    function validateSentenceSyntax(text) {
+      const errors = [];
+      const warnings = [];
+      
+      if (!text || text.trim() === '') {
+        return { errors, warnings, isValid: true };
+      }
+      
+      // Remove incremental prefixes for validation
+      let cleanText = text;
+      if (cleanText.startsWith('++')) cleanText = cleanText.substring(2);
+      else if (cleanText.startsWith('+')) cleanText = cleanText.substring(1);
+      
+      // Check for unclosed brackets
+      const openBrackets = (cleanText.match(/\[/g) || []).length;
+      const closeBrackets = (cleanText.match(/\]/g) || []).length;
+      if (openBrackets !== closeBrackets) {
+        errors.push('Unclosed or extra brackets detected');
+      }
+      
+      // Validate placeholder syntax
+      const placeholderRegex = /\[([^\]]+)\]/g;
+      let match;
+      while ((match = placeholderRegex.exec(cleanText)) !== null) {
+        const content = match[1];
+        
+        // Check for valid placeholder types
+        if (content === '+' || content === '+content') {
+          // Valid incremental block
+          continue;
+        }
+        
+        if (!content.includes(':')) {
+          errors.push(`Invalid placeholder: [${content}] - missing type (text, number, or customDropdown)`);
+          continue;
+        }
+        
+        const [type, ...rest] = content.split(':');
+        const validTypes = ['text', 'number', 'customDropdown'];
+        
+        if (!validTypes.includes(type)) {
+          errors.push(`Unknown placeholder type: "${type}" in [${content}]`);
+        }
+        
+        if (type === 'customDropdown') {
+          const label = rest[0];
+          if (!label || label.trim() === '') {
+            errors.push(`Dropdown missing label in [${content}]`);
+          }
+          
+          // Check if dropdown exists in local or global reference
+          if (label && !templateData.localDropdownOptions[label] && !globalReference.globalDropdownOptions[label]) {
+            // Check if it has inline options
+            if (rest.length < 2 || !rest[1]) {
+              warnings.push(`Dropdown "${label}" not found in local or global options`);
+            }
+          }
+        }
+        
+        if ((type === 'text' || type === 'number') && (!rest[0] || rest[0].trim() === '')) {
+          errors.push(`${type} placeholder missing label in [${content}]`);
+        }
+      }
+      
+      return {
+        errors,
+        warnings,
+        isValid: errors.length === 0
+      };
+    }
+
+    // ==================== IMPORT/EXPORT ====================
+    function handleImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          templateData = {
+            localDropdownOptions: data.localDropdownOptions || {},
+            narrativeSections: data.narrativeSections || [],
+            commonSentences: data.commonSentences || []
+          };
+          alert('Template imported successfully!');
+          renderAll();
+        } catch (err) {
+          alert('Error parsing JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function handleGlobalRefImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          globalReference = {
+            commonSentences: data.commonSentences || [],
+            globalDropdownOptions: data.globalDropdownOptions || {}
+          };
+          updateReferencePanel();
+          alert('Global reference loaded! Dropdown names and QuickSentences are now available for validation.');
+        } catch (err) {
+          alert('Error parsing JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function clearGlobalReference() {
+      globalReference = { commonSentences: [], globalDropdownOptions: {} };
+      updateReferencePanel();
+    }
+
+    function updateReferencePanel() {
+      const panel = document.getElementById('referencePanel');
+      const hasData = globalReference.commonSentences.length > 0 || 
+        Object.keys(globalReference.globalDropdownOptions).length > 0;
+      
+      panel.style.display = hasData ? 'block' : 'none';
+      document.getElementById('refDropdownCount').textContent = 
+        Object.keys(globalReference.globalDropdownOptions).length + ' dropdowns';
+      document.getElementById('refSentenceCount').textContent = 
+        globalReference.commonSentences.length + ' sentences';
+    }
+
+    function handleExport() {
+      downloadJson(templateData, 'template.json');
+    }
+
+    function downloadJson(data, filename) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ==================== RENDERING ====================
+    function renderAll() {
+      renderSections();
+      renderCommonSentences();
+      renderLocalDropdowns();
+      updatePreview();
+    }
+
+    function renderSections() {
+      const container = document.getElementById('sectionsContainer');
+      container.innerHTML = '';
+      
+      if (templateData.narrativeSections.length === 0) {
+        container.innerHTML = '<p class="text-muted">No sections defined. Click "Add Section" to create one.</p>';
+        return;
+      }
+
+      templateData.narrativeSections.forEach((section, sectionIndex) => {
+        const card = document.createElement('div');
+        card.className = 'section-card';
+        card.dataset.index = sectionIndex;
+        
+        card.innerHTML = `
+          <div class="section-card-header">
+            <h5>
+              <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
+              <strong>${escapeHtml(section.part)}</strong>${section.subpart ? `<span class="text-muted">${escapeHtml(section.subpart)}</span>` : ''}
+              ${section.tooltip ? `<small class="text-muted ms-2" title="${escapeHtml(section.tooltip)}"><i class="bi bi-info-circle"></i></small>` : ''}
+            </h5>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary" data-action="edit-section" data-index="${sectionIndex}" title="Edit section"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-success" data-action="add-sentence" data-index="${sectionIndex}" title="Add sentence"><i class="bi bi-plus-lg"></i></button>
+              <button class="btn btn-outline-danger" data-action="delete-section" data-index="${sectionIndex}" title="Delete section"><i class="bi bi-trash"></i></button>
+            </div>
+          </div>
+          <div class="sentences-container" data-section="${sectionIndex}">
+            ${renderSentences(section.sentences || [], sectionIndex)}
+          </div>
+        `;
+        
+        container.appendChild(card);
+      });
+
+      // Add event delegation for section buttons
+      container.addEventListener('click', handleSectionAction);
+
+      // Initialize sortable for sections
+      if (typeof Sortable !== 'undefined') {
+        new Sortable(container, {
+          animation: 150,
+          handle: '.section-card-header',
+          onEnd: (evt) => {
+            const item = templateData.narrativeSections.splice(evt.oldIndex, 1)[0];
+            templateData.narrativeSections.splice(evt.newIndex, 0, item);
+            renderSections();
+          }
+        });
+
+        // Initialize sortable for sentences within each section
+        document.querySelectorAll('.sentences-container').forEach(cont => {
+          new Sortable(cont, {
+            animation: 150,
+            handle: '.drag-handle',
+            group: 'sentences',
+            onEnd: (evt) => {
+              const fromSection = parseInt(evt.from.dataset.section);
+              const toSection = parseInt(evt.to.dataset.section);
+              const item = templateData.narrativeSections[fromSection].sentences.splice(evt.oldIndex, 1)[0];
+              templateData.narrativeSections[toSection].sentences.splice(evt.newIndex, 0, item);
+              renderSections();
+            }
+          });
+        });
+      }
+    }
+
+    function handleSectionAction(e) {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      
+      const action = btn.dataset.action;
+      const index = parseInt(btn.dataset.index);
+      const sentenceIndex = btn.dataset.sentenceIndex !== undefined ? parseInt(btn.dataset.sentenceIndex) : null;
+      
+      switch (action) {
+        case 'edit-section':
+          openSectionModal(index);
+          break;
+        case 'add-sentence':
+          openSentenceModal(index);
+          break;
+        case 'delete-section':
+          deleteSection(index);
+          break;
+        case 'edit-sentence':
+          openSentenceModal(index, sentenceIndex);
+          break;
+        case 'delete-sentence':
+          deleteSentence(index, sentenceIndex);
+          break;
+      }
+    }
+
+    function renderSentences(sentences, sectionIndex) {
+      if (!sentences || sentences.length === 0) {
+        return '<p class="text-muted small mb-0">No sentences. Click <i class="bi bi-plus-lg"></i> to add one.</p>';
+      }
+      
+      return sentences.map((sentence, sentenceIndex) => {
+        let badges = '';
+        let content = '';
+        let validationClass = '';
+        let validationHtml = '';
+        
+        if (sentence.QuickSentence) {
+          badges = '<span class="badge text-bg-info me-1">QuickSentence</span>';
+          content = `<div class="sentence-text">${escapeHtml(sentence.QuickSentence)}</div>`;
+          
+          // Check if QuickSentence exists in global reference
+          const exists = globalReference.commonSentences.some(s => 
+            (typeof s === 'object' && s.name === sentence.QuickSentence) || s === sentence.QuickSentence
+          );
+          if (!exists && globalReference.commonSentences.length > 0) {
+            validationClass = 'has-warning';
+            validationHtml = '<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>QuickSentence not found in global reference</div>';
+          }
+        } else if (sentence.tabs) {
+          badges = '<span class="badge bg-primary me-1">Tabbed</span>';
+          content = `<div class="mt-2">${sentence.tabs.map((tab, i) => {
+            const tabValidation = validateSentenceSyntax(tab.text || '');
+            return `
+            <div class="tab-item ${tabValidation.errors.length > 0 ? 'border-danger' : ''}">
+              <strong>${escapeHtml(tab.title || 'Tab ' + (i+1))}:</strong>
+              <div class="sentence-text mt-1">${escapeHtml(tab.text || '')}</div>
+              ${tabValidation.errors.length > 0 ? '<div class="validation-error small"><i class="bi bi-exclamation-circle me-1"></i>Syntax errors detected</div>' : ''}
+            </div>
+          `}).join('')}</div>`;
+        } else {
+          const text = sentence.text || '';
+          const validation = validateSentenceSyntax(text);
+          
+          if (text.startsWith('++')) {
+            badges = '<span class="badge bg-success me-1">++ Incremental</span>';
+          } else if (text.startsWith('+')) {
+            badges = '<span class="badge bg-success me-1">+ Incremental</span>';
+          }
+          
+          if (validation.errors.length > 0) {
+            validationClass = 'has-error';
+            validationHtml = '<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>Syntax errors - click edit to fix</div>';
+          } else if (validation.warnings.length > 0) {
+            validationClass = 'has-warning';
+            validationHtml = '<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>' + escapeHtml(validation.warnings[0]) + '</div>';
+          }
+          
+          content = `<div class="sentence-text">${escapeHtml(text)}</div>${validationHtml}`;
+        }
+        
+        return `
+          <div class="sentence-item ${validationClass}" data-index="${sentenceIndex}">
+            <div class="sentence-item-header">
+              <div class="d-flex align-items-start">
+                <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
+                <div>${badges}</div>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary btn-sm" data-action="edit-sentence" data-index="${sectionIndex}" data-sentence-index="${sentenceIndex}" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger btn-sm" data-action="delete-sentence" data-index="${sectionIndex}" data-sentence-index="${sentenceIndex}" title="Delete"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+            ${content}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCommonSentences() {
+      const container = document.getElementById('commonSentencesContainer');
+      container.innerHTML = '';
+      
+      if (!templateData.commonSentences || templateData.commonSentences.length === 0) {
+        container.innerHTML = '<p class="text-muted">No local common sentences defined. Click "Add Common Sentence" to create one.</p>';
+        return;
+      }
+      
+      templateData.commonSentences.forEach((sentence, index) => {
+        const item = document.createElement('div');
+        item.className = 'common-sentence-item';
+        
+        let badges = '';
+        let content = '';
+        let validationHtml = '';
+        
+        if (typeof sentence === 'string') {
+          const validation = validateSentenceSyntax(sentence);
+          content = `<div class="sentence-text">${escapeHtml(sentence)}</div>`;
+          if (validation.errors.length > 0) {
+            validationHtml = '<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>Syntax errors detected</div>';
+          }
+        } else if (sentence.tabs) {
+          badges = '<span class="badge bg-primary me-1">Tabbed</span>';
+          if (sentence.name) badges = `<span class="badge bg-secondary me-1">${escapeHtml(sentence.name)}</span>` + badges;
+          content = `<div class="mt-2">${sentence.tabs.map((tab, i) => `
+            <div class="tab-item">
+              <strong>${escapeHtml(tab.title || 'Tab ' + (i+1))}:</strong>
+              <div class="sentence-text mt-1">${escapeHtml(tab.text || '')}</div>
+            </div>
+          `).join('')}</div>`;
+        } else {
+          const text = sentence.text || '';
+          const validation = validateSentenceSyntax(text);
+          if (sentence.name) badges = `<span class="badge bg-secondary me-1">${escapeHtml(sentence.name)}</span>`;
+          if (text.startsWith('++')) {
+            badges += '<span class="badge bg-success me-1">++ Incremental</span>';
+          } else if (text.startsWith('+')) {
+            badges += '<span class="badge bg-success me-1">+ Incremental</span>';
+          }
+          content = `<div class="sentence-text">${escapeHtml(text)}</div>`;
+          if (validation.errors.length > 0) {
+            validationHtml = '<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>Syntax errors - click edit to fix</div>';
+          }
+        }
+        
+        item.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start">
+            <div>${badges}</div>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary btn-sm" data-action="edit-common" data-index="${index}"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger btn-sm" data-action="delete-common" data-index="${index}"><i class="bi bi-trash"></i></button>
+            </div>
+          </div>
+          ${content}
+          ${validationHtml}
+        `;
+        
+        container.appendChild(item);
+      });
+
+      // Add event delegation
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const index = parseInt(btn.dataset.index);
+        if (btn.dataset.action === 'edit-common') {
+          openCommonSentenceModal(index);
+        } else if (btn.dataset.action === 'delete-common') {
+          deleteCommonSentence(index);
+        }
+      });
+    }
+
+    function renderLocalDropdowns() {
+      const container = document.getElementById('localDropdownsContainer');
+      container.innerHTML = '';
+      
+      const keys = Object.keys(templateData.localDropdownOptions);
+      if (keys.length === 0) {
+        container.innerHTML = '<p class="text-muted">No local dropdowns defined.</p>';
+        return;
+      }
+      
+      keys.forEach(name => {
+        const options = templateData.localDropdownOptions[name];
+        const item = document.createElement('div');
+        item.className = 'common-sentence-item';
+        
+        const hiddenCount = options.filter(o => o.startsWith('*')).length;
+        
+        item.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <strong>${escapeHtml(name)}</strong>
+              <span class="badge bg-secondary ms-2">${options.length} options</span>
+              ${hiddenCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${hiddenCount} hidden</span>` : ''}
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary btn-sm" data-action="edit-dropdown" data-name="${escapeHtml(name)}"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger btn-sm" data-action="delete-dropdown" data-name="${escapeHtml(name)}"><i class="bi bi-trash"></i></button>
+            </div>
+          </div>
+          <div class="small text-muted">
+            ${options.slice(0, 5).map(o => `<code>${escapeHtml(o)}</code>`).join(', ')}
+            ${options.length > 5 ? `<span class="text-muted">... and ${options.length - 5} more</span>` : ''}
+          </div>
+        `;
+        
+        container.appendChild(item);
+      });
+
+      // Add event delegation
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const name = btn.dataset.name;
+        if (btn.dataset.action === 'edit-dropdown') {
+          openDropdownModal(name);
+        } else if (btn.dataset.action === 'delete-dropdown') {
+          deleteDropdown(name);
+        }
+      });
+    }
+
+    function updatePreview() {
+      document.getElementById('templateJsonPreview').textContent = JSON.stringify(templateData, null, 2);
+    }
+
+    // ==================== SECTION OPERATIONS ====================
+    function openSectionModal(index = null) {
+      editingIndex = index;
+      
+      document.getElementById('sectionModalTitle').textContent = index !== null ? 'Edit Section' : 'Add Section';
+      
+      if (index !== null) {
+        const section = templateData.narrativeSections[index];
+        document.getElementById('sectionPart').value = section.part || '';
+        document.getElementById('sectionSubpart').value = section.subpart || '';
+        document.getElementById('sectionTooltip').value = section.tooltip || '';
+        document.getElementById('sectionIncludeTitle').checked = section.includeTitle !== false;
+      } else {
+        document.getElementById('sectionPart').value = '';
+        document.getElementById('sectionSubpart').value = '';
+        document.getElementById('sectionTooltip').value = '';
+        document.getElementById('sectionIncludeTitle').checked = true;
+      }
+      
+      sectionModal.show();
+    }
+
+    function saveSection() {
+      const part = document.getElementById('sectionPart').value.trim();
+      if (!part) {
+        alert('Part is required');
+        return;
+      }
+      
+      const subpart = document.getElementById('sectionSubpart').value.trim();
+      const tooltip = document.getElementById('sectionTooltip').value.trim();
+      const includeTitle = document.getElementById('sectionIncludeTitle').checked;
+      const sentences = editingIndex !== null ? templateData.narrativeSections[editingIndex].sentences : [];
+      
+      const section = { part, includeTitle, sentences };
+      if (subpart) section.subpart = subpart;
+      if (tooltip) section.tooltip = tooltip;
+      
+      if (editingIndex !== null) {
+        templateData.narrativeSections[editingIndex] = section;
+      } else {
+        templateData.narrativeSections.push(section);
+      }
+      
+      sectionModal.hide();
+      renderSections();
+      updatePreview();
+    }
+
+    function deleteSection(index) {
+      if (confirm('Are you sure you want to delete this section and all its sentences?')) {
+        templateData.narrativeSections.splice(index, 1);
+        renderSections();
+        updatePreview();
+      }
+    }
+
+    // ==================== SENTENCE OPERATIONS ====================
+    function openSentenceModal(sectionIndex, sentenceIndex = null) {
+      editingSectionIndex = sectionIndex;
+      editingIndex = sentenceIndex;
+      
+      document.getElementById('sentenceModalTitle').textContent = sentenceIndex !== null ? 'Edit Sentence' : 'Add Sentence';
+      
+      // Reset form
+      document.getElementById('sentenceText').value = '';
+      document.getElementById('sentenceValidation').innerHTML = '';
+      document.getElementById('sentenceIncremental').checked = false;
+      document.getElementById('sentenceIncrementalNewline').checked = false;
+      document.getElementById('incrementalNewlineOption').style.display = 'none';
+      document.getElementById('quickSentenceName').value = '';
+      document.getElementById('tabsContainer').innerHTML = '';
+      
+      // Show available QuickSentences from global reference
+      updateAvailableQuickSentences();
+      
+      // Switch to simple tab by default
+      const simpleTab = new bootstrap.Tab(document.getElementById('simple-tab'));
+      simpleTab.show();
+      
+      if (sentenceIndex !== null) {
+        const sentence = templateData.narrativeSections[sectionIndex].sentences[sentenceIndex];
+        
+        if (sentence.QuickSentence) {
+          const quickTab = new bootstrap.Tab(document.getElementById('quick-tab'));
+          quickTab.show();
+          document.getElementById('quickSentenceName').value = sentence.QuickSentence;
+        } else if (sentence.tabs) {
+          const tabbedTab = new bootstrap.Tab(document.getElementById('tabbed-tab'));
+          tabbedTab.show();
+          sentence.tabs.forEach(tab => addTabToEditor('tabsContainer', tab.title, tab.text));
+        } else {
+          let text = sentence.text || '';
+          if (text.startsWith('++')) {
+            document.getElementById('sentenceIncremental').checked = true;
+            document.getElementById('sentenceIncrementalNewline').checked = true;
+            document.getElementById('incrementalNewlineOption').style.display = 'block';
+            text = text.substring(2);
+          } else if (text.startsWith('+')) {
+            document.getElementById('sentenceIncremental').checked = true;
+            document.getElementById('incrementalNewlineOption').style.display = 'block';
+            text = text.substring(1);
+          }
+          document.getElementById('sentenceText').value = text;
+          validateAndShowErrors(text, 'sentenceValidation');
+        }
+      }
+      
+      sentenceModal.show();
+    }
+
+    function updateAvailableQuickSentences() {
+      const container = document.getElementById('availableQuickSentences');
+      
+      // Get names from both local and global common sentences
+      const localNames = (templateData.commonSentences || [])
+        .filter(s => typeof s === 'object' && s.name)
+        .map(s => s.name);
+      
+      const globalNames = globalReference.commonSentences
+        .filter(s => typeof s === 'object' && s.name)
+        .map(s => s.name);
+      
+      let html = '';
+      
+      if (localNames.length > 0) {
+        html += `
+          <label class="form-label small">Available in this template:</label>
+          <div class="d-flex flex-wrap gap-1 mb-2">
+            ${localNames.map(n => `<button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('quickSentenceName').value='${escapeHtml(n)}'">${escapeHtml(n)}</button>`).join('')}
+          </div>
+        `;
+      }
+      
+      if (globalNames.length > 0) {
+        html += `
+          <label class="form-label small">Available in global.json:</label>
+          <div class="d-flex flex-wrap gap-1">
+            ${globalNames.map(n => `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('quickSentenceName').value='${escapeHtml(n)}'">${escapeHtml(n)}</button>`).join('')}
+          </div>
+        `;
+      }
+      
+      if (localNames.length === 0 && globalNames.length === 0) {
+        html = '<p class="text-muted small">No named common sentences available. Add one in the "Common Sentences" tab or load a global.json reference.</p>';
+      }
+      
+      container.innerHTML = html;
+    }
+
+    function saveSentence() {
+      const activeTab = document.querySelector('#sentenceTypeTabs .nav-link.active');
+      const activeTabId = activeTab ? activeTab.getAttribute('data-bs-target') : '#simpleTab';
+      let sentence = {};
+      
+      if (activeTabId === '#simpleTab') {
+        let text = document.getElementById('sentenceText').value.trim();
+        if (!text) {
+          alert('Sentence text is required');
+          return;
+        }
+        
+        // Validate before saving
+        const validation = validateSentenceSyntax(text);
+        if (validation.errors.length > 0) {
+          if (!confirm('This sentence has syntax errors. Save anyway?')) {
+            return;
+          }
+        }
+        
+        if (document.getElementById('sentenceIncremental').checked) {
+          text = (document.getElementById('sentenceIncrementalNewline').checked ? '++' : '+') + text;
+        }
+        sentence = { text };
+      } else if (activeTabId === '#tabbedTab') {
+        const tabs = [];
+        document.querySelectorAll('#tabsContainer .tab-editor-item').forEach(item => {
+          const title = item.querySelector('.tab-title').value.trim();
+          const text = item.querySelector('.tab-text').value.trim();
+          if (title || text) {
+            tabs.push({ title, text });
+          }
+        });
+        if (tabs.length === 0) {
+          alert('At least one tab is required');
+          return;
+        }
+        sentence = { tabs };
+      } else if (activeTabId === '#quickTab') {
+        const name = document.getElementById('quickSentenceName').value.trim();
+        if (!name) {
+          alert('QuickSentence name is required');
+          return;
+        }
+        sentence = { QuickSentence: name };
+      }
+      
+      if (!templateData.narrativeSections[editingSectionIndex].sentences) {
+        templateData.narrativeSections[editingSectionIndex].sentences = [];
+      }
+      
+      if (editingIndex !== null) {
+        templateData.narrativeSections[editingSectionIndex].sentences[editingIndex] = sentence;
+      } else {
+        templateData.narrativeSections[editingSectionIndex].sentences.push(sentence);
+      }
+      
+      sentenceModal.hide();
+      renderSections();
+      updatePreview();
+    }
+
+    function deleteSentence(sectionIndex, sentenceIndex) {
+      if (confirm('Are you sure you want to delete this sentence?')) {
+        templateData.narrativeSections[sectionIndex].sentences.splice(sentenceIndex, 1);
+        renderSections();
+        updatePreview();
+      }
+    }
+
+    // ==================== COMMON SENTENCE OPERATIONS ====================
+    function openCommonSentenceModal(index = null) {
+      editingCommonSentenceIndex = index;
+      
+      document.getElementById('commonSentenceModalTitle').textContent = index !== null ? 'Edit Common Sentence' : 'Add Common Sentence';
+      
+      // Reset form
+      document.getElementById('commonSentenceName').value = '';
+      document.getElementById('commonSentenceText').value = '';
+      document.getElementById('commonSentenceValidation').innerHTML = '';
+      document.getElementById('commonSentenceIncremental').checked = false;
+      document.getElementById('commonSentenceIncrementalNewline').checked = false;
+      document.getElementById('commonIncrementalNewlineOption').style.display = 'none';
+      document.getElementById('commonTabsContainer').innerHTML = '';
+      
+      // Switch to simple tab by default
+      const simpleTab = new bootstrap.Tab(document.getElementById('common-simple-tab'));
+      simpleTab.show();
+      
+      if (index !== null) {
+        const sentence = templateData.commonSentences[index];
+        
+        if (typeof sentence === 'string') {
+          document.getElementById('commonSentenceText').value = sentence;
+          validateAndShowErrors(sentence, 'commonSentenceValidation');
+        } else {
+          document.getElementById('commonSentenceName').value = sentence.name || '';
+          
+          if (sentence.tabs) {
+            const tabbedTab = new bootstrap.Tab(document.getElementById('common-tabbed-tab'));
+            tabbedTab.show();
+            sentence.tabs.forEach(tab => addTabToEditor('commonTabsContainer', tab.title, tab.text));
+          } else {
+            let text = sentence.text || '';
+            if (text.startsWith('++')) {
+              document.getElementById('commonSentenceIncremental').checked = true;
+              document.getElementById('commonSentenceIncrementalNewline').checked = true;
+              document.getElementById('commonIncrementalNewlineOption').style.display = 'block';
+              text = text.substring(2);
+            } else if (text.startsWith('+')) {
+              document.getElementById('commonSentenceIncremental').checked = true;
+              document.getElementById('commonIncrementalNewlineOption').style.display = 'block';
+              text = text.substring(1);
+            }
+            document.getElementById('commonSentenceText').value = text;
+            validateAndShowErrors(text, 'commonSentenceValidation');
+          }
+        }
+      }
+      
+      commonSentenceModal.show();
+    }
+
+    function saveCommonSentence() {
+      const name = document.getElementById('commonSentenceName').value.trim();
+      const activeTab = document.querySelector('#commonSentenceTypeTabs .nav-link.active');
+      const activeTabId = activeTab ? activeTab.getAttribute('data-bs-target') : '#commonSimpleTab';
+      let sentence;
+      
+      if (activeTabId === '#commonSimpleTab') {
+        let text = document.getElementById('commonSentenceText').value.trim();
+        if (!text) {
+          alert('Sentence text is required');
+          return;
+        }
+        
+        // Validate before saving
+        const validation = validateSentenceSyntax(text);
+        if (validation.errors.length > 0) {
+          if (!confirm('This sentence has syntax errors. Save anyway?')) {
+            return;
+          }
+        }
+        
+        if (document.getElementById('commonSentenceIncremental').checked) {
+          text = (document.getElementById('commonSentenceIncrementalNewline').checked ? '++' : '+') + text;
+        }
+        sentence = name ? { name, text } : { text };
+      } else {
+        const tabs = [];
+        document.querySelectorAll('#commonTabsContainer .tab-editor-item').forEach(item => {
+          const title = item.querySelector('.tab-title').value.trim();
+          const text = item.querySelector('.tab-text').value.trim();
+          if (title || text) {
+            tabs.push({ title, text });
+          }
+        });
+        if (tabs.length === 0) {
+          alert('At least one tab is required');
+          return;
+        }
+        sentence = name ? { name, tabs } : { tabs };
+      }
+      
+      if (editingCommonSentenceIndex !== null) {
+        templateData.commonSentences[editingCommonSentenceIndex] = sentence;
+      } else {
+        templateData.commonSentences.push(sentence);
+      }
+      
+      commonSentenceModal.hide();
+      renderCommonSentences();
+      updatePreview();
+    }
+
+    function deleteCommonSentence(index) {
+      if (confirm('Are you sure you want to delete this common sentence?')) {
+        templateData.commonSentences.splice(index, 1);
+        renderCommonSentences();
+        updatePreview();
+      }
+    }
+
+    // ==================== DROPDOWN OPERATIONS ====================
+    function openDropdownModal(name = null) {
+      editingDropdownName = name;
+      
+      document.getElementById('dropdownModalTitle').textContent = name ? 'Edit Dropdown' : 'Add Dropdown';
+      
+      document.getElementById('dropdownName').value = name || '';
+      document.getElementById('dropdownName').disabled = !!name;
+      document.getElementById('dropdownOptionsContainer').innerHTML = '';
+      
+      if (name) {
+        const options = templateData.localDropdownOptions[name];
+        if (options) {
+          options.forEach(opt => addDropdownOption(opt));
+        }
+      } else {
+        addDropdownOption();
+      }
+      
+      dropdownModal.show();
+    }
+
+    function addDropdownOption(value = '') {
+      const container = document.getElementById('dropdownOptionsContainer');
+      const item = document.createElement('div');
+      item.className = 'dropdown-option-item';
+      item.innerHTML = `
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input option-hidden" ${value.startsWith('*') ? 'checked' : ''} title="Hidden by default">
+        </div>
+        <input type="text" class="form-control form-control-sm option-value" value="${escapeHtml(value.replace(/^\*/, ''))}" placeholder="Option value">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-action="remove-option"><i class="bi bi-trash"></i></button>
+      `;
+      
+      item.querySelector('[data-action="remove-option"]').addEventListener('click', () => item.remove());
+      container.appendChild(item);
+    }
+
+    function saveDropdown() {
+      const name = document.getElementById('dropdownName').value.trim();
+      if (!name) {
+        alert('Dropdown name is required');
+        return;
+      }
+      
+      const options = [];
+      document.querySelectorAll('#dropdownOptionsContainer .dropdown-option-item').forEach(item => {
+        const value = item.querySelector('.option-value').value.trim();
+        const hidden = item.querySelector('.option-hidden').checked;
+        if (value) {
+          options.push(hidden ? '*' + value : value);
+        }
+      });
+      
+      if (options.length === 0) {
+        alert('At least one option is required');
+        return;
+      }
+      
+      if (editingDropdownName && editingDropdownName !== name) {
+        delete templateData.localDropdownOptions[editingDropdownName];
+      }
+      templateData.localDropdownOptions[name] = options;
+      
+      dropdownModal.hide();
+      renderLocalDropdowns();
+      updatePreview();
+    }
+
+    function deleteDropdown(name) {
+      if (confirm(`Are you sure you want to delete the "${name}" dropdown?`)) {
+        delete templateData.localDropdownOptions[name];
+        renderLocalDropdowns();
+        updatePreview();
+      }
+    }
+
+    // ==================== TAB EDITOR HELPERS ====================
+    function addTabToEditor(containerId, title = '', text = '') {
+      const container = document.getElementById(containerId);
+      const item = document.createElement('div');
+      item.className = 'tab-editor-item';
+      item.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <input type="text" class="form-control form-control-sm tab-title" placeholder="Tab title" value="${escapeHtml(title)}" style="max-width: 200px;">
+          <button type="button" class="btn btn-outline-danger btn-sm" data-action="remove-tab"><i class="bi bi-trash"></i></button>
+        </div>
+        <textarea class="form-control form-control-sm tab-text" rows="3" placeholder="Tab content with placeholders...">${escapeHtml(text)}</textarea>
+        <div class="tab-validation"></div>
+        <div class="mt-2">
+          <small class="text-muted">Insert:</small>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[text:Label]">Text</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[number:Label]">Number</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[customDropdown:Label]">Dropdown</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[customDropdown:Label:opt1,opt2]">Dropdown w/Opts</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="[+]">Incremental</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm insert-tab-btn" data-insert="\\n">Line Break</button>
+        </div>
+      `;
+      
+      item.querySelector('[data-action="remove-tab"]').addEventListener('click', () => item.remove());
+      
+      const textarea = item.querySelector('.tab-text');
+      const validationDiv = item.querySelector('.tab-validation');
+      
+      // Add validation on input
+      textarea.addEventListener('input', () => {
+        validateAndShowErrors(textarea.value, validationDiv);
+      });
+      
+      item.querySelectorAll('.insert-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          insertAtCursor(textarea, btn.dataset.insert);
+          validateAndShowErrors(textarea.value, validationDiv);
+        });
+      });
+      
+      container.appendChild(item);
+      
+      // Initial validation if there's text
+      if (text) {
+        validateAndShowErrors(text, validationDiv);
+      }
+    }
+
+    // Modified to accept element or ID
+    function validateAndShowErrors(text, containerOrId) {
+      const container = typeof containerOrId === 'string' 
+        ? document.getElementById(containerOrId) 
+        : containerOrId;
+      
+      const { errors, warnings } = validateSentenceSyntax(text);
+      
+      let html = '';
+      errors.forEach(err => {
+        html += `<div class="validation-error"><i class="bi bi-exclamation-circle me-1"></i>${escapeHtml(err)}</div>`;
+      });
+      warnings.forEach(warn => {
+        html += `<div class="validation-warning"><i class="bi bi-exclamation-triangle me-1"></i>${escapeHtml(warn)}</div>`;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    // ==================== UTILITY FUNCTIONS ====================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function insertAtCursor(textarea, text) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const before = textarea.value.substring(0, start);
+      const after = textarea.value.substring(end);
+      textarea.value = before + text + after;
+      textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      textarea.focus();
+    }
+  </script>
+</body>
+</html>
