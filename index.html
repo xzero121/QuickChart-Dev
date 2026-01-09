@@ -13,8 +13,6 @@
      crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
-  <script src="https://sql.js.org/dist/sql-wasm.js"></script>
-  <script src="db.js"></script>
   <script src="tools/calcs.js"></script>
 </head>
 
@@ -40,14 +38,14 @@
       </div>
       <div class="header-right">
         <div class="header-controls-row">
-          <div class="input-group" id="templateInputGroup">
+          <div class="input-group" id="jsonFileInputGroup">
             <input type="text" id="jsonFileInput" class="form-control form-control-sm"
-              placeholder="Template Name (e.g., default)" value="default"
-              title="Enter template name (e.g., default, floyd) and click Load">
+              placeholder="Config Name (e.g., default)" value="default"
+              title="Enter configuration name (e.g., default, trauma) and click Load">
             <button id="loadJsonBtn" class="btn btn-primary btn-sm">Load</button>
           </div>
           <button id="newRunBtn" class="btn btn-warning btn-sm"
-            title="Clear the current narrative and start over with the loaded template's defaults">New Run</button>
+            title="Clear the current narrative and start over with the loaded configuration's defaults">New Run</button>
         </div>
         <div class="toggle-newrun-row">
           <div class="form-check form-switch" id="sectionTitlesToggle" title="Toggle inclusion of section titles in the final narrative">
@@ -273,70 +271,31 @@
     }
 
     async function loadConfiguration(configName, isInitialLoad = false) {
-      if (DEBUG) console.log(`Attempting to load configuration: ${configName}`);
-      
+      const filename = `${configName.toLowerCase()}.json`;
+
+      if (DEBUG) console.log(`Attempting to load configuration: ${filename}`);
       try {
-        // Initialize the database
-        await QuickChartDB.initDatabase();
-        
+        // First, load the global configuration
         let globalData = { commonSentences: [], globalDropdownOptions: {} };
-        let templateData = null;
-        
-        // Check if we have data in SQLite
-        const hasDbData = QuickChartDB.hasTemplates() && QuickChartDB.hasGlobalConfig();
-        
-        if (hasDbData) {
-          // Load from SQLite
-          if (DEBUG) console.log("Loading configuration from SQLite database");
-          
-          globalData = QuickChartDB.loadGlobalConfig();
-          templateData = QuickChartDB.loadTemplate(configName.toLowerCase());
-          
-          if (!templateData) {
-            // Template not found in DB, try to load from JSON and import
-            if (DEBUG) console.log(`Template '${configName}' not in database, attempting JSON import`);
-            templateData = await loadAndImportFromJSON(configName.toLowerCase());
+        try {
+          const globalResponse = await fetch('global.json', { cache: 'no-store' });
+          if (globalResponse.ok) {
+            globalData = await globalResponse.json();
+            if (DEBUG) console.log("Global configuration loaded.");
+          } else {
+            console.warn("Global configuration not found, using empty defaults.");
           }
-        } else {
-          // No data in SQLite, migrate from JSON files
-          if (DEBUG) console.log("No data in SQLite, migrating from JSON files");
-          
-          // Load and import global config
-          try {
-            const globalResponse = await fetch('global.json', { cache: 'no-store' });
-            if (globalResponse.ok) {
-              const jsonGlobalData = await globalResponse.json();
-              await QuickChartDB.importGlobalConfig(jsonGlobalData);
-              globalData = QuickChartDB.loadGlobalConfig();
-              if (DEBUG) console.log("Global configuration migrated to SQLite");
-            }
-          } catch (globalError) {
-            console.warn("Failed to load global configuration from JSON:", globalError);
-          }
-          
-          // Load and import default templates
-          const defaultTemplates = ['default', 'floyd'];
-          for (const templateName of defaultTemplates) {
-            try {
-              const response = await fetch(`${templateName}.json`, { cache: 'no-store' });
-              if (response.ok) {
-                const jsonData = await response.json();
-                await QuickChartDB.importTemplate(templateName, jsonData, 'public');
-                if (DEBUG) console.log(`Template '${templateName}' migrated to SQLite`);
-              }
-            } catch (e) {
-              console.warn(`Failed to migrate template '${templateName}':`, e);
-            }
-          }
-          
-          // Now load the requested template from SQLite
-          templateData = QuickChartDB.loadTemplate(configName.toLowerCase());
-          
-          if (!templateData) {
-            throw new Error(`Configuration '${configName}' not found after migration`);
-          }
+        } catch (globalError) {
+          console.warn("Failed to load global configuration:", globalError);
         }
-        
+
+        // Then load the template-specific configuration
+        const response = await fetch(filename, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`Configuration file '${filename}' not found or could not be loaded (Status: ${response.status})`);
+        }
+        const data = await response.json();
+
         // Save the loaded config name to localStorage
         if (!isInitialLoad) {
           try {
@@ -349,15 +308,15 @@
         // Merge global and local configurations
         // Global commonSentences come first, then local ones are added
         const globalSentences = globalData.commonSentences || [];
-        const localSentences = templateData.commonSentences || [];
+        const localSentences = data.commonSentences || [];
         rawCommonSentences = [...globalSentences, ...localSentences];
 
         // Merge dropdown options: local options override global options for the same key
         const globalOptions = globalData.globalDropdownOptions || {};
-        const localOptions = templateData.localDropdownOptions || templateData.globalDropdownOptions || {};
+        const localOptions = data.localDropdownOptions || data.globalDropdownOptions || {};
         globalDropdownOptions = { ...globalOptions, ...localOptions };
 
-        defaultNarrativeSections = templateData.narrativeSections || [];
+        defaultNarrativeSections = data.narrativeSections || [];
 
         // Assign stable IDs on defaultNarrativeSections so locks persist across resets
         assignInitialIDs(defaultNarrativeSections);
@@ -422,27 +381,13 @@
         if (!isInitialLoad) {
           showConfirmationModal("Load Successful", `Configuration '${configName}' loaded successfully.`, "", () => { }, () => { }, true);
         }
-        if (DEBUG) console.log(`Configuration '${configName}' loaded from SQLite.`);
+        if (DEBUG) console.log(`Configuration '${configName}' loaded.`);
       } catch (error) {
-        console.error(`Failed to load configuration '${configName}':`, error);
-        showConfirmationModal("Load Error", `Could not load configuration '${configName}'. Please check the name and ensure it exists. <br><small>(${error.message})</small>`, "", () => { }, () => { }, true);
+        console.error(`Failed to load or parse configuration '${filename}':`, error);
+        showConfirmationModal("Load Error", `Could not load configuration '${configName}'. Please check the name and ensure the file exists. <br><small>(${error.message})</small>`, "", () => { }, () => { }, true);
         document.getElementById('jsonFileInput').value = currentConfigName;
         throw error;
       }
-    }
-    
-    /**
-     * Helper function to load template from JSON and import to SQLite
-     */
-    async function loadAndImportFromJSON(templateName) {
-      const filename = `${templateName}.json`;
-      const response = await fetch(filename, { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error(`Configuration file '${filename}' not found (Status: ${response.status})`);
-      }
-      const jsonData = await response.json();
-      await QuickChartDB.importTemplate(templateName, jsonData, 'public');
-      return QuickChartDB.loadTemplate(templateName);
     }
 
     // --- State Management ---
