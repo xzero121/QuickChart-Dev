@@ -130,9 +130,48 @@ function calculateOxygenDuration(tankSize, CurrentPSI, FlowRateLPM) {
   const tankConstant = {"D": 0.16, "E": 0.28, "M": 1.56, "H": 3.14};
 
   const duration = (CurrentPSI * tankConstant[tankSize]) / FlowRateLPM;
-  return duration;
+  const safeDuration = (CurrentPSI-200) * tankConstant[tankSize] / FlowRateLPM;
+  return { duration, safeDuration };
 }
 
+function calculateOxygenDurationVent(tankSize, CurrentPSI, FiO2, TidalVolume, RespirationRate) {
+  const tankConstant = {"D": 0.16, "E": 0.28, "M": 1.56, "H": 3.14};
+
+  // 1. Clean up FiO2 input
+  let decimalFiO2 = typeof FiO2 === "string" && FiO2.endsWith("%") 
+    ? Number(FiO2.slice(0, -1)) / 100 
+    : Number(FiO2) / 100;
+
+  // 2. Calculate Minute Volume (L/min)
+  const minuteVolume = (TidalVolume * RespirationRate) / 1000;
+
+  // 3. ZOLL SPECIFIC: The Base Consumption (Bias Flow + PEEP maintenance)
+  // For Z Vent, use 3.0 for "Exact" or 5.0 for "Safety Margin"
+  const baseFlow = 5.0; 
+
+  // 4. Mixing Formula: How much tank O2 is needed to reach target FiO2?
+  // We use 0.79 because we are only adding O2 to the 79% of air that is Nitrogen.
+  let mixingFactor = (decimalFiO2 - 0.21) / 0.79;
+  
+  // Guard against FiO2 of 21% (which would result in 0 flow from tank)
+  if (mixingFactor < 0) mixingFactor = 0;
+
+  // 5. Total Oxygen Consumption
+  const totalFlowLPM = (minuteVolume * mixingFactor) + baseFlow;
+
+  // 6. Tank Math
+  const totalLiters = CurrentPSI * tankConstant[tankSize];
+  const duration = totalLiters / totalFlowLPM;
+  
+  // Clinical Safety: Most protocols require switching at 500 PSI
+  const safeLiters = (CurrentPSI - 500) * tankConstant[tankSize];
+  const safeDuration = safeLiters / totalFlowLPM;
+
+  return { 
+    duration: Math.floor(duration), 
+    safeDuration: Math.floor(safeDuration) 
+  };
+}
 
 
 

@@ -167,7 +167,7 @@
         {
           "text": "Primary assessment findings, documented in the assessment section, revealed [text:Assessment Status]."
         },
-        { "QuickSentence": "IV Access" },
+        { "QuickSentence": "PTA IV Access" },
         { "QuickSentence": "Ventilator" },
         { "QuickSentence": "Skin Assessment" },
         { "QuickSentence": "Lung Assessment" },
@@ -189,12 +189,12 @@
         {
           "text": "The patient's vital signs, along with any performed interventions, are detailed in the flowchart section."
         },
-        { "QuickSentence": "Facility Meds" },
-        { "QuickSentence": "Meds Administered" },
+        { "QuickSentence": "Transported Medications" },
+        { "QuickSentence": "Medications Administered" },
         { "QuickSentence": "GCS" },
         { "QuickSentence": "Ventilator" },
         { "QuickSentence": "O2 Therapy" },
-        { "QuickSentence": "IV Access" },
+        { "QuickSentence": "IV Placement" },
         { "QuickSentence": "Cardiac Monitor" },
         {
           "tabs": [

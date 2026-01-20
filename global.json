@@ -1,19 +1,15 @@
 {
   "commonSentences": [
     {
-      "name": "IV Access",
+      "name": "PTA IV Access",
       "tabs": [
         {
           "title": "IV Monitoring",
-          "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] prior to EMS arrival."
+          "text": "++The patient had a [+[customDropdown:IV Type:Saline Locked] [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] prior to EMS arrival, which remained in place during transport."
         },
         {
           "title": "Central Line Monitoring",
-          "text": "The patient had a [customDropdown:Central Line:PICC, Midline, Central Line, Femoral Line, Port] placed in the [customDropdown:IV Location:left arm,right arm] prior to EMS arrival."
-        },
-        {
-          "title": "IV Placement",
-          "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] at [text:Time] by [customDropdown:Provider]."
+          "text": "The patient had a [customDropdown:IV Type:Saline Locked, Heprin Locked] [customDropdown:Central Line:PICC, Midline, Central Line, Femoral Line, Accessed Port] placed in the [customDropdown:IV Location:left arm,right arm] prior to EMS arrival, which remained in place during transport."
         }
       ]
     },
@@ -47,11 +43,11 @@
       "text": "The patient was on a cardiac monitor for the duration of transport, with the following findings: [text:Cardiac Monitor Findings]."
     },
     {
-      "name": "Facility Meds",
+      "name": "Transported Medications",
       "text": "+The patient was transported with the following IV medications from the sending facility: [+\\n[customDropdown:Medication] at [text:Rate]]."
     },
     {
-      "name": "Meds Administered",
+      "name": "Medications Administered",
       "text": "+During transport, the patient was administered the following medications: [+\\n[text:Dosage] of [customDropdown:EMS Medication] via [text:Route] at [text:Time]] \\nby [customDropdown:Provider] due to [text:Reason for Medication]. The patient [customDropdown:Medication Response:responded well,had no response,had an adverse reaction] to the medications."
     },
     {
@@ -77,6 +73,10 @@
     {
       "name": "PTA Contact",
       "text": "Facility staff was notified prior to EMS arrival by phone, EMS staff spoke with [text:Facility Staff] and advised them of ETA."
+    },
+    {
+      "name": "IV Placement",
+      "text": "++The patient had a [+[customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand]] at [text:Time] by [customDropdown:Provider]."
     },
     {
       "name": "ET Tube",
