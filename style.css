@@ -908,10 +908,14 @@ html,
       padding: 10px 12px;
       cursor: pointer;
       display: grid;
-      grid-template-columns: 50px 1fr 50px;
+      grid-template-columns: 1fr auto;
       align-items: center;
       color: #212529;
       background: #fff;
+    }
+
+    .tool-modal-content .o2-warn {
+      color: #dc3545 !important;
     }
 
     .tool-modal-content .dropdownItem > span:first-child {
@@ -938,6 +942,37 @@ html,
     .tool-modal-content .fio2Hint {
       font-weight: 500;
       white-space: nowrap;
+    }
+
+    .tool-modal-content .row
+    {
+      --bs-gutter-x: 0;
+    }
+
+    .tool-modal-content .modeContainer {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 10px;
+    }
+    .tool-modal-content .tankSizeWrapper {
+      flex: 0 0 60%;
+    }
+    .tool-modal-content .modeToggleWrapper {
+      flex: 0 0 40%;
+    }
+
+    .tool-modal-content .modeToggleWrapper label {
+      visibility: hidden;
+      height: 0;
+      margin: 0;
+    }
+    .tool-modal-content .ventilatorRow {
+      display: none;
+      gap: 10px;
+    }
+    .tool-modal-content .ventilatorRow > div {
+      flex: 1;
     }
 
     [data-bs-theme="dark"] .tool-modal-content .card {

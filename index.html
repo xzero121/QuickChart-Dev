@@ -13,7 +13,7 @@
      crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
-  <script src="calcs.js"></script>
+  <script src="tools/calcs.js"></script>
 </head>
 
 <body>
@@ -2251,7 +2251,111 @@
       processDropdownBlur(event.target);
     }
 
-    /** Filters suggestions based on input, handles hidden items, positions and shows dropdown. (NEW/REVISED) */
+    /** 
+     * Smart search scoring for dropdown items.
+     * Returns a score where lower = better match. Returns Infinity if no match.
+     * Supports: exact match, prefix match, contains, multi-word (all terms must match), and fuzzy matching.
+     */
+    function calculateSearchScore(itemText, filterText) {
+      const itemLower = itemText.toLowerCase();
+      const filterLower = filterText.toLowerCase();
+      
+      // Exact match (best)
+      if (itemLower === filterLower) return 0;
+      
+      // Split filter into words for multi-word search
+      const filterWords = filterLower.split(/\s+/).filter(w => w.length > 0);
+      
+      // Single word search
+      if (filterWords.length === 1) {
+        const word = filterWords[0];
+        
+        // Prefix match (starts with) - very good
+        if (itemLower.startsWith(word)) return 1;
+        
+        // Word boundary match (word starts with filter) - good
+        const wordBoundaryRegex = new RegExp(`\\b${escapeRegex(word)}`, 'i');
+        if (wordBoundaryRegex.test(itemText)) return 2;
+        
+        // Contains anywhere - decent
+        if (itemLower.includes(word)) return 3;
+        
+        // Fuzzy match - check if characters appear in order (with gaps allowed)
+        const fuzzyScore = fuzzyMatch(itemLower, word);
+        if (fuzzyScore !== Infinity) return 4 + fuzzyScore * 0.1; // 4.x range for fuzzy
+      } else {
+        // Multi-word search: all words must match (in any order)
+        let allWordsMatch = true;
+        let totalScore = 0;
+        
+        for (const word of filterWords) {
+          if (word.length === 0) continue;
+          
+          // Check if this word matches
+          if (itemLower.includes(word)) {
+            // Bonus for word boundary matches
+            const wordBoundaryRegex = new RegExp(`\\b${escapeRegex(word)}`, 'i');
+            totalScore += wordBoundaryRegex.test(itemText) ? 1 : 2;
+          } else {
+            // Try fuzzy match for this word
+            const fuzzyScore = fuzzyMatch(itemLower, word);
+            if (fuzzyScore !== Infinity) {
+              totalScore += 3 + fuzzyScore * 0.1;
+            } else {
+              allWordsMatch = false;
+              break;
+            }
+          }
+        }
+        
+        if (allWordsMatch) return totalScore / filterWords.length;
+      }
+      
+      return Infinity; // No match
+    }
+    
+    /**
+     * Fuzzy matching: checks if all characters of needle appear in haystack in order.
+     * Returns a score based on how spread out the characters are (lower = better).
+     * Returns Infinity if no match.
+     */
+    function fuzzyMatch(haystack, needle) {
+      if (needle.length === 0) return 0;
+      if (needle.length > haystack.length) return Infinity;
+      
+      let haystackIdx = 0;
+      let needleIdx = 0;
+      let gaps = 0;
+      let lastMatchIdx = -1;
+      
+      while (haystackIdx < haystack.length && needleIdx < needle.length) {
+        if (haystack[haystackIdx] === needle[needleIdx]) {
+          if (lastMatchIdx !== -1) {
+            gaps += haystackIdx - lastMatchIdx - 1;
+          }
+          lastMatchIdx = haystackIdx;
+          needleIdx++;
+        }
+        haystackIdx++;
+      }
+      
+      // All characters found
+      if (needleIdx === needle.length) {
+        // Score based on: gaps between matches and how early matches start
+        return gaps + (haystack.indexOf(needle[0]) * 0.5);
+      }
+      
+      return Infinity;
+    }
+    
+    /**
+     * Escape special regex characters in a string.
+     */
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    /** Filters suggestions based on input using smart search, handles hidden items, positions and shows dropdown. */
     function filterAndShowDropdownSuggestions(inputElement) {
       const dropdownContainer = inputElement.closest('.custom-dropdown');
       const suggestionBox = dropdownContainer?.querySelector(".suggestions");
@@ -2261,29 +2365,40 @@
         return;
       }
 
-      const filterText = inputElement.value.toLowerCase().trim();
+      const filterText = inputElement.value.trim();
       const items = Array.from(suggestionBox.querySelectorAll("li"));
       let hasVisibleItems = false;
 
-      items.forEach(item => {
-        const itemText = item.textContent.toLowerCase();
-        const isHiddenByDefault = item.dataset.hidden === 'true';
-
-        // Determine visibility based on filter text
-        let shouldShow = true;
-        if (filterText) {
-          // If filtering, show if text matches (hidden status doesn't matter)
-          shouldShow = itemText.includes(filterText);
-        } else {
-          // If not filtering (just focused), hide items marked as hidden
-          shouldShow = !isHiddenByDefault;
-        }
-
-        item.style.display = shouldShow ? "" : "none";
-        if (shouldShow) {
+      if (filterText) {
+        // Score and sort items based on search relevance
+        const scoredItems = items.map(item => ({
+          element: item,
+          text: item.textContent,
+          score: calculateSearchScore(item.textContent, filterText)
+        })).filter(item => item.score !== Infinity);
+        
+        // Sort by score (lower = better match)
+        scoredItems.sort((a, b) => a.score - b.score);
+        
+        // Hide all items first
+        items.forEach(item => item.style.display = 'none');
+        
+        // Show and reorder matching items
+        const ul = suggestionBox.querySelector('ul');
+        scoredItems.forEach(item => {
+          item.element.style.display = '';
+          ul.appendChild(item.element); // Move to end to maintain sorted order
           hasVisibleItems = true;
-        }
-      });
+        });
+      } else {
+        // No filter text - show non-hidden items in original order
+        items.forEach(item => {
+          const isHiddenByDefault = item.dataset.hidden === 'true';
+          const shouldShow = !isHiddenByDefault;
+          item.style.display = shouldShow ? '' : 'none';
+          if (shouldShow) hasVisibleItems = true;
+        });
+      }
 
       // Only show the box if there are items to display
       if (hasVisibleItems) {
@@ -2742,7 +2857,7 @@
         showConfirmationModal("Copied to Clipboard",
           "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
           // Fix: Use HTML for disclaimer to properly render the <br> tag
-          "<span>Paste your narrative first,</span><br>",
+          "<span>Paste your narrative first.</span><br>",
           () => {
             if (DEBUG) console.log("Final narrative area cleared after copy and confirmation.");
             // Clear the final text area
@@ -3446,17 +3561,17 @@
       const o2Btn = document.getElementById('o2ToolBtn');
 
       dripBtn?.addEventListener('click', () => {
-        loadToolContent('drip.html', 'Drip Calculator');
+        loadToolContent('tools/drip.html', 'Drip Calculator');
         toolMenu.style.display = 'none';
       });
 
       ibwBtn?.addEventListener('click', () => {
-        loadToolContent('ibw.html', 'IBW Calculator');
+        loadToolContent('tools/ibw.html', 'IBW Calculator');
         toolMenu.style.display = 'none';
       });
 
       o2Btn?.addEventListener('click', () => {
-        loadToolContent('oxygen.html', 'Oxygen Duration Calculator');
+        loadToolContent('tools/oxygen.html', 'Oxygen Duration Calculator');
         toolMenu.style.display = 'none';
       });
 
@@ -3512,7 +3627,7 @@
             if (script.src) {
               // For external scripts, we need to load calcs.js if not already loaded
               if (script.src.includes('calcs.js') && typeof calculateDripRates === 'undefined') {
-                newScript.src = './calcs.js';
+                newScript.src = './tools/calcs.js';
                 modalBody.appendChild(newScript);
               }
             } else {

@@ -23,7 +23,8 @@
       place-items: center;
       user-select: none;
       cursor: pointer;
-    }    .dropdown {
+    }    
+    .dropdown {
       position: absolute;
       left: 0;
       right: 0;
@@ -37,11 +38,12 @@
       border-radius: 12px;
       box-shadow: 0 6px 24px rgba(0,0,0,0.10);
     }
-    .dropdown.open { display: block; }    .dropdownItem {
+    .dropdown.open { display: block; }    
+    .dropdownItem {
       padding: 10px 12px;
       cursor: pointer;
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: 50px 1fr !important;
       align-items: center;
       gap: 12px;
     }
@@ -51,23 +53,46 @@
     .dropdownItem > span:last-child {
       text-align: right;
       white-space: nowrap;
-    }.fio2Hint {
+    }
+    #ventilatorDisclaimer {
+      display: none;
+      background-color: #e9ecef;
+      border-left: 4px solid #6c757d;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #495057;
       font-weight: 500;
-      white-space: nowrap;
-      text-align: center;
-      flex-grow: 1;
+    }
+    #ventilatorDisclaimer.active {
+      display: block;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2 style="margin:0 0 6px; text-align:center;">Oxygen Duration Calculator</h2>    <label for="tankSize">Tank Size</label>
-    <select id="tankSize">
-      <option value="D" selected>Portable - Class D (M-15)</option>
-      <option value="E">Large Portable - Class E (M-22)</option>
-      <option value="M">Main - Class M (M-122)</option>
-      <option value="H">Large Main - Class H (M-250)</option>
-    </select>
+    <div id="ventilatorDisclaimer" style="display: none;" class="text-center">⚠️ Experimental! Use with Caution!</div>
+    <h2 style="margin:0 0 6px; text-align:center;">Oxygen Duration Calculator</h2>
+    
+    <div class="modeContainer">
+      <div class="tankSizeWrapper">
+        <label for="tankSize">Tank Size</label>
+        <select id="tankSize">
+          <option value="D" selected>Portable - Class D (M-15)</option>
+          <option value="E">Large Portable - Class E (M-22)</option>
+          <option value="M">Main - Class M (M-122)</option>
+          <option value="H">Large Main - Class H (M-250)</option>
+        </select>
+      </div>
+      
+      <div class="modeToggleWrapper">
+        <label>&nbsp;</label>
+        <button id="modeToggleBtn" type="button" class="btn btn-outline-secondary" style="width: 100%;">
+          <i class="bi bi-lightning-fill"></i> Ventilator Mode
+        </button>
+      </div>
+    </div>
 
     <div class="row">
       <div>
@@ -80,7 +105,7 @@
         </div>
       </div>
 
-      <div>
+      <div id="flowRateWrapper">
         <label for="flowRateInput">Flow Rate (LPM)</label>
         <div class="comboWrap">
           <input id="flowRateInput" class="comboInput" type="text" placeholder="e.g. 15" autocomplete="off" />
@@ -88,6 +113,22 @@
 
           <div id="flowRateDropdown" class="dropdown"></div>
         </div>
+      </div>
+
+      <div id="fio2Wrapper" style="display: none;">
+        <label for="fio2Input">FiO2 (%)</label>
+        <input id="fio2Input" type="text" placeholder="e.g. 40" autocomplete="off" />
+      </div>
+    </div>
+
+    <div id="ventilatorRow" class="ventilatorRow" style="display: none;">
+      <div>
+        <label for="volumeInput">Tidal Volume (mL)</label>
+        <input id="volumeInput" type="text" placeholder="e.g. 500" autocomplete="off" />
+      </div>
+      <div>
+        <label for="rrInput">Respiration Rate (breaths/min)</label>
+        <input id="rrInput" type="text" placeholder="e.g. 12" autocomplete="off" />
       </div>
     </div>
 
@@ -101,6 +142,7 @@
     const el = (id) => document.getElementById(id);
     const resultBox = el("result");    const PSI_VALUES = Array.from({ length: 25 }, (_, i) => (i + 1) * 100);
     const FLOW_RATE_VALUES = [0.25, 0.5, 0.75, 1, 2, 3, 4, 5, 6, 8, 10, 12.5, 15, 25];
+<<<<<<< HEAD:oxygen.html
     const FIO2_VALUES = {
       0.25: '21%',
       0.5: '22%',
@@ -118,6 +160,8 @@
       25: '100%',
       40: '100%'
     };
+=======
+>>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
 
     const tankSize = el("tankSize");
     const currentPSIInput = el("currentPSIInput");
@@ -127,10 +171,27 @@
     const flowRateInput = el("flowRateInput");
     const flowRateBtn = el("flowRateBtn");
     const flowRateDropdown = el("flowRateDropdown");
+    const flowRateWrapper = el("flowRateWrapper");
+
+    const modeToggleBtn = el("modeToggleBtn");
+    const fio2Wrapper = el("fio2Wrapper");
+    const ventilatorRow = el("ventilatorRow");
+    const ventilatorDisclaimer = el("ventilatorDisclaimer");
+    const volumeInput = el("volumeInput");
+    const rrInput = el("rrInput");
+    const fio2Input = el("fio2Input");
+
+    let isVentilatorMode = false;
 
     function showError(msg) {
       resultBox.innerHTML = `<div class="err"><strong>Error:</strong> ${msg}</div>`;
+<<<<<<< HEAD:oxygen.html
     }    function formatDuration(minutes) {
+=======
+    }
+
+    function showResult(minutes, safeMinutes) {
+>>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
       const hours = Math.floor(minutes / 60);
       const mins = Math.round(minutes % 60);
       if (hours > 0) {
@@ -144,12 +205,27 @@
       const safeStr = formatDuration(result.safe);
       const maxStr = formatDuration(result.max);
 
+      const safeHours = Math.floor(safeMinutes / 60);
+      const safeMins = Math.round(safeMinutes % 60);
+      let timeSafeStr = "";
+      if (safeHours > 0) {
+        timeSafeStr = `${safeHours}h ${safeMins}m`;
+      } else {
+        timeSafeStr = `${safeMins}m`;
+      }
+
       resultBox.innerHTML = `
         <div class="bubbleRow">
           <div class="bubble">
+<<<<<<< HEAD:oxygen.html
             <div class="bubbleTitle">Safe Duration</div>
             <div class="bubbleValue">${safeStr}</div>
             <div class="bubbleSubtitle">Max: ${maxStr}</div>
+=======
+            <div class="bubbleTitle">Duration</div>
+            <div class="bubbleValue${safeMinutes <= 5 ? " o2-warn": ""}">${safeMinutes > 0 ? timeSafeStr : "0m"}</div>
+            <div class="bubbleSubtitle">Max: ${timeStr}</div>
+>>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
           </div>
         </div>`;
     }
@@ -170,7 +246,6 @@
       flowRateDropdown.innerHTML = FLOW_RATE_VALUES.map(v => `
         <div class="dropdownItem" data-value="${v}">
           <span>${v}</span>
-          <span class="itemHint fio2Hint">(FIO2: ${FIO2_VALUES[v]})</span>
           <span class="itemHint">LPM</span>
         </div>
       `).join("");
@@ -200,6 +275,26 @@
       }
     });
 
+    // Mode toggle handler
+    modeToggleBtn.onclick = () => {
+      isVentilatorMode = !isVentilatorMode;
+      
+      // Toggle visibility - swap Flow Rate with FiO2
+      flowRateWrapper.style.display = isVentilatorMode ? "none" : "block";
+      fio2Wrapper.style.display = isVentilatorMode ? "block" : "none";
+      ventilatorRow.style.display = isVentilatorMode ? "flex" : "none";
+      ventilatorDisclaimer.style.display = isVentilatorMode ? "block" : "none";
+      
+      // Toggle button styling
+      if (isVentilatorMode) {
+        modeToggleBtn.classList.add("btn-secondary");
+        modeToggleBtn.classList.remove("btn-outline-secondary");
+      } else {
+        modeToggleBtn.classList.add("btn-outline-secondary");
+        modeToggleBtn.classList.remove("btn-secondary");
+      }
+    };
+
     // Defaults
     currentPSIInput.value = "2000";
     flowRateInput.value = "15";
@@ -209,6 +304,37 @@
     el("calcBtn").onclick = () => {
       resultBox.innerHTML = "";
 
+      let duration, safeDuration;
+
+      // check if vent mode is toggled
+      if (isVentilatorMode) {
+
+        let fio2, volume, rr, tankSizeVal, currentPSI;
+        try {
+          tankSizeVal = tankSize.value.trim().toUpperCase();
+          if (!["D", "E", "M", "H"].includes(tankSizeVal)) {
+            throw new Error("Tank size must be D, E, M, or H.");
+          }
+          fio2 = parseNumber(fio2Input, "FiO2");
+          volume = parseNumber(volumeInput, "Tidal Volume");
+          rr = parseNumber(rrInput, "Respiration Rate");
+          if (fio2 < 21 || fio2 > 100) {
+            throw new Error("FiO2 must be between 21 and 100.");
+          }
+          currentPSI = parseNumber(currentPSIInput, "current PSI");
+        } catch (e) {
+          return showError(e.message);
+        }
+
+      if (typeof calculateOxygenDurationVent !== "function") {
+        return showError("calculateOxygenDurationVent() not found.");
+      }
+
+        ({ duration, safeDuration } = calculateOxygenDurationVent(tankSizeVal, currentPSI, fio2, volume, rr));
+      }
+      else
+      {
+        
       let tankSizeVal, currentPSI, flowRate;
       try {
         tankSizeVal = tankSize.value.trim().toUpperCase();
@@ -223,8 +349,16 @@
 
       if (typeof calculateOxygenDuration !== "function") {
         return showError("calculateOxygenDuration() not found.");
+<<<<<<< HEAD:oxygen.html
       }      const result = calculateOxygenDuration(tankSizeVal, currentPSI, flowRate);
       showResult(result);
+=======
+      }
+
+      ({ duration, safeDuration } = calculateOxygenDuration(tankSizeVal, currentPSI, flowRate));
+      }
+      showResult(duration, safeDuration);
+>>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
     };
   </script>
 </body>

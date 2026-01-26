@@ -84,7 +84,8 @@
       "*Norton Women and Childrens' Hospital",
       "*Norton Children's Hospital",
       "*Norton Pavilion",
-      "*Kindred Hospital"
+      "*Kindred Hospital",
+      "*Maple Manor"
     ]
   },
   "narrativeSections": [
@@ -100,6 +101,7 @@
         {
           "text": "The response was [customDropdown:Response Type]."
         },
+        { "QuickSentence": "PTA Contact" },
         { "QuickSentence": "PTA Medications" },
         { "QuickSentence": "PTA Treatments" },
         {
@@ -165,7 +167,7 @@
         {
           "text": "Primary assessment findings, documented in the assessment section, revealed [text:Assessment Status]."
         },
-        { "QuickSentence": "IV Access" },
+        { "QuickSentence": "PTA IV Access" },
         { "QuickSentence": "Ventilator" },
         { "QuickSentence": "Skin Assessment" },
         { "QuickSentence": "Lung Assessment" },
@@ -187,12 +189,12 @@
         {
           "text": "The patient's vital signs, along with any performed interventions, are detailed in the flowchart section."
         },
-        { "QuickSentence": "Facility Meds" },
-        { "QuickSentence": "Meds Administered" },
+        { "QuickSentence": "Transported Medications" },
+        { "QuickSentence": "Medications Administered" },
         { "QuickSentence": "GCS" },
         { "QuickSentence": "Ventilator" },
         { "QuickSentence": "O2 Therapy" },
-        { "QuickSentence": "IV Access" },
+        { "QuickSentence": "IV Placement" },
         { "QuickSentence": "Cardiac Monitor" },
         {
           "tabs": [
