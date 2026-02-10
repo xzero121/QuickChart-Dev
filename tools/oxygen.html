@@ -142,26 +142,6 @@
     const el = (id) => document.getElementById(id);
     const resultBox = el("result");    const PSI_VALUES = Array.from({ length: 25 }, (_, i) => (i + 1) * 100);
     const FLOW_RATE_VALUES = [0.25, 0.5, 0.75, 1, 2, 3, 4, 5, 6, 8, 10, 12.5, 15, 25];
-<<<<<<< HEAD:oxygen.html
-    const FIO2_VALUES = {
-      0.25: '21%',
-      0.5: '22%',
-      0.75: '23%',
-      1: '24%',
-      2: '28%',
-      3: '32%',
-      4: '36%',
-      5: '40%',
-      6: '44%',
-      8: '52%',
-      10: '60%',
-      12.5: '70%',
-      15: '80%',
-      25: '100%',
-      40: '100%'
-    };
-=======
->>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
 
     const tankSize = el("tankSize");
     const currentPSIInput = el("currentPSIInput");
@@ -185,13 +165,9 @@
 
     function showError(msg) {
       resultBox.innerHTML = `<div class="err"><strong>Error:</strong> ${msg}</div>`;
-<<<<<<< HEAD:oxygen.html
-    }    function formatDuration(minutes) {
-=======
     }
 
     function showResult(minutes, safeMinutes) {
->>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
       const hours = Math.floor(minutes / 60);
       const mins = Math.round(minutes % 60);
       if (hours > 0) {
@@ -217,15 +193,9 @@
       resultBox.innerHTML = `
         <div class="bubbleRow">
           <div class="bubble">
-<<<<<<< HEAD:oxygen.html
-            <div class="bubbleTitle">Safe Duration</div>
-            <div class="bubbleValue">${safeStr}</div>
-            <div class="bubbleSubtitle">Max: ${maxStr}</div>
-=======
             <div class="bubbleTitle">Duration</div>
             <div class="bubbleValue${safeMinutes <= 5 ? " o2-warn": ""}">${safeMinutes > 0 ? timeSafeStr : "0m"}</div>
             <div class="bubbleSubtitle">Max: ${timeStr}</div>
->>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
           </div>
         </div>`;
     }
@@ -349,16 +319,11 @@
 
       if (typeof calculateOxygenDuration !== "function") {
         return showError("calculateOxygenDuration() not found.");
-<<<<<<< HEAD:oxygen.html
-      }      const result = calculateOxygenDuration(tankSizeVal, currentPSI, flowRate);
-      showResult(result);
-=======
       }
 
       ({ duration, safeDuration } = calculateOxygenDuration(tankSizeVal, currentPSI, flowRate));
       }
       showResult(duration, safeDuration);
->>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/oxygen.html
     };
   </script>
 </body>
