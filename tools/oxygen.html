@@ -167,7 +167,7 @@
       resultBox.innerHTML = `<div class="err"><strong>Error:</strong> ${msg}</div>`;
     }
 
-    function showResult(minutes, safeMinutes) {
+    function formatDuration(minutes) {
       const hours = Math.floor(minutes / 60);
       const mins = Math.round(minutes % 60);
       if (hours > 0) {
@@ -177,24 +177,15 @@
       }
     }
 
-    function showResult(result) {
-      const safeStr = formatDuration(result.safe);
-      const maxStr = formatDuration(result.max);
-
-      const safeHours = Math.floor(safeMinutes / 60);
-      const safeMins = Math.round(safeMinutes % 60);
-      let timeSafeStr = "";
-      if (safeHours > 0) {
-        timeSafeStr = `${safeHours}h ${safeMins}m`;
-      } else {
-        timeSafeStr = `${safeMins}m`;
-      }
+    function showResult(duration, safeDuration) {
+      const timeStr = formatDuration(duration);
+      const timeSafeStr = formatDuration(safeDuration);
 
       resultBox.innerHTML = `
         <div class="bubbleRow">
           <div class="bubble">
             <div class="bubbleTitle">Duration</div>
-            <div class="bubbleValue${safeMinutes <= 5 ? " o2-warn": ""}">${safeMinutes > 0 ? timeSafeStr : "0m"}</div>
+            <div class="bubbleValue${safeDuration <= 5 ? " o2-warn": ""}">${safeDuration > 0 ? timeSafeStr : "0m"}</div>
             <div class="bubbleSubtitle">Max: ${timeStr}</div>
           </div>
         </div>`;
