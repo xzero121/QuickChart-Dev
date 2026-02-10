@@ -151,6 +151,26 @@
     let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
     let activeDropdowns = []; // Track visible dropdown suggestion boxes
 
+    /** Helper: Get the text value of an inline field (contenteditable span) */
+    function getFieldValue(field) {
+      return (field.textContent || '').replace(/\u200B/g, ''); // Strip zero-width spaces
+    }
+    /** Helper: Set the text value of an inline field (contenteditable span) */
+    function setFieldValue(field, value) {
+      field.textContent = value || '';
+      // If empty, ensure truly empty for :empty CSS pseudo-class
+      if (!value) {
+        field.innerHTML = '';
+      }
+    }
+    /** Helper: Normalize a contenteditable field so :empty works when cleared */
+    function normalizeFieldEmpty(field) {
+      const val = getFieldValue(field).trim();
+      if (!val) {
+        field.innerHTML = ''; // Remove any leftover <br>, whitespace, etc.
+      }
+    }
+
     // --- Fuse.js Options ---
     const fuseOptions = {
       keys: ["display", "searchable"],
@@ -214,12 +234,70 @@
       attachInputSizingListeners();
       attachBlurListeners();
       attachDropdownLogic();
+      attachContentEditableHandlers();
     }
 
     function attachAllEventListenersForElement(element) {
       attachInputSizingListenersForElement(element);
       attachBlurListenersForElement(element);
       attachDropdownLogicForElement(element);
+      attachContentEditableHandlersForElement(element);
+    }
+
+    /** Prevents Enter from creating newlines and ensures plain-text paste in contenteditable fields */
+    function attachContentEditableHandlers() {
+      const container = document.getElementById('sectionContainer');
+      if (!container) return;
+      container.removeEventListener('keydown', handleContentEditableKeydownDelegated);
+      container.addEventListener('keydown', handleContentEditableKeydownDelegated);
+      container.removeEventListener('paste', handleContentEditablePasteDelegated);
+      container.addEventListener('paste', handleContentEditablePasteDelegated);
+    }
+    function attachContentEditableHandlersForElement(element) {
+      element.querySelectorAll('.inline-field[contenteditable]').forEach(field => {
+        field.removeEventListener('keydown', handleContentEditableKeydownDirect);
+        field.addEventListener('keydown', handleContentEditableKeydownDirect);
+        field.removeEventListener('paste', handleContentEditablePasteDirect);
+        field.addEventListener('paste', handleContentEditablePasteDirect);
+      });
+    }
+    function handleContentEditableKeydownDelegated(event) {
+      if (event.target.matches('.inline-field[contenteditable]')) {
+        if (event.key === 'Enter') {
+          // For dropdown inputs, only prevent Enter if dropdown is not handling it
+          if (event.target.matches('.custom-dropdown-input')) {
+            const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+            if (suggestionBox && suggestionBox.style.display !== 'none') return; // Let dropdown handler manage it
+          }
+          event.preventDefault();
+          event.target.blur(); // Commit value on Enter
+        }
+      }
+    }
+    function handleContentEditableKeydownDirect(event) {
+      if (event.key === 'Enter') {
+        if (event.target.matches('.custom-dropdown-input')) {
+          const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+          if (suggestionBox && suggestionBox.style.display !== 'none') return;
+        }
+        event.preventDefault();
+        event.target.blur();
+      }
+    }
+    function handleContentEditablePasteDelegated(event) {
+      if (event.target.matches('.inline-field[contenteditable]')) {
+        handlePlainTextPaste(event);
+      }
+    }
+    function handleContentEditablePasteDirect(event) {
+      handlePlainTextPaste(event);
+    }
+    function handlePlainTextPaste(event) {
+      event.preventDefault();
+      const text = (event.clipboardData || window.clipboardData).getData('text/plain');
+      // Insert plain text without line breaks
+      const cleanText = text.replace(/[\r\n]+/g, ' ');
+      document.execCommand('insertText', false, cleanText);
     }
 
 
@@ -1301,7 +1379,7 @@
             }
             fieldsByLabel[label].push({
               field: field,
-              value: field.value,
+              value: getFieldValue(field),
               index: fieldsByLabel[label].length
             });
           });
@@ -1354,7 +1432,7 @@
           }
           fieldsByLabel[label].push({
             field: field,
-            value: field.value,
+            value: getFieldValue(field),
             index: fieldsByLabel[label].length // This gives us the position within this label group
           });
         });
@@ -1788,7 +1866,7 @@
     function handleInlineFieldBlur(event) {
       const field = event.target;
       const label = field.dataset.label;
-      const value = field.value;
+      const value = getFieldValue(field);
       const li = field.closest('li[data-id]');
       if (!li || !label) return;
 
@@ -1865,6 +1943,9 @@
         field.classList.remove('empty-field');
       }
       
+      // Normalize empty contenteditable fields so :empty CSS pseudo-class works for placeholders
+      normalizeFieldEmpty(field);
+      
       if (valueChanged) {
         if (DEBUG) console.log(`Value saved for ${sentenceId} - ${label}: ${value}`);
         saveState();
@@ -1909,7 +1990,7 @@
                   if (!fieldsByLabel[label]) {
                     fieldsByLabel[label] = [];
                   }
-                  fieldsByLabel[label].push(field.value);
+                  fieldsByLabel[label].push(getFieldValue(field));
                 });
                 
                 // Store the values in tabIncrementalValues
@@ -1932,7 +2013,7 @@
                 
                 tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
                   const label = field.dataset.label;
-                  const newValue = field.value;
+                  const newValue = getFieldValue(field);
                   if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
                     sentenceObj.tabValues[tabIndex][label] = newValue;
                     changesMade = true;
@@ -1957,7 +2038,7 @@
                 if (!fieldsByLabel[label]) {
                   fieldsByLabel[label] = [];
                 }
-                fieldsByLabel[label].push(field.value);
+                fieldsByLabel[label].push(getFieldValue(field));
               });
               
               // Store the values in incrementalValues
@@ -1979,7 +2060,7 @@
               li.querySelectorAll(".sentence-content > .inline-field[data-label]").forEach(field => {
                 // Ensure we only get direct children of sentence-content, not those inside tab-panes if any mix-up
                 const label = field.dataset.label;
-                const newValue = field.value;
+                const newValue = getFieldValue(field);
                 if (sentenceObj.values[label] !== newValue) {
                   sentenceObj.values[label] = newValue;
                   changesMade = true;
@@ -2043,19 +2124,19 @@
             }).join("");
             return `
             <div class="custom-dropdown">
-              <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off" autocapitalize="off"/>
+              <span contenteditable="true" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>
               <div class="suggestions">
                 <ul class="list-group">${listItems}</ul>
               </div>
             </div>`;
           case "text":
-            // Keep the original value (with \n) for the input field
-            return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocapitalize="off"/>`;
+            // Keep the original value (with \n) for the field
+            return `<span contenteditable="true" class="inline-field" data-type="text" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocapitalize="off">${currentValue}</span>`;
           case "number":
-            return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocapitalize="off"/>`;
+            return `<span contenteditable="true" class="inline-field" data-type="number" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" inputmode="numeric" autocapitalize="off">${currentValue}</span>`;
           case "dropdown":
             console.warn(`Standard 'dropdown' type encountered for [${label}]. Consider using 'customDropdown' for richer features or ensure specific handling is implemented if needed.`);
-            return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off" autocapitalize="off"/>`;
+            return `<span contenteditable="true" class="inline-field" data-type="dropdown" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>`;
           default:
             console.warn(`Unknown placeholder type: ${type} for label: ${label}`);
             return match;
@@ -2365,7 +2446,7 @@
         return;
       }
 
-      const filterText = inputElement.value.trim();
+      const filterText = getFieldValue(inputElement).trim();
       const items = Array.from(suggestionBox.querySelectorAll("li"));
       let hasVisibleItems = false;
 
@@ -2524,8 +2605,8 @@
     }
 
     function selectDropdownItem(inputElement, selectedLi) {
-      inputElement.value = selectedLi.textContent.trim();
-      inputElement.title = inputElement.value; // Update title attribute
+      setFieldValue(inputElement, selectedLi.textContent.trim());
+      inputElement.title = getFieldValue(inputElement); // Update title attribute
       adjustInputWidth(inputElement); // Adjust width based on new value
       // The blur handler (handleInlineFieldBlur) will save the state.
       // It's triggered by the click handler or after Enter/Tab.
@@ -3126,6 +3207,11 @@
           }
         });
       });
+
+      // Normalize all empty-field elements so :empty CSS pseudo-class works for placeholder display
+      document.querySelectorAll('.inline-field.empty-field').forEach(field => {
+        normalizeFieldEmpty(field);
+      });
     }
 
     /**
@@ -3301,9 +3387,11 @@
       const minWidth = parseFloat(inputStyle.minWidth) || (isCustomDropdown ? 80 : MIN_INLINE_WIDTH);
 
       widthMeasurerSpan.style.font = inputStyle.font;
-      widthMeasurerSpan.textContent = input.placeholder || ' '; // Measure placeholder width
+      const placeholderText = input.dataset.placeholder || ' ';
+      widthMeasurerSpan.textContent = placeholderText; // Measure placeholder width
       const placeholderWidth = widthMeasurerSpan.scrollWidth;
-      widthMeasurerSpan.textContent = input.value || ' '; // Measure value width
+      const fieldValue = getFieldValue(input);
+      widthMeasurerSpan.textContent = fieldValue || ' '; // Measure value width
       const valueWidth = widthMeasurerSpan.scrollWidth;
 
       // Add a small buffer (e.g., 2-5px) to prevent text from touching the edge
@@ -3318,8 +3406,14 @@
       let maxWidth = parentWidth * (MAX_INLINE_WIDTH_PERCENT / 100);
       maxWidth = Math.max(maxWidth, minWidth * 1.5); // Ensure max width is at least 1.5x min width
 
-      const newWidth = Math.min(maxWidth, Math.max(minWidth, requiredContentWidth));
-      input.style.width = `${newWidth}px`;
+      if (requiredContentWidth > maxWidth) {
+        // Content exceeds max width — set to max and let CSS wrap the text
+        input.style.width = `${maxWidth}px`;
+      } else {
+        // Content fits — size to content
+        const newWidth = Math.max(minWidth, requiredContentWidth);
+        input.style.width = `${newWidth}px`;
+      }
     }
 
     function adjustAllInitialSizes() {

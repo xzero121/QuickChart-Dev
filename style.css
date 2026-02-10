@@ -377,29 +377,36 @@ html,
     }
 
 
-    /* ===== INLINE FIELDS ===== */
+    /* ===== INLINE FIELDS (contenteditable spans) ===== */
     .inline-field {
       display: inline-block;
       width: auto;
       min-width: 50px;
       max-width: 80%;
       margin: 0 .25rem;
-      vertical-align: baseline;
+      vertical-align: bottom;
       font: inherit;
       font-size: 1em;
+      line-height: inherit;
       border: none;
       border-bottom: 1px dotted #777;
       background-color: transparent;
       padding: 0 .25rem;
       box-sizing: border-box;
-      white-space: nowrap;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
       overflow: hidden;
-      text-overflow: ellipsis;
+      cursor: text;
+      -webkit-user-modify: read-write-plaintext-only;
     }
 
-    .inline-field::placeholder {
-      text-align: center;
+    .inline-field:empty::before {
+      content: attr(data-placeholder);
       opacity: 0.6;
+      color: inherit;
+      pointer-events: none;
+      white-space: nowrap;
     }
 
     .inline-field:focus {
@@ -407,25 +414,26 @@ html,
       border-bottom-color: #0d6efd;
       border-bottom-width: 1px;
       border-bottom-style: solid;
-      overflow: visible;
-      text-overflow: clip;
     }
 
     .inline-field.empty-field {
       box-shadow: none !important;
       background-color: transparent;
+      border-bottom-color: #dc3545 !important;
+      border-bottom-style: solid !important;
     }
 
-    .inline-field.empty-field::placeholder {
+    .inline-field.empty-field:empty::before {
       color: #dc3545 !important;
       opacity: 1;
     }
 
     .inline-field.empty-field:focus {
       box-shadow: none !important;
+      border-bottom-color: #dc3545 !important;
     }
 
-    .inline-field.empty-field:focus::placeholder {
+    .inline-field.empty-field:focus:empty::before {
       color: #dc3545 !important;
       opacity: 0.7;
     }
