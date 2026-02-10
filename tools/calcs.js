@@ -142,12 +142,6 @@ function calculateOxygenDuration(tankSize, CurrentPSI, FlowRateLPM) {
   }
 
   const duration = (CurrentPSI * tankConstant[tankSize]) / FlowRateLPM;
-<<<<<<< HEAD:calcs.js
-  const durationResidual = (CurrentPSI - 200) * tankConstant[tankSize] / FlowRateLPM;
-  return {max: duration, safe: durationResidual > 0 ? durationResidual : 0};
-}
-
-=======
   const safeDuration = (CurrentPSI-200) * tankConstant[tankSize] / FlowRateLPM;
   return { duration, safeDuration };
 }
@@ -193,7 +187,6 @@ function calculateOxygenDurationVent(tankSize, CurrentPSI, FiO2, TidalVolume, Re
 
 
 
->>>>>>> 6507377643dfc052c2e091af90da54e6e390ce62:tools/calcs.js
 let mcLarenMaleTable = null;
 let mcLarenFemaleTable = null;
 

@@ -22,6 +22,7 @@
     ],
     "Provider": [
       "*T. Anderson, Paramedic",
+      "*D. Brown, Paramedic",
       "*A. Gubler, Paramedic",
       "*J. Harrison, Paramedic",
       "*C. Lefebvre, Paramedic",
@@ -34,6 +35,7 @@
       "*E. Brown, EMT-B",
       "*R. Dobbins, EMT-B",
       "*K. Frost, EMT-B",
+      "*V. Nguyen, EMT-B",
       "*S. Park, EMT-B",
       "*C. Tate, EMT-B",
       "*A. VanTassell, EMT-B"
@@ -248,6 +250,10 @@
             {
               "title": "Necessary",
               "text": "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity]."
+            },
+            {
+              "title": "Bed Confined",
+              "text": "The medical necessity for ambulance transport was justified because 1: Patient was bed confined before and after transport, due to [text:Bed Confined Reason]."
             },
             {
               "title": "Not Necessary",

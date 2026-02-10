@@ -28,7 +28,7 @@
     },
     {
       "name": "O2 Therapy",
-      "text": "The patient was on [text:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask]."
+      "text": "The patient was on [text:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask] for the duration of EMS transport."
     },
     {
       "name": "GCS",
@@ -270,6 +270,7 @@
        "*Aminosalicylic Acid",
        "*Aminosyn II 8.5%",
        "*Aminosyn II in Dextrose",
+       "*Amiodarone (Cordarone)",
        "*Amitiza",
        "*Amitriptyline",
        "*Amlexanox",
@@ -3170,7 +3171,6 @@
     "Transfer of Location": ["hospital bed", "facility bed"],
     "Reason": ["higher level of care", "long term care"],
     "Medical Necessity": [
-      "1: Patient was bed confined before and after transport",
       "2: Patient required Cardiac / Hemodynamic monitoring during transport",
       "3: Patient is confused, combative, lethargic, or comatose",
       "4: Patient has contractures",

@@ -16,7 +16,9 @@
       "Medic 13", 
       "Medic 14", 
       "Medic 15",
-      "Medic 16"
+      "Medic 16",
+      "Medic 17",
+      "Medic 18"
     ],
     "Provider": [
       "*Provider 1",
@@ -33,8 +35,12 @@
       "Baptist Health Paducah"
     ],
     "Receiving Facility": [
-      "Baptist Floyd", 
-      "Baptist Health Louisville"
+      "Baptist Health Floyd", 
+      "Baptist Health La Grange",
+      "Baptist Health Louisville",
+      "Baptist Health Corbin",
+      "Baptist Health Hardin",
+      "Baptist Health Paducah"
     ]
   },
   "narrativeSections": [
@@ -199,6 +205,10 @@
             {
               "title": "Necessary",
               "text": "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity]."
+            },
+            {
+              "title": "Bed Confined",
+              "text": "The medical necessity for ambulance transport was justified because 1: Patient was bed confined before and after transport, due to [text:Bed Confined Reason]."
             },
             {
               "title": "Not Necessary",
