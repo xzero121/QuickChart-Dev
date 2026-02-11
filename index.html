@@ -261,6 +261,66 @@
         field.addEventListener('paste', handleContentEditablePasteDirect);
       });
     }
+    /** Shared Tab navigation logic for contenteditable inline fields.
+     *  Prevents iOS Safari's native scroll-to-top jitter by:
+     *  1. Saving scroll position before focus change
+     *  2. Using preventScroll on focus()
+     *  3. Restoring scroll position immediately after
+     *  4. Placing the caret explicitly for caret visibility
+     */
+    function handleTabNavigation(event) {
+      const allFields = Array.from(document.querySelectorAll('.inline-field[contenteditable]'));
+      const currentIndex = allFields.indexOf(event.target);
+      if (currentIndex === -1) return;
+
+      const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
+      if (nextIndex < 0 || nextIndex >= allFields.length) return;
+
+      event.preventDefault();
+
+      const currentField = event.target;
+      const nextField = allFields[nextIndex];
+
+      // Save scroll position before any focus change
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+
+      // Manually trigger blur-save on current field without DOM mutation
+      // (normalizeFieldEmpty causes reflow, defer it)
+      handleInlineFieldBlur({ target: currentField });
+
+      // Focus with preventScroll to stop iOS Safari's native scroll behavior
+      nextField.focus({ preventScroll: true });
+
+      // Immediately restore scroll position in case iOS moved it
+      window.scrollTo(scrollX, scrollY);
+
+      // Place caret at end of content for iOS Safari caret visibility
+      const sel = window.getSelection();
+      const range = document.createRange();
+      if (nextField.childNodes.length > 0) {
+        range.selectNodeContents(nextField);
+        range.collapse(false); // Collapse to end
+      } else {
+        range.setStart(nextField, 0);
+        range.collapse(true);
+      }
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      // After layout settles, gently scroll the field into view without jarring jump
+      requestAnimationFrame(() => {
+        const rect = nextField.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        // Only scroll if the field is not already reasonably visible
+        // Account for iOS keyboard (~40% of viewport from bottom)
+        const visibleBottom = viewportHeight * 0.55;
+        if (rect.top < 0 || rect.bottom > visibleBottom) {
+          nextField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+
     function handleContentEditableKeydownDelegated(event) {
       if (event.target.matches('.inline-field[contenteditable]')) {
         if (event.key === 'Enter') {
@@ -272,29 +332,7 @@
           event.preventDefault();
           event.target.blur(); // Commit value on Enter
         } else if (event.key === 'Tab') {
-          // iOS Safari fix: manually move focus to next/prev inline field for reliable Tab navigation
-          const allFields = Array.from(document.querySelectorAll('.inline-field[contenteditable]'));
-          const currentIndex = allFields.indexOf(event.target);
-          if (currentIndex !== -1) {
-            const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
-            if (nextIndex >= 0 && nextIndex < allFields.length) {
-              event.preventDefault();
-              const nextField = allFields[nextIndex];
-              nextField.focus();
-              // Place caret at end of content for iOS Safari caret visibility
-              const range = document.createRange();
-              const sel = window.getSelection();
-              if (nextField.childNodes.length > 0) {
-                range.selectNodeContents(nextField);
-                range.collapse(false); // Collapse to end
-              } else {
-                range.setStart(nextField, 0);
-                range.collapse(true);
-              }
-              sel.removeAllRanges();
-              sel.addRange(range);
-            }
-          }
+          handleTabNavigation(event);
         }
       }
     }
@@ -307,29 +345,7 @@
         event.preventDefault();
         event.target.blur();
       } else if (event.key === 'Tab') {
-        // iOS Safari fix: manually move focus to next/prev inline field for reliable Tab navigation
-        const allFields = Array.from(document.querySelectorAll('.inline-field[contenteditable]'));
-        const currentIndex = allFields.indexOf(event.target);
-        if (currentIndex !== -1) {
-          const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
-          if (nextIndex >= 0 && nextIndex < allFields.length) {
-            event.preventDefault();
-            const nextField = allFields[nextIndex];
-            nextField.focus();
-            // Place caret at end of content for iOS Safari caret visibility
-            const range = document.createRange();
-            const sel = window.getSelection();
-            if (nextField.childNodes.length > 0) {
-              range.selectNodeContents(nextField);
-              range.collapse(false);
-            } else {
-              range.setStart(nextField, 0);
-              range.collapse(true);
-            }
-            sel.removeAllRanges();
-            sel.addRange(range);
-          }
-        }
+        handleTabNavigation(event);
       }
     }
     function handleContentEditablePasteDelegated(event) {
