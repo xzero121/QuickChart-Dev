@@ -379,7 +379,8 @@ html,
 
     /* ===== INLINE FIELDS (contenteditable spans) ===== */
     .inline-field {
-      display: inline;
+      display: inline-block;
+      vertical-align: baseline;
       min-width: 50px;
       margin: 0 .25rem;
       font: inherit;
@@ -395,6 +396,10 @@ html,
       overflow-wrap: break-word;
       cursor: text;
       -webkit-user-modify: read-write-plaintext-only;
+      /* iOS Safari: ensure caret is visible and prevent tap-delay jitter */
+      caret-color: auto;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .inline-field:empty::before {
@@ -441,7 +446,8 @@ html,
 
     .custom-dropdown .inline-field.custom-dropdown-input {
       min-width: 80px;
-      display: inline;
+      display: inline-block;
+      vertical-align: baseline;
     }
 
     .custom-dropdown .suggestions {
@@ -1428,7 +1434,7 @@ html,
       }
 
       .inline-field {
-        font-size: 0.95rem;
+        font-size: 1rem;
         min-width: 40px;
       }
 

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>QuickChart</title>
 
   <link rel="stylesheet" href="style.css" />
@@ -124,7 +124,7 @@
     </div>
   </div>
 
-  <div id="versionText" class="version-text">Version: 2.1.0 Pre</div>
+  <div id="versionText" class="version-text">Version: 2.1.1 Pre</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -271,6 +271,30 @@
           }
           event.preventDefault();
           event.target.blur(); // Commit value on Enter
+        } else if (event.key === 'Tab') {
+          // iOS Safari fix: manually move focus to next/prev inline field for reliable Tab navigation
+          const allFields = Array.from(document.querySelectorAll('.inline-field[contenteditable]'));
+          const currentIndex = allFields.indexOf(event.target);
+          if (currentIndex !== -1) {
+            const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
+            if (nextIndex >= 0 && nextIndex < allFields.length) {
+              event.preventDefault();
+              const nextField = allFields[nextIndex];
+              nextField.focus();
+              // Place caret at end of content for iOS Safari caret visibility
+              const range = document.createRange();
+              const sel = window.getSelection();
+              if (nextField.childNodes.length > 0) {
+                range.selectNodeContents(nextField);
+                range.collapse(false); // Collapse to end
+              } else {
+                range.setStart(nextField, 0);
+                range.collapse(true);
+              }
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+          }
         }
       }
     }
@@ -282,6 +306,30 @@
         }
         event.preventDefault();
         event.target.blur();
+      } else if (event.key === 'Tab') {
+        // iOS Safari fix: manually move focus to next/prev inline field for reliable Tab navigation
+        const allFields = Array.from(document.querySelectorAll('.inline-field[contenteditable]'));
+        const currentIndex = allFields.indexOf(event.target);
+        if (currentIndex !== -1) {
+          const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
+          if (nextIndex >= 0 && nextIndex < allFields.length) {
+            event.preventDefault();
+            const nextField = allFields[nextIndex];
+            nextField.focus();
+            // Place caret at end of content for iOS Safari caret visibility
+            const range = document.createRange();
+            const sel = window.getSelection();
+            if (nextField.childNodes.length > 0) {
+              range.selectNodeContents(nextField);
+              range.collapse(false);
+            } else {
+              range.setStart(nextField, 0);
+              range.collapse(true);
+            }
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }
       }
     }
     function handleContentEditablePasteDelegated(event) {
@@ -3380,6 +3428,16 @@
     }
 
     function adjustInputWidth(input) {
+      if (!input || !widthMeasurerSpan) return;
+
+      // Use requestAnimationFrame to batch width adjustments and prevent iOS Safari jitter
+      if (input._adjustWidthRAF) cancelAnimationFrame(input._adjustWidthRAF);
+      input._adjustWidthRAF = requestAnimationFrame(() => {
+        _adjustInputWidthImmediate(input);
+      });
+    }
+
+    function _adjustInputWidthImmediate(input) {
       if (!input || !widthMeasurerSpan) return;
       const inputStyle = window.getComputedStyle(input);
       const isCustomDropdown = input.classList.contains('custom-dropdown-input');
