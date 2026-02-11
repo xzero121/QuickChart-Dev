@@ -379,12 +379,9 @@ html,
 
     /* ===== INLINE FIELDS (contenteditable spans) ===== */
     .inline-field {
-      display: inline-block;
-      width: auto;
+      display: inline;
       min-width: 50px;
-      max-width: 80%;
       margin: 0 .25rem;
-      vertical-align: bottom;
       font: inherit;
       font-size: 1em;
       line-height: inherit;
@@ -396,7 +393,6 @@ html,
       white-space: pre-wrap;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      overflow: hidden;
       cursor: text;
       -webkit-user-modify: read-write-plaintext-only;
     }
@@ -445,7 +441,7 @@ html,
 
     .custom-dropdown .inline-field.custom-dropdown-input {
       min-width: 80px;
-      display: inline-block;
+      display: inline;
     }
 
     .custom-dropdown .suggestions {
