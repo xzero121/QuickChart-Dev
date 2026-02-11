@@ -415,7 +415,6 @@ html,
       border-bottom-color: #0d6efd;
       border-bottom-width: 2px;
       border-bottom-style: solid;
-      background-color: rgba(13, 110, 253, 0.06);
     }
 
     .inline-field.empty-field {
@@ -624,7 +623,6 @@ html,
     }
 
     [data-bs-theme="dark"] .inline-field:focus {
-      background-color: rgba(13, 110, 253, 0.15) !important;
       border-bottom-color: #4d94ff !important;
     }
 
