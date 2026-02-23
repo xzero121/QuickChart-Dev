@@ -2567,14 +2567,20 @@
 
     function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
       const inputRect = inputElement.getBoundingClientRect();
+      const liRect = liAncestor.getBoundingClientRect();
 
-      // Position relative to the viewport
-      suggestionBox.style.position = 'fixed'; // Use fixed positioning for viewport coordinates
+      // Position relative to the viewport using fixed positioning
+      suggestionBox.style.position = 'fixed';
       suggestionBox.style.left = `${inputRect.left}px`;
-      suggestionBox.style.top = `${inputRect.bottom + 2}px`; // 2px gap below input
-      suggestionBox.style.minWidth = `${inputRect.width}px`;
-      suggestionBox.style.maxWidth = `350px`; // Max width constraint
-      suggestionBox.style.zIndex = '1000'; // Ensure it appears above other content
+      suggestionBox.style.minWidth = `${Math.max(inputRect.width, 120)}px`;
+      suggestionBox.style.maxWidth = `350px`;
+      suggestionBox.style.zIndex = '1000';
+
+      // Place dropdown below the sentence card (li) so it never covers the input
+      const gapBelow = 4; // px gap between sentence card and dropdown
+      const gapAbove = 4;
+      const preferredTop = liRect.bottom + gapBelow;
+      suggestionBox.style.top = `${preferredTop}px`;
 
       // Store reference to the input element on the suggestion box for repositioning during scroll
       suggestionBox.dataset.linkedInputId = inputElement.id || '';
@@ -2601,16 +2607,25 @@
 
         // Check if dropdown extends beyond viewport bottom
         if (suggestionsRect.bottom > window.innerHeight) {
-          const spaceAbove = inputRect.top; // Space above input in viewport
+          const spaceAbove = liRect.top; // Space above the sentence card
 
-          if (suggestionsRect.height < spaceAbove) {
-            // If it fits above the input, position it above
-            suggestionBox.style.top = `${inputRect.top - suggestionsRect.height - 2}px`;
+          if (suggestionsRect.height + gapAbove < spaceAbove) {
+            // If it fits above the sentence card, position it there
+            suggestionBox.style.top = `${liRect.top - suggestionsRect.height - gapAbove}px`;
           } else {
-            // Otherwise, position at bottom with a max-height constraint
-            const maxHeight = window.innerHeight - inputRect.bottom - 10; // 10px from bottom of viewport
-            suggestionBox.style.maxHeight = `${maxHeight}px`;
-            suggestionBox.style.overflowY = 'auto';
+            // Otherwise, constrain height to fit below the sentence card
+            const maxHeight = window.innerHeight - liRect.bottom - gapBelow - 10;
+            if (maxHeight > 80) {
+              suggestionBox.style.top = `${liRect.bottom + gapBelow}px`;
+              suggestionBox.style.maxHeight = `${maxHeight}px`;
+              suggestionBox.style.overflowY = 'auto';
+            } else {
+              // Not enough room below — constrain above the sentence card instead
+              const maxHeightAbove = liRect.top - gapAbove - 10;
+              suggestionBox.style.top = `${liRect.top - Math.min(suggestionsRect.height, maxHeightAbove) - gapAbove}px`;
+              suggestionBox.style.maxHeight = `${maxHeightAbove}px`;
+              suggestionBox.style.overflowY = 'auto';
+            }
           }
         }
 
