@@ -124,7 +124,7 @@
     </div>
   </div>
 
-  <div id="versionText" class="version-text">Version: 2.1.3 Pre</div>
+  <div id="versionText" class="version-text">Version: 2.1.4 Pre</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -272,6 +272,18 @@
           event.preventDefault();
           event.target.blur(); // Commit value on Enter
         }
+        // Handle Tab key to prevent Safari from scrolling to top of page
+        if (event.key === 'Tab') {
+          // If this event was already handled by the dropdown keydown handler, skip
+          if (event._tabHandled) return;
+          // For dropdown inputs, let the dropdown keydown handler manage Tab when dropdown is open
+          if (event.target.matches('.custom-dropdown-input')) {
+            const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+            if (suggestionBox && suggestionBox.style.display !== 'none') return;
+          }
+          event.preventDefault();
+          focusNextTabbableField(event.target, event.shiftKey);
+        }
       }
     }
     function handleContentEditableKeydownDirect(event) {
@@ -282,6 +294,16 @@
         }
         event.preventDefault();
         event.target.blur();
+      }
+      // Handle Tab key to prevent Safari from scrolling to top of page
+      if (event.key === 'Tab') {
+        if (event._tabHandled) return;
+        if (event.target.matches('.custom-dropdown-input')) {
+          const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+          if (suggestionBox && suggestionBox.style.display !== 'none') return;
+        }
+        event.preventDefault();
+        focusNextTabbableField(event.target, event.shiftKey);
       }
     }
     function handleContentEditablePasteDelegated(event) {
@@ -2270,7 +2292,14 @@
 
     // Delegated handlers
     function handleDropdownFocusDelegated(event) {
-      if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target);
+      if (event.target.matches('.custom-dropdown-input')) {
+        // Don't reopen dropdown if we just selected an item and refocused
+        if (event.target._suppressDropdownReopen) {
+          event.target._suppressDropdownReopen = false;
+          return;
+        }
+        filterAndShowDropdownSuggestions(event.target);
+      }
     }
     function handleDropdownInputDelegated(event) {
       if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target);
@@ -2280,12 +2309,17 @@
     }
     function handleDropdownSuggestionClickDelegated(event) {
       if (event.target.matches('.custom-dropdown .suggestions li')) {
+        event.preventDefault(); // Prevent focus loss from mousedown
         const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
         if (input) {
           selectDropdownItem(input, event.target);
           hideDropdownSuggestions(input); // Hide after selection
           // Manually trigger blur's save logic for the input field
           handleInlineFieldBlur({ target: input });
+          // Refocus the input so tab navigation continues from this position
+          // Set flag to prevent dropdown from reopening on focus
+          input._suppressDropdownReopen = true;
+          input.focus();
         }
       }
     }
@@ -2303,6 +2337,11 @@
 
     // Direct handlers (for dynamically added elements if delegation is tricky)
     function handleDropdownFocusDirect(event) {
+      // Don't reopen dropdown if we just selected an item and refocused
+      if (event.target._suppressDropdownReopen) {
+        event.target._suppressDropdownReopen = false;
+        return;
+      }
       filterAndShowDropdownSuggestions(event.target);
     }
     function handleDropdownInputDirect(event) {
@@ -2313,11 +2352,16 @@
     }
     function handleDropdownSuggestionClickDirect(event) { // Attached to suggestionBox
       if (event.target.matches('li')) { // Check if a list item was clicked
+        event.preventDefault(); // Prevent focus loss from mousedown
         const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
         if (input) {
           selectDropdownItem(input, event.target);
           hideDropdownSuggestions(input);
           handleInlineFieldBlur({ target: input });
+          // Refocus the input so tab navigation continues from this position
+          // Set flag to prevent dropdown from reopening on focus
+          input._suppressDropdownReopen = true;
+          input.focus();
         }
       }
     }
@@ -2581,6 +2625,7 @@
             handleInlineFieldBlur({ target: inputElement }); // Ensure save
             // If Tab was pressed, move focus to the next tabbable field
             if (event.key === 'Tab') {
+              event._tabHandled = true; // Flag so contenteditable handler doesn't double-advance
               focusNextTabbableField(inputElement, event.shiftKey);
             }
           } else if (event.key === 'Enter') { // If Enter but no selection, just hide
@@ -2588,9 +2633,8 @@
             hideDropdownSuggestions(inputElement);
             // inputElement.blur(); // Optionally blur
           } else if (event.key === 'Tab') {
-            // No item highlighted — hide dropdown and let Tab proceed naturally
+            // No item highlighted — hide dropdown and let the contenteditable Tab handler manage it
             hideDropdownSuggestions(inputElement);
-            // Don't preventDefault — allow default tab navigation
           }
           break;
         case 'Escape':
@@ -2677,7 +2721,10 @@
       }
       const nextField = tabbables[nextIndex];
       if (nextField) {
-        nextField.focus();
+        // Use preventScroll to avoid Safari jumping to top, then scroll smoothly
+        nextField.focus({ preventScroll: true });
+        // Smoothly scroll the focused element into view if needed
+        nextField.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }
 
