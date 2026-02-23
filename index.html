@@ -2567,7 +2567,10 @@
 
     function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
       const inputRect = inputElement.getBoundingClientRect();
-      const liRect = liAncestor.getBoundingClientRect();
+
+      // Reset any stale max-height from previous positioning
+      suggestionBox.style.maxHeight = '';
+      suggestionBox.style.overflowY = '';
 
       // Position relative to the viewport using fixed positioning
       suggestionBox.style.position = 'fixed';
@@ -2576,11 +2579,9 @@
       suggestionBox.style.maxWidth = `350px`;
       suggestionBox.style.zIndex = '1000';
 
-      // Place dropdown below the sentence card (li) so it never covers the input
-      const gapBelow = 4; // px gap between sentence card and dropdown
-      const gapAbove = 4;
-      const preferredTop = liRect.bottom + gapBelow;
-      suggestionBox.style.top = `${preferredTop}px`;
+      // Place dropdown directly below the input with a clear gap
+      const gap = 6;
+      suggestionBox.style.top = `${inputRect.bottom + gap}px`;
 
       // Store reference to the input element on the suggestion box for repositioning during scroll
       suggestionBox.dataset.linkedInputId = inputElement.id || '';
@@ -2604,39 +2605,36 @@
       // Use requestAnimationFrame to ensure styles are applied and dimensions are available
       requestAnimationFrame(() => {
         const suggestionsRect = suggestionBox.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - inputRect.bottom - gap;
+        const spaceAbove = inputRect.top - gap;
 
-        // Check if dropdown extends beyond viewport bottom
-        if (suggestionsRect.bottom > window.innerHeight) {
-          const spaceAbove = liRect.top; // Space above the sentence card
-
-          if (suggestionsRect.height + gapAbove < spaceAbove) {
-            // If it fits above the sentence card, position it there
-            suggestionBox.style.top = `${liRect.top - suggestionsRect.height - gapAbove}px`;
-          } else {
-            // Otherwise, constrain height to fit below the sentence card
-            const maxHeight = window.innerHeight - liRect.bottom - gapBelow - 10;
-            if (maxHeight > 80) {
-              suggestionBox.style.top = `${liRect.bottom + gapBelow}px`;
-              suggestionBox.style.maxHeight = `${maxHeight}px`;
-              suggestionBox.style.overflowY = 'auto';
-            } else {
-              // Not enough room below — constrain above the sentence card instead
-              const maxHeightAbove = liRect.top - gapAbove - 10;
-              suggestionBox.style.top = `${liRect.top - Math.min(suggestionsRect.height, maxHeightAbove) - gapAbove}px`;
-              suggestionBox.style.maxHeight = `${maxHeightAbove}px`;
-              suggestionBox.style.overflowY = 'auto';
-            }
-          }
+        if (suggestionsRect.height <= spaceBelow) {
+          // Fits below the input — keep it there (already positioned)
+        } else if (suggestionsRect.height <= spaceAbove) {
+          // Fits above the input — flip it
+          suggestionBox.style.top = `${inputRect.top - suggestionsRect.height - gap}px`;
+        } else if (spaceBelow >= spaceAbove) {
+          // More room below — constrain height to fit below
+          suggestionBox.style.maxHeight = `${spaceBelow - 10}px`;
+          suggestionBox.style.overflowY = 'auto';
+        } else {
+          // More room above — constrain height and flip above
+          suggestionBox.style.top = `${gap + 10}px`; // 10px from top of viewport
+          suggestionBox.style.maxHeight = `${spaceAbove - 10}px`;
+          suggestionBox.style.overflowY = 'auto';
+          // Recalculate position after constraining
+          const constrainedHeight = Math.min(suggestionsRect.height, spaceAbove - 10);
+          suggestionBox.style.top = `${inputRect.top - constrainedHeight - gap}px`;
         }
 
         // Check if dropdown extends beyond viewport right edge
         if (suggestionsRect.right > window.innerWidth) {
-          suggestionBox.style.left = `${window.innerWidth - suggestionsRect.width - 5}px`; // 5px padding from right edge
+          suggestionBox.style.left = `${window.innerWidth - suggestionsRect.width - 5}px`;
         }
 
         // Check if dropdown extends beyond viewport left edge
         if (suggestionsRect.left < 0) {
-          suggestionBox.style.left = '5px'; // 5px padding from left edge
+          suggestionBox.style.left = '5px';
         }
       });
     }
