@@ -2331,7 +2331,10 @@
           // Refocus the input so tab navigation continues from this position
           // Set flag to prevent dropdown from reopening on focus
           input._suppressDropdownReopen = true;
-          input.focus({ preventScroll: true });
+          // Use rAF to ensure Safari/iPad processes focus after touch-up
+          requestAnimationFrame(() => {
+            input.focus({ preventScroll: true });
+          });
           // Clear the selecting flag after a delay longer than the blur timeout
           setTimeout(() => { input._dropdownSelecting = false; }, 200);
         }
@@ -2381,7 +2384,10 @@
           // Refocus the input so tab navigation continues from this position
           // Set flag to prevent dropdown from reopening on focus
           input._suppressDropdownReopen = true;
-          input.focus({ preventScroll: true });
+          // Use rAF to ensure Safari/iPad processes focus after touch-up
+          requestAnimationFrame(() => {
+            input.focus({ preventScroll: true });
+          });
           // Clear the selecting flag after a delay longer than the blur timeout
           setTimeout(() => { input._dropdownSelecting = false; }, 200);
         }
@@ -2656,7 +2662,9 @@
             } else {
               // Enter: keep focus on the input so tab order isn't lost
               inputElement._suppressDropdownReopen = true;
-              inputElement.focus({ preventScroll: true });
+              requestAnimationFrame(() => {
+                inputElement.focus({ preventScroll: true });
+              });
             }
             // Clear the selecting flag after blur timeout window
             setTimeout(() => { inputElement._dropdownSelecting = false; }, 200);

@@ -408,7 +408,7 @@ html,
     .inline-field:focus {
       outline: none;
       border-bottom-color: #0d6efd;
-      border-bottom-width: 1px;
+      border-bottom-width: 2px;
       border-bottom-style: solid;
     }
 
@@ -614,6 +614,12 @@ html,
       background-color: #2a2a2a !important;
       color: #e0e0e0 !important;
       border-color: #666 !important;
+    }
+
+    [data-bs-theme="dark"] .inline-field:focus {
+      border-bottom-color: #0d6efd !important;
+      border-bottom-width: 2px;
+      border-bottom-style: solid;
     }
 
     [data-bs-theme="dark"] .alert,
