@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>QuickChart</title>
 
   <link rel="stylesheet" href="style.css" />
@@ -124,7 +124,7 @@
     </div>
   </div>
 
-  <div id="versionText" class="version-text">Version: 2.1.2 Pre</div>
+  <div id="versionText" class="version-text">Version: 2.1.3 Pre</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -261,68 +261,6 @@
         field.addEventListener('paste', handleContentEditablePasteDirect);
       });
     }
-    /** Shared Tab navigation logic for contenteditable inline fields.
-     *  Prevents iOS Safari's native scroll-to-top jitter by:
-     *  1. Saving scroll position before focus change
-     *  2. Using preventScroll on focus()
-     *  3. Restoring scroll position immediately after
-     *  4. Placing the caret explicitly for caret visibility
-     */
-    function handleTabNavigation(event) {
-      // Only include visible fields — exclude those inside inactive tab panes (display:none)
-      const allFields = Array.from(document.querySelectorAll('.inline-field[contenteditable]'))
-        .filter(field => field.offsetParent !== null);
-      const currentIndex = allFields.indexOf(event.target);
-      if (currentIndex === -1) return;
-
-      const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
-      if (nextIndex < 0 || nextIndex >= allFields.length) return;
-
-      event.preventDefault();
-
-      const currentField = event.target;
-      const nextField = allFields[nextIndex];
-
-      // Save scroll position before any focus change
-      const scrollX = window.scrollX;
-      const scrollY = window.scrollY;
-
-      // Manually trigger blur-save on current field without DOM mutation
-      // (normalizeFieldEmpty causes reflow, defer it)
-      handleInlineFieldBlur({ target: currentField });
-
-      // Focus with preventScroll to stop iOS Safari's native scroll behavior
-      nextField.focus({ preventScroll: true });
-
-      // Immediately restore scroll position in case iOS moved it
-      window.scrollTo(scrollX, scrollY);
-
-      // Place caret at end of content for iOS Safari caret visibility
-      const sel = window.getSelection();
-      const range = document.createRange();
-      if (nextField.childNodes.length > 0) {
-        range.selectNodeContents(nextField);
-        range.collapse(false); // Collapse to end
-      } else {
-        range.setStart(nextField, 0);
-        range.collapse(true);
-      }
-      sel.removeAllRanges();
-      sel.addRange(range);
-
-      // After layout settles, gently scroll the field into view without jarring jump
-      requestAnimationFrame(() => {
-        const rect = nextField.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        // Only scroll if the field is not already reasonably visible
-        // Account for iOS keyboard (~40% of viewport from bottom)
-        const visibleBottom = viewportHeight * 0.55;
-        if (rect.top < 0 || rect.bottom > visibleBottom) {
-          nextField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
-    }
-
     function handleContentEditableKeydownDelegated(event) {
       if (event.target.matches('.inline-field[contenteditable]')) {
         if (event.key === 'Enter') {
@@ -333,8 +271,6 @@
           }
           event.preventDefault();
           event.target.blur(); // Commit value on Enter
-        } else if (event.key === 'Tab') {
-          handleTabNavigation(event);
         }
       }
     }
@@ -346,8 +282,6 @@
         }
         event.preventDefault();
         event.target.blur();
-      } else if (event.key === 'Tab') {
-        handleTabNavigation(event);
       }
     }
     function handleContentEditablePasteDelegated(event) {
@@ -2645,12 +2579,19 @@
             selectDropdownItem(inputElement, visibleItems[focusedIndex]);
             hideDropdownSuggestions(inputElement);
             handleInlineFieldBlur({ target: inputElement }); // Ensure save
+            // If Tab was pressed, move focus to the next tabbable field
+            if (event.key === 'Tab') {
+              focusNextTabbableField(inputElement, event.shiftKey);
+            }
           } else if (event.key === 'Enter') { // If Enter but no selection, just hide
             event.preventDefault();
             hideDropdownSuggestions(inputElement);
             // inputElement.blur(); // Optionally blur
+          } else if (event.key === 'Tab') {
+            // No item highlighted — hide dropdown and let Tab proceed naturally
+            hideDropdownSuggestions(inputElement);
+            // Don't preventDefault — allow default tab navigation
           }
-          // Allow Tab to function normally if no item is highlighted
           break;
         case 'Escape':
           event.preventDefault();
@@ -2713,6 +2654,31 @@
         hideDropdownSuggestions(inputElement);
         // The main blur handler (handleInlineFieldBlur) attached to the input will save its value.
       }, 150);
+    }
+
+    /** Moves focus to the next (or previous, if reverse=true) tabbable field */
+    function focusNextTabbableField(currentElement, reverse) {
+      // Gather all tabbable elements within sectionContainer
+      const container = document.getElementById('sectionContainer');
+      if (!container) return;
+      const tabbables = Array.from(container.querySelectorAll(
+        '.inline-field[contenteditable="true"], input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(el => {
+        // Filter out hidden elements
+        return el.offsetParent !== null && !el.closest('[style*="display: none"]');
+      });
+      if (tabbables.length === 0) return;
+      const currentIndex = tabbables.indexOf(currentElement);
+      let nextIndex;
+      if (reverse) {
+        nextIndex = currentIndex <= 0 ? tabbables.length - 1 : currentIndex - 1;
+      } else {
+        nextIndex = currentIndex >= tabbables.length - 1 ? 0 : currentIndex + 1;
+      }
+      const nextField = tabbables[nextIndex];
+      if (nextField) {
+        nextField.focus();
+      }
     }
 
     function handleScrollForDropdowns() {
@@ -3446,16 +3412,6 @@
     }
 
     function adjustInputWidth(input) {
-      if (!input || !widthMeasurerSpan) return;
-
-      // Use requestAnimationFrame to batch width adjustments and prevent iOS Safari jitter
-      if (input._adjustWidthRAF) cancelAnimationFrame(input._adjustWidthRAF);
-      input._adjustWidthRAF = requestAnimationFrame(() => {
-        _adjustInputWidthImmediate(input);
-      });
-    }
-
-    function _adjustInputWidthImmediate(input) {
       if (!input || !widthMeasurerSpan) return;
       const inputStyle = window.getComputedStyle(input);
       const isCustomDropdown = input.classList.contains('custom-dropdown-input');
