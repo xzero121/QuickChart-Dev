@@ -2608,10 +2608,12 @@
       if (suggestionBox.style.display !== 'none' && !activeDropdowns.includes(suggestionBox)) {
         activeDropdowns.push(suggestionBox);
 
-        // Ensure scroll/resize listeners are attached if this is the first visible dropdown
+        // Ensure scroll/resize/touch listeners are attached if this is the first visible dropdown
         if (activeDropdowns.length === 1) {
           window.addEventListener('scroll', handleScrollForDropdowns, { passive: true });
           window.visualViewport?.addEventListener('resize', handleScrollForDropdowns, { passive: true });
+          window.visualViewport?.addEventListener('scroll', handleScrollForDropdowns, { passive: true });
+          document.addEventListener('touchmove', handleTouchMoveForDropdowns, { passive: true });
         }
       }
 
@@ -2744,10 +2746,12 @@
         if (index !== -1) {
           activeDropdowns.splice(index, 1);
 
-          // Remove scroll/resize listeners if no active dropdowns remain
+          // Remove scroll/resize/touch listeners if no active dropdowns remain
           if (activeDropdowns.length === 0) {
             window.removeEventListener('scroll', handleScrollForDropdowns);
             window.visualViewport?.removeEventListener('resize', handleScrollForDropdowns);
+            window.visualViewport?.removeEventListener('scroll', handleScrollForDropdowns);
+            document.removeEventListener('touchmove', handleTouchMoveForDropdowns);
           }
         }
       }
@@ -2815,10 +2819,12 @@
     }
 
     function handleScrollForDropdowns() {
-      // If no active dropdowns, remove the scroll/resize listeners
+      // If no active dropdowns, remove the scroll/resize/touch listeners
       if (activeDropdowns.length === 0) {
         window.removeEventListener('scroll', handleScrollForDropdowns);
         window.visualViewport?.removeEventListener('resize', handleScrollForDropdowns);
+        window.visualViewport?.removeEventListener('scroll', handleScrollForDropdowns);
+        document.removeEventListener('touchmove', handleTouchMoveForDropdowns);
         return;
       }
 
@@ -2844,6 +2850,28 @@
         // Reposition the dropdown based on new scroll position
         positionDropdownSuggestions(inputElement, suggestionBox, liAncestor);
       });
+    }
+
+    function handleTouchMoveForDropdowns(event) {
+      // Don't hide if the touch is inside an active dropdown (user scrolling the suggestion list)
+      if (activeDropdowns.some(box => box.contains(event.target))) {
+        return;
+      }
+      // Hide all active dropdowns when the user scrolls the page on a touch device.
+      // On iOS Safari, scroll events and rAF callbacks don't fire during momentum
+      // scrolling, so fixed-position dropdowns can't be repositioned. Hiding them
+      // on touchmove (which fires during the active touch phase) avoids the stale
+      // position problem entirely.
+      const toHide = [...activeDropdowns];
+      toHide.forEach(suggestionBox => {
+        suggestionBox.style.display = 'none';
+        highlightDropdownItem(Array.from(suggestionBox.querySelectorAll('li')), -1);
+      });
+      activeDropdowns.length = 0;
+      window.removeEventListener('scroll', handleScrollForDropdowns);
+      window.visualViewport?.removeEventListener('resize', handleScrollForDropdowns);
+      window.visualViewport?.removeEventListener('scroll', handleScrollForDropdowns);
+      document.removeEventListener('touchmove', handleTouchMoveForDropdowns);
     }
 
 
