@@ -912,15 +912,6 @@
         return;
       }
       
-      // Now find where to insert in the runtime narrativeSections
-      // Count how many non-QuickSentence items come before this placeholder in defaults
-      let targetPosition = 0;
-      for (let i = 0; i < placeholderIndex; i++) {
-        if (!defaultSection.sentences[i].QuickSentence) {
-          targetPosition++;
-        }
-      }
-      
       // Find the corresponding position in the runtime section
       const section = narrativeSections.find(s => s.part === partLabel);
       if (!section) {
@@ -929,9 +920,30 @@
       }
       
       if (!section.sentences) section.sentences = [];
-      
-      // Insert at the target position (or at end if position is beyond current length)
-      const insertIndex = Math.min(targetPosition, section.sentences.length);
+
+      // Find the QuickSentence placeholder in the runtime section.
+      // This accurately accounts for any sentences the user has added or removed
+      // since the default was loaded, ensuring the insert point stays correct.
+      const runtimePlaceholderIndex = section.sentences.findIndex(s =>
+        s.QuickSentence && s.QuickSentence.toLowerCase() === quickSentenceName.toLowerCase()
+      );
+
+      let insertIndex;
+      if (runtimePlaceholderIndex !== -1) {
+        // Count only non-QuickSentence items before the placeholder in the runtime section
+        // to get an index that aligns with the DOM sentence list (which skips QS placeholders)
+        insertIndex = section.sentences.slice(0, runtimePlaceholderIndex).filter(s => !s.QuickSentence).length;
+      } else {
+        // Fallback: use the default-based count if the placeholder is missing from runtime
+        let targetPosition = 0;
+        for (let i = 0; i < placeholderIndex; i++) {
+          if (!defaultSection.sentences[i].QuickSentence) {
+            targetPosition++;
+          }
+        }
+        insertIndex = Math.min(targetPosition, section.sentences.length);
+      }
+
       addSentenceAtIndex(partLabel, sentenceData, insertIndex);
     }
 
@@ -2596,16 +2608,22 @@
       if (suggestionBox.style.display !== 'none' && !activeDropdowns.includes(suggestionBox)) {
         activeDropdowns.push(suggestionBox);
 
-        // Ensure scroll listener is attached if this is the first visible dropdown
+        // Ensure scroll/resize listeners are attached if this is the first visible dropdown
         if (activeDropdowns.length === 1) {
           window.addEventListener('scroll', handleScrollForDropdowns, { passive: true });
+          window.visualViewport?.addEventListener('resize', handleScrollForDropdowns, { passive: true });
         }
       }
 
       // Use requestAnimationFrame to ensure styles are applied and dimensions are available
       requestAnimationFrame(() => {
         const suggestionsRect = suggestionBox.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - inputRect.bottom - gap;
+
+        // Use visualViewport dimensions when available so on-screen keyboard is accounted for
+        const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+        const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+
+        const spaceBelow = viewportHeight - inputRect.bottom - gap;
         const spaceAbove = inputRect.top - gap;
 
         if (suggestionsRect.height <= spaceBelow) {
@@ -2628,8 +2646,8 @@
         }
 
         // Check if dropdown extends beyond viewport right edge
-        if (suggestionsRect.right > window.innerWidth) {
-          suggestionBox.style.left = `${window.innerWidth - suggestionsRect.width - 5}px`;
+        if (suggestionsRect.right > viewportWidth) {
+          suggestionBox.style.left = `${viewportWidth - suggestionsRect.width - 5}px`;
         }
 
         // Check if dropdown extends beyond viewport left edge
@@ -2726,9 +2744,10 @@
         if (index !== -1) {
           activeDropdowns.splice(index, 1);
 
-          // Remove scroll listener if no active dropdowns remain
+          // Remove scroll/resize listeners if no active dropdowns remain
           if (activeDropdowns.length === 0) {
             window.removeEventListener('scroll', handleScrollForDropdowns);
+            window.visualViewport?.removeEventListener('resize', handleScrollForDropdowns);
           }
         }
       }
@@ -2796,9 +2815,10 @@
     }
 
     function handleScrollForDropdowns() {
-      // If no active dropdowns, remove the scroll listener
+      // If no active dropdowns, remove the scroll/resize listeners
       if (activeDropdowns.length === 0) {
         window.removeEventListener('scroll', handleScrollForDropdowns);
+        window.visualViewport?.removeEventListener('resize', handleScrollForDropdowns);
         return;
       }
 
