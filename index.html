@@ -124,7 +124,7 @@
     </div>
   </div>
 
-  <div id="versionText" class="version-text">Version: 2.0.0 Pre</div>
+  <div id="versionText" class="version-text">Version: 2.1.6 Pre</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -150,6 +150,26 @@
     let widthMeasurerSpan; // Ref to hidden span for width calc
     let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
     let activeDropdowns = []; // Track visible dropdown suggestion boxes
+
+    /** Helper: Get the text value of an inline field (contenteditable span) */
+    function getFieldValue(field) {
+      return (field.textContent || '').replace(/\u200B/g, ''); // Strip zero-width spaces
+    }
+    /** Helper: Set the text value of an inline field (contenteditable span) */
+    function setFieldValue(field, value) {
+      field.textContent = value || '';
+      // If empty, ensure truly empty for :empty CSS pseudo-class
+      if (!value) {
+        field.innerHTML = '';
+      }
+    }
+    /** Helper: Normalize a contenteditable field so :empty works when cleared */
+    function normalizeFieldEmpty(field) {
+      const val = getFieldValue(field).trim();
+      if (!val) {
+        field.innerHTML = ''; // Remove any leftover <br>, whitespace, etc.
+      }
+    }
 
     // --- Fuse.js Options ---
     const fuseOptions = {
@@ -214,12 +234,92 @@
       attachInputSizingListeners();
       attachBlurListeners();
       attachDropdownLogic();
+      attachContentEditableHandlers();
     }
 
     function attachAllEventListenersForElement(element) {
       attachInputSizingListenersForElement(element);
       attachBlurListenersForElement(element);
       attachDropdownLogicForElement(element);
+      attachContentEditableHandlersForElement(element);
+    }
+
+    /** Prevents Enter from creating newlines and ensures plain-text paste in contenteditable fields */
+    function attachContentEditableHandlers() {
+      const container = document.getElementById('sectionContainer');
+      if (!container) return;
+      container.removeEventListener('keydown', handleContentEditableKeydownDelegated);
+      container.addEventListener('keydown', handleContentEditableKeydownDelegated);
+      container.removeEventListener('paste', handleContentEditablePasteDelegated);
+      container.addEventListener('paste', handleContentEditablePasteDelegated);
+    }
+    function attachContentEditableHandlersForElement(element) {
+      element.querySelectorAll('.inline-field[contenteditable]').forEach(field => {
+        field.removeEventListener('keydown', handleContentEditableKeydownDirect);
+        field.addEventListener('keydown', handleContentEditableKeydownDirect);
+        field.removeEventListener('paste', handleContentEditablePasteDirect);
+        field.addEventListener('paste', handleContentEditablePasteDirect);
+      });
+    }
+    function handleContentEditableKeydownDelegated(event) {
+      if (event.target.matches('.inline-field[contenteditable]')) {
+        if (event.key === 'Enter') {
+          // For dropdown inputs, only prevent Enter if dropdown is not handling it
+          if (event.target.matches('.custom-dropdown-input')) {
+            const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+            if (suggestionBox && suggestionBox.style.display !== 'none') return; // Let dropdown handler manage it
+          }
+          event.preventDefault();
+          event.target.blur(); // Commit value on Enter
+        }
+        // Handle Tab key to prevent Safari from scrolling to top of page
+        if (event.key === 'Tab') {
+          // If this event was already handled by the dropdown keydown handler, skip
+          if (event._tabHandled) return;
+          // For dropdown inputs, let the dropdown keydown handler manage Tab when dropdown is open
+          if (event.target.matches('.custom-dropdown-input')) {
+            const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+            if (suggestionBox && suggestionBox.style.display !== 'none') return;
+          }
+          event.preventDefault();
+          focusNextTabbableField(event.target, event.shiftKey);
+        }
+      }
+    }
+    function handleContentEditableKeydownDirect(event) {
+      if (event.key === 'Enter') {
+        if (event.target.matches('.custom-dropdown-input')) {
+          const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+          if (suggestionBox && suggestionBox.style.display !== 'none') return;
+        }
+        event.preventDefault();
+        event.target.blur();
+      }
+      // Handle Tab key to prevent Safari from scrolling to top of page
+      if (event.key === 'Tab') {
+        if (event._tabHandled) return;
+        if (event.target.matches('.custom-dropdown-input')) {
+          const suggestionBox = event.target.closest('.custom-dropdown')?.querySelector('.suggestions');
+          if (suggestionBox && suggestionBox.style.display !== 'none') return;
+        }
+        event.preventDefault();
+        focusNextTabbableField(event.target, event.shiftKey);
+      }
+    }
+    function handleContentEditablePasteDelegated(event) {
+      if (event.target.matches('.inline-field[contenteditable]')) {
+        handlePlainTextPaste(event);
+      }
+    }
+    function handleContentEditablePasteDirect(event) {
+      handlePlainTextPaste(event);
+    }
+    function handlePlainTextPaste(event) {
+      event.preventDefault();
+      const text = (event.clipboardData || window.clipboardData).getData('text/plain');
+      // Insert plain text without line breaks
+      const cleanText = text.replace(/[\r\n]+/g, ' ');
+      document.execCommand('insertText', false, cleanText);
     }
 
 
@@ -761,6 +861,7 @@
         
         const btn = document.createElement("button");
         btn.type = "button";
+        btn.tabIndex = -1; // Exclude from tab order
         btn.classList.add("btn", "btn-sm", "btn-outline-secondary", "quick-add-btn");
         btn.textContent = sentence.name || sentence.display.substring(0, 20) + "...";
         btn.title = sentence.display;
@@ -985,6 +1086,7 @@
         const tabBtn = document.createElement("button");
         tabBtn.classList.add("tab-button");
         tabBtn.type = "button"; // Important for forms
+        tabBtn.tabIndex = -1; // Exclude from tab order
         if (i === sentenceObj.activeTabIndex) tabBtn.classList.add("active");
         tabBtn.innerText = tab.title || `Tab ${i + 1}`;
         tabBtn.dataset.tabIndex = i;
@@ -1030,6 +1132,7 @@
       const removeBtn = document.createElement("button");
       removeBtn.classList.add("btn", "btn-sm", "remove-sentence-btn"); // Bootstrap and custom classes
       removeBtn.type = "button";
+      removeBtn.tabIndex = -1; // Exclude from tab order
       removeBtn.innerHTML = "&times;"; // "X" symbol for remove
       removeBtn.title = "Remove Sentence";
       removeBtn.setAttribute('aria-label', 'Remove sentence');
@@ -1046,6 +1149,7 @@
     function createEditButton(sentenceObj, partLabel) {
       const btn = document.createElement('button');
       btn.classList.add('btn', 'btn-sm', 'edit-sentence-btn');
+      btn.tabIndex = -1; // Exclude from tab order
       btn.title = 'Edit Sentence Text';
       btn.innerHTML = '<i class="bi bi-pencil-fill"></i>';
       btn.setAttribute('aria-label', 'Edit sentence text');
@@ -1188,6 +1292,7 @@
     function createLockButton(sentenceObj, partLabel) {
       const btn = document.createElement('button');
       btn.classList.add('btn', 'btn-sm', 'lock-sentence-btn');
+      btn.tabIndex = -1; // Exclude from tab order
       btn.title = sentenceObj.locked ? 'Unlock Sentence' : 'Lock Sentence (prevents deletion in New Run)';
       btn.setAttribute('aria-label', sentenceObj.locked ? 'Unlock sentence' : 'Lock sentence');
       btn.innerHTML = `<i class="bi bi-lock${sentenceObj.locked ? '-fill text-primary' : ''}"></i>`;
@@ -1228,6 +1333,7 @@
       // Decrement button
       const decrementBtn = document.createElement('button');
       decrementBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'increment-btn');
+      decrementBtn.tabIndex = -1; // Exclude from tab order
       decrementBtn.innerHTML = '<i class="bi bi-dash"></i>';
       decrementBtn.title = 'Decrease count';
       decrementBtn.addEventListener('click', () => {
@@ -1258,6 +1364,7 @@
       // Increment button
       const incrementBtn = document.createElement('button');
       incrementBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'increment-btn');
+      incrementBtn.tabIndex = -1; // Exclude from tab order
       incrementBtn.innerHTML = '<i class="bi bi-plus"></i>';
       incrementBtn.title = 'Increase count';
       incrementBtn.addEventListener('click', () => {
@@ -1313,7 +1420,7 @@
             }
             fieldsByLabel[label].push({
               field: field,
-              value: field.value,
+              value: getFieldValue(field),
               index: fieldsByLabel[label].length
             });
           });
@@ -1366,7 +1473,7 @@
           }
           fieldsByLabel[label].push({
             field: field,
-            value: field.value,
+            value: getFieldValue(field),
             index: fieldsByLabel[label].length // This gives us the position within this label group
           });
         });
@@ -1515,6 +1622,7 @@
 
       const addBtn = document.createElement("button");
       addBtn.type = "button"; // Important: type="button" to prevent form submission
+      addBtn.tabIndex = -1; // Exclude from tab order
       addBtn.classList.add("btn", "btn-sm", "btn-secondary");
       addBtn.innerText = "Add";
       addBtn.title = "Add new sentence from text area";
@@ -1800,7 +1908,7 @@
     function handleInlineFieldBlur(event) {
       const field = event.target;
       const label = field.dataset.label;
-      const value = field.value;
+      const value = getFieldValue(field);
       const li = field.closest('li[data-id]');
       if (!li || !label) return;
 
@@ -1877,6 +1985,9 @@
         field.classList.remove('empty-field');
       }
       
+      // Normalize empty contenteditable fields so :empty CSS pseudo-class works for placeholders
+      normalizeFieldEmpty(field);
+      
       if (valueChanged) {
         if (DEBUG) console.log(`Value saved for ${sentenceId} - ${label}: ${value}`);
         saveState();
@@ -1921,7 +2032,7 @@
                   if (!fieldsByLabel[label]) {
                     fieldsByLabel[label] = [];
                   }
-                  fieldsByLabel[label].push(field.value);
+                  fieldsByLabel[label].push(getFieldValue(field));
                 });
                 
                 // Store the values in tabIncrementalValues
@@ -1944,7 +2055,7 @@
                 
                 tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
                   const label = field.dataset.label;
-                  const newValue = field.value;
+                  const newValue = getFieldValue(field);
                   if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
                     sentenceObj.tabValues[tabIndex][label] = newValue;
                     changesMade = true;
@@ -1969,7 +2080,7 @@
                 if (!fieldsByLabel[label]) {
                   fieldsByLabel[label] = [];
                 }
-                fieldsByLabel[label].push(field.value);
+                fieldsByLabel[label].push(getFieldValue(field));
               });
               
               // Store the values in incrementalValues
@@ -1991,7 +2102,7 @@
               li.querySelectorAll(".sentence-content > .inline-field[data-label]").forEach(field => {
                 // Ensure we only get direct children of sentence-content, not those inside tab-panes if any mix-up
                 const label = field.dataset.label;
-                const newValue = field.value;
+                const newValue = getFieldValue(field);
                 if (sentenceObj.values[label] !== newValue) {
                   sentenceObj.values[label] = newValue;
                   changesMade = true;
@@ -2055,19 +2166,19 @@
             }).join("");
             return `
             <div class="custom-dropdown">
-              <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off" autocapitalize="off"/>
+              <span contenteditable="true" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>
               <div class="suggestions">
                 <ul class="list-group">${listItems}</ul>
               </div>
             </div>`;
           case "text":
-            // Keep the original value (with \n) for the input field
-            return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocapitalize="off"/>`;
+            // Keep the original value (with \n) for the field
+            return `<span contenteditable="true" class="inline-field" data-type="text" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocapitalize="off">${currentValue}</span>`;
           case "number":
-            return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocapitalize="off"/>`;
+            return `<span contenteditable="true" class="inline-field" data-type="number" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" inputmode="numeric" autocapitalize="off">${currentValue}</span>`;
           case "dropdown":
             console.warn(`Standard 'dropdown' type encountered for [${label}]. Consider using 'customDropdown' for richer features or ensure specific handling is implemented if needed.`);
-            return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off" autocapitalize="off"/>`;
+            return `<span contenteditable="true" class="inline-field" data-type="dropdown" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>`;
           default:
             console.warn(`Unknown placeholder type: ${type} for label: ${label}`);
             return match;
@@ -2201,7 +2312,14 @@
 
     // Delegated handlers
     function handleDropdownFocusDelegated(event) {
-      if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target);
+      if (event.target.matches('.custom-dropdown-input')) {
+        // Don't reopen dropdown if we just selected an item and refocused
+        if (event.target._suppressDropdownReopen) {
+          event.target._suppressDropdownReopen = false;
+          return;
+        }
+        filterAndShowDropdownSuggestions(event.target);
+      }
     }
     function handleDropdownInputDelegated(event) {
       if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target);
@@ -2210,18 +2328,34 @@
       if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event);
     }
     function handleDropdownSuggestionClickDelegated(event) {
-      if (event.target.matches('.custom-dropdown .suggestions li')) {
-        const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
+      const li = event.target.closest('.custom-dropdown .suggestions li');
+      if (li) {
+        event.preventDefault(); // Prevent focus loss from mousedown
+        event.stopPropagation(); // Stop other handlers from interfering
+        const input = li.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
         if (input) {
-          selectDropdownItem(input, event.target);
+          // Flag to suppress blur-triggered dropdown hiding during selection
+          input._dropdownSelecting = true;
+          selectDropdownItem(input, li);
           hideDropdownSuggestions(input); // Hide after selection
           // Manually trigger blur's save logic for the input field
           handleInlineFieldBlur({ target: input });
+          // Refocus the input so tab navigation continues from this position
+          // Set flag to prevent dropdown from reopening on focus
+          input._suppressDropdownReopen = true;
+          // Use rAF to ensure Safari/iPad processes focus after touch-up
+          requestAnimationFrame(() => {
+            input.focus({ preventScroll: true });
+          });
+          // Clear the selecting flag after a delay longer than the blur timeout
+          setTimeout(() => { input._dropdownSelecting = false; }, 200);
         }
       }
     }
     function handleDropdownBlurDelegated(event) {
       if (event.target.matches('.custom-dropdown-input')) {
+        // If a dropdown selection is in progress, don't process blur
+        if (event.target._dropdownSelecting) return;
         // Check if the relatedTarget (where focus went) is part of the suggestions
         const dropdownContainer = event.target.closest('.custom-dropdown');
         const suggestionBox = dropdownContainer?.querySelector('.suggestions');
@@ -2234,6 +2368,11 @@
 
     // Direct handlers (for dynamically added elements if delegation is tricky)
     function handleDropdownFocusDirect(event) {
+      // Don't reopen dropdown if we just selected an item and refocused
+      if (event.target._suppressDropdownReopen) {
+        event.target._suppressDropdownReopen = false;
+        return;
+      }
       filterAndShowDropdownSuggestions(event.target);
     }
     function handleDropdownInputDirect(event) {
@@ -2243,16 +2382,32 @@
       processDropdownKeydown(event.target, event);
     }
     function handleDropdownSuggestionClickDirect(event) { // Attached to suggestionBox
-      if (event.target.matches('li')) { // Check if a list item was clicked
+      const li = event.target.closest('li');
+      if (li) {
+        event.preventDefault(); // Prevent focus loss from mousedown
+        event.stopPropagation(); // Stop other handlers from interfering
         const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
         if (input) {
-          selectDropdownItem(input, event.target);
+          // Flag to suppress blur-triggered dropdown hiding during selection
+          input._dropdownSelecting = true;
+          selectDropdownItem(input, li);
           hideDropdownSuggestions(input);
           handleInlineFieldBlur({ target: input });
+          // Refocus the input so tab navigation continues from this position
+          // Set flag to prevent dropdown from reopening on focus
+          input._suppressDropdownReopen = true;
+          // Use rAF to ensure Safari/iPad processes focus after touch-up
+          requestAnimationFrame(() => {
+            input.focus({ preventScroll: true });
+          });
+          // Clear the selecting flag after a delay longer than the blur timeout
+          setTimeout(() => { input._dropdownSelecting = false; }, 200);
         }
       }
     }
     function handleDropdownBlurDirect(event) {
+      // If a dropdown selection is in progress, don't process blur
+      if (event.target._dropdownSelecting) return;
       const dropdownContainer = event.target.closest('.custom-dropdown');
       const suggestionBox = dropdownContainer?.querySelector('.suggestions');
       if (suggestionBox && suggestionBox.contains(document.activeElement) && document.activeElement !== event.target) {
@@ -2377,7 +2532,7 @@
         return;
       }
 
-      const filterText = inputElement.value.trim();
+      const filterText = getFieldValue(inputElement).trim();
       const items = Array.from(suggestionBox.querySelectorAll("li"));
       let hasVisibleItems = false;
 
@@ -2425,13 +2580,20 @@
     function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
       const inputRect = inputElement.getBoundingClientRect();
 
-      // Position relative to the viewport
-      suggestionBox.style.position = 'fixed'; // Use fixed positioning for viewport coordinates
+      // Reset any stale max-height from previous positioning
+      suggestionBox.style.maxHeight = '';
+      suggestionBox.style.overflowY = '';
+
+      // Position relative to the viewport using fixed positioning
+      suggestionBox.style.position = 'fixed';
       suggestionBox.style.left = `${inputRect.left}px`;
-      suggestionBox.style.top = `${inputRect.bottom + 2}px`; // 2px gap below input
-      suggestionBox.style.minWidth = `${inputRect.width}px`;
-      suggestionBox.style.maxWidth = `350px`; // Max width constraint
-      suggestionBox.style.zIndex = '1000'; // Ensure it appears above other content
+      suggestionBox.style.minWidth = `${Math.max(inputRect.width, 120)}px`;
+      suggestionBox.style.maxWidth = `350px`;
+      suggestionBox.style.zIndex = '1000';
+
+      // Place dropdown directly below the input with a clear gap
+      const gap = 6;
+      suggestionBox.style.top = `${inputRect.bottom + gap}px`;
 
       // Store reference to the input element on the suggestion box for repositioning during scroll
       suggestionBox.dataset.linkedInputId = inputElement.id || '';
@@ -2461,29 +2623,36 @@
         const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
         const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
 
-        // Check if dropdown extends beyond visible viewport bottom (respects on-screen keyboard)
-        if (suggestionsRect.bottom > viewportHeight) {
-          const spaceAbove = inputRect.top; // Space above input in viewport
+        const spaceBelow = viewportHeight - inputRect.bottom - gap;
+        const spaceAbove = inputRect.top - gap;
 
-          if (suggestionsRect.height < spaceAbove) {
-            // If it fits above the input, position it above
-            suggestionBox.style.top = `${inputRect.top - suggestionsRect.height - 2}px`;
-          } else {
-            // Otherwise, position at bottom with a max-height constraint
-            const maxHeight = viewportHeight - inputRect.bottom - 10; // 10px from bottom of visible viewport
-            suggestionBox.style.maxHeight = `${maxHeight}px`;
-            suggestionBox.style.overflowY = 'auto';
-          }
+        if (suggestionsRect.height <= spaceBelow) {
+          // Fits below the input — keep it there (already positioned)
+        } else if (suggestionsRect.height <= spaceAbove) {
+          // Fits above the input — flip it
+          suggestionBox.style.top = `${inputRect.top - suggestionsRect.height - gap}px`;
+        } else if (spaceBelow >= spaceAbove) {
+          // More room below — constrain height to fit below
+          suggestionBox.style.maxHeight = `${spaceBelow - 10}px`;
+          suggestionBox.style.overflowY = 'auto';
+        } else {
+          // More room above — constrain height and flip above
+          suggestionBox.style.top = `${gap + 10}px`; // 10px from top of viewport
+          suggestionBox.style.maxHeight = `${spaceAbove - 10}px`;
+          suggestionBox.style.overflowY = 'auto';
+          // Recalculate position after constraining
+          const constrainedHeight = Math.min(suggestionsRect.height, spaceAbove - 10);
+          suggestionBox.style.top = `${inputRect.top - constrainedHeight - gap}px`;
         }
 
         // Check if dropdown extends beyond viewport right edge
         if (suggestionsRect.right > viewportWidth) {
-          suggestionBox.style.left = `${viewportWidth - suggestionsRect.width - 5}px`; // 5px padding from right edge
+          suggestionBox.style.left = `${viewportWidth - suggestionsRect.width - 5}px`;
         }
 
         // Check if dropdown extends beyond viewport left edge
         if (suggestionsRect.left < 0) {
-          suggestionBox.style.left = '5px'; // 5px padding from left edge
+          suggestionBox.style.left = '5px';
         }
       });
     }
@@ -2512,15 +2681,31 @@
         case 'Tab': // Treat Tab like Enter for selection if an item is highlighted
           if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
             event.preventDefault();
+            // Flag to suppress blur-triggered dropdown hiding during selection
+            inputElement._dropdownSelecting = true;
             selectDropdownItem(inputElement, visibleItems[focusedIndex]);
             hideDropdownSuggestions(inputElement);
             handleInlineFieldBlur({ target: inputElement }); // Ensure save
+            // If Tab was pressed, move focus to the next tabbable field
+            if (event.key === 'Tab') {
+              event._tabHandled = true; // Flag so contenteditable handler doesn't double-advance
+              focusNextTabbableField(inputElement, event.shiftKey);
+            } else {
+              // Enter: keep focus on the input so tab order isn't lost
+              inputElement._suppressDropdownReopen = true;
+              requestAnimationFrame(() => {
+                inputElement.focus({ preventScroll: true });
+              });
+            }
+            // Clear the selecting flag after blur timeout window
+            setTimeout(() => { inputElement._dropdownSelecting = false; }, 200);
           } else if (event.key === 'Enter') { // If Enter but no selection, just hide
             event.preventDefault();
             hideDropdownSuggestions(inputElement);
-            // inputElement.blur(); // Optionally blur
+          } else if (event.key === 'Tab') {
+            // No item highlighted — hide dropdown and let the contenteditable Tab handler manage it
+            hideDropdownSuggestions(inputElement);
           }
-          // Allow Tab to function normally if no item is highlighted
           break;
         case 'Escape':
           event.preventDefault();
@@ -2541,8 +2726,8 @@
     }
 
     function selectDropdownItem(inputElement, selectedLi) {
-      inputElement.value = selectedLi.textContent.trim();
-      inputElement.title = inputElement.value; // Update title attribute
+      setFieldValue(inputElement, selectedLi.textContent.trim());
+      inputElement.title = getFieldValue(inputElement); // Update title attribute
       adjustInputWidth(inputElement); // Adjust width based on new value
       // The blur handler (handleInlineFieldBlur) will save the state.
       // It's triggered by the click handler or after Enter/Tab.
@@ -2571,6 +2756,8 @@
     function processDropdownBlur(inputElement) {
       // Delay hiding to allow click on suggestion to register
       setTimeout(() => {
+        // If a dropdown selection happened during the delay, skip
+        if (inputElement._dropdownSelecting) return;
         // Check if focus has moved to an element *within the same custom dropdown's suggestions*
         const dropdownContainer = inputElement.closest('.custom-dropdown');
         const suggestionBox = dropdownContainer?.querySelector('.suggestions');
@@ -2584,6 +2771,47 @@
         hideDropdownSuggestions(inputElement);
         // The main blur handler (handleInlineFieldBlur) attached to the input will save its value.
       }, 150);
+    }
+
+    /** Moves focus to the next (or previous, if reverse=true) tabbable field */
+    function focusNextTabbableField(currentElement, reverse) {
+      // Gather only inline input fields within sectionContainer (skip buttons, controls, etc.)
+      const container = document.getElementById('sectionContainer');
+      if (!container) return;
+      const tabbables = Array.from(container.querySelectorAll(
+        '.inline-field[contenteditable="true"]'
+      )).filter(el => {
+        // Filter out hidden elements and elements in inactive tab panes
+        if (el.offsetParent === null) return false;
+        if (el.closest('[style*="display: none"]')) return false;
+        const tabPane = el.closest('.tab-pane');
+        if (tabPane && !tabPane.classList.contains('active')) return false;
+        return true;
+      });
+      if (tabbables.length === 0) return;
+      const currentIndex = tabbables.indexOf(currentElement);
+      let nextIndex;
+      if (reverse) {
+        nextIndex = currentIndex <= 0 ? tabbables.length - 1 : currentIndex - 1;
+      } else {
+        nextIndex = currentIndex >= tabbables.length - 1 ? 0 : currentIndex + 1;
+      }
+      const nextField = tabbables[nextIndex];
+      if (nextField) {
+        // Use preventScroll to avoid Safari jumping to top
+        nextField.focus({ preventScroll: true });
+        // Use a rAF to scroll into view after focus is settled, avoiding Safari's scroll reset
+        requestAnimationFrame(() => {
+          const rect = nextField.getBoundingClientRect();
+          const viewH = window.innerHeight;
+          const topThird = viewH / 3;
+          // If the field is already in the top third, don't scroll
+          if (rect.top >= 0 && rect.top <= topThird) return;
+          // Scroll so the field lands at roughly the top third of the viewport
+          const scrollTarget = window.scrollY + rect.top - topThird;
+          window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+        });
+      }
     }
 
     function handleScrollForDropdowns() {
@@ -3145,6 +3373,11 @@
           }
         });
       });
+
+      // Normalize all empty-field elements so :empty CSS pseudo-class works for placeholder display
+      document.querySelectorAll('.inline-field.empty-field').forEach(field => {
+        normalizeFieldEmpty(field);
+      });
     }
 
     /**
@@ -3320,9 +3553,11 @@
       const minWidth = parseFloat(inputStyle.minWidth) || (isCustomDropdown ? 80 : MIN_INLINE_WIDTH);
 
       widthMeasurerSpan.style.font = inputStyle.font;
-      widthMeasurerSpan.textContent = input.placeholder || ' '; // Measure placeholder width
+      const placeholderText = input.dataset.placeholder || ' ';
+      widthMeasurerSpan.textContent = placeholderText; // Measure placeholder width
       const placeholderWidth = widthMeasurerSpan.scrollWidth;
-      widthMeasurerSpan.textContent = input.value || ' '; // Measure value width
+      const fieldValue = getFieldValue(input);
+      widthMeasurerSpan.textContent = fieldValue || ' '; // Measure value width
       const valueWidth = widthMeasurerSpan.scrollWidth;
 
       // Add a small buffer (e.g., 2-5px) to prevent text from touching the edge
@@ -3337,8 +3572,14 @@
       let maxWidth = parentWidth * (MAX_INLINE_WIDTH_PERCENT / 100);
       maxWidth = Math.max(maxWidth, minWidth * 1.5); // Ensure max width is at least 1.5x min width
 
-      const newWidth = Math.min(maxWidth, Math.max(minWidth, requiredContentWidth));
-      input.style.width = `${newWidth}px`;
+      if (requiredContentWidth > maxWidth) {
+        // Content exceeds max width — set to max and let CSS wrap the text
+        input.style.width = `${maxWidth}px`;
+      } else {
+        // Content fits — size to content
+        const newWidth = Math.max(minWidth, requiredContentWidth);
+        input.style.width = `${newWidth}px`;
+      }
     }
 
     function adjustAllInitialSizes() {

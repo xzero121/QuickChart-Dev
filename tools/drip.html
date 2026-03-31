@@ -6,6 +6,23 @@
   <title>IV Drip Calculator</title>
   <style>
     /* Minimal structural styles - colors handled by parent when loaded in modal */
+    .iv-drip-layout { display: flex; align-items: stretch; gap: 0; }
+    .iv-gauge-sidebar {
+      width: 42px; min-width: 42px; flex-shrink: 0;
+      display: flex; flex-direction: column;
+      border-radius: 0 0 0 0.5rem; overflow: hidden;
+    }
+    .iv-gauge-band {
+      flex: 1; display: flex; align-items: center;
+      justify-content: center;
+    }
+    .iv-gauge-label {
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      font-size: 0.7rem; font-weight: 700; color: #fff;
+      user-select: none; letter-spacing: 0.5px; line-height: 1;
+    }
+    .iv-gauge-label-dark { color: #333; }
+    .iv-drip-layout .card { flex: 1; padding: 1rem; padding-left: 14px; }
     .row { display:flex; gap:10px; }
     .row > * { flex:1; }
     .bubbleRow { display:flex; gap:10px; margin-top: 12px; }
@@ -43,6 +60,29 @@
   </style>
 </head>
 <body>
+  <div class="iv-drip-layout">
+
+    <div class="iv-gauge-sidebar" aria-label="IV catheter gauge colour reference">
+      <div class="iv-gauge-band" style="background:#FF8000;" title="14 gauge – orange">
+        <span class="iv-gauge-label">14G</span>
+      </div>
+      <div class="iv-gauge-band" style="background:#888888;" title="16 gauge – grey">
+        <span class="iv-gauge-label">16G</span>
+      </div>
+      <div class="iv-gauge-band" style="background:#28A745;" title="18 gauge – green">
+        <span class="iv-gauge-label">18G</span>
+      </div>
+      <div class="iv-gauge-band" style="background:#E83E8C;" title="20 gauge – pink">
+        <span class="iv-gauge-label">20G</span>
+      </div>
+      <div class="iv-gauge-band" style="background:#007BFF;" title="22 gauge – blue">
+        <span class="iv-gauge-label">22G</span>
+      </div>
+      <div class="iv-gauge-band" style="background:#FFC107;" title="24 gauge – yellow">
+        <span class="iv-gauge-label iv-gauge-label-dark">24G</span>
+      </div>
+    </div>
+
   <div class="card">
     <h2 style="margin:0 0 6px; text-align:center;">IV Drip Calculator</h2>
 
@@ -75,6 +115,8 @@
 
     <div id="result"></div>
   </div>
+
+  </div><!-- end .iv-drip-layout -->
 
   <script src="./calcs.js"></script>
 
