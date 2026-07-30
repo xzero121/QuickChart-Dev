@@ -33,6 +33,7 @@
       "*M. Powers, Paramedic",
       "*T. Spalding, Paramedic",
       "*L. Kleinhouse, EMT-A",
+      "*A. VanTassell, EMT-A",
       "*D. Sooter, EMT-A",
       "*B. Brown, EMT-B",
       "*E. Brown, EMT-B",
@@ -40,8 +41,7 @@
       "*K. Frost, EMT-B",
       "*V. Nguyen, EMT-B",
       "*S. Park, EMT-B",
-      "*C. Tate, EMT-B",
-      "*A. VanTassell, EMT-B"
+      "*C. Tate, EMT-B"
     ],
     "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
     "Receiving Facility": [
@@ -91,7 +91,10 @@
       "*Norton Pavilion",
       "*Kindred Hospital",
       "*Maple Manor",
-      "*IU Methodist Hospital"
+      "*IU Methodist Hospital",
+      "*Baptist Health Cancer Care",
+      "*Rivercrest Senior Living",
+      "*Frazier Rehab"
     ]
   },
   "narrativeSections": [
