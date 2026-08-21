@@ -7,12 +7,11 @@
   <title>QuickChart</title>
 
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-     crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
+  <link rel="stylesheet" href="CSS/bootstrap-min-5.3.8.css" />
+  <link rel="stylesheet" href="CSS/bootstrap-icons-1.13.1.css">
+  <link rel="stylesheet" href="CSS/font-awesome-7.2.0-all-min.css" />
+  <script src="JS/Sortable-1.15.0-min.js"></script>
+  <script src="JS/fuse-6.6.2-min.js"></script>
   <script src="tools/calcs.js"></script>
 </head>
 
@@ -124,9 +123,9 @@
     </div>
   </div>
 
-  <div id="versionText" class="version-text">Version: 2.1.6 Pre</div>
+  <div id="versionText" class="version-text">Version: 2.1.8</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="JS/bootstrap-bundle-5.3.8-min.js"></script>
 
   <script>
     // --- Constants ---
@@ -2300,13 +2299,14 @@
         const suggestionBox = dropdownContainer.querySelector(".suggestions");
         if (!suggestionBox) return;
 
-        input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect);
-        input.removeEventListener('input', handleDropdownInputDirect); input.addEventListener('input', handleDropdownInputDirect);
-        input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect);
-        // Click/mousedown on suggestions is handled by delegation on suggestionBox or its parent
+        // Focus/input/keydown/blur are handled by the delegated listeners on #sectionContainer
+        // (attachDropdownLogic), which already cover elements added after init via event bubbling.
+        // Attaching direct copies here as well caused every keydown (e.g. ArrowUp/ArrowDown) to
+        // fire twice for dynamically-added sentences, skipping every other dropdown item.
+        // Only suggestion-click needs a direct listener: it calls stopPropagation() to avoid
+        // double-handling the same click via the delegated listener.
         suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); // Attach to suggestionBox
         suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
-        input.removeEventListener('blur', handleDropdownBlurDirect); input.addEventListener('blur', handleDropdownBlurDirect);
       });
     }
 
@@ -2367,20 +2367,9 @@
     }
 
     // Direct handlers (for dynamically added elements if delegation is tricky)
-    function handleDropdownFocusDirect(event) {
-      // Don't reopen dropdown if we just selected an item and refocused
-      if (event.target._suppressDropdownReopen) {
-        event.target._suppressDropdownReopen = false;
-        return;
-      }
-      filterAndShowDropdownSuggestions(event.target);
-    }
-    function handleDropdownInputDirect(event) {
-      filterAndShowDropdownSuggestions(event.target);
-    }
-    function handleDropdownKeydownDirect(event) {
-      processDropdownKeydown(event.target, event);
-    }
+    // Note: focus/input/keydown/blur direct handlers were removed — the delegated
+    // listeners on #sectionContainer already cover dynamically-added elements via
+    // bubbling, and attaching both caused double-firing (see attachDropdownLogicForElement).
     function handleDropdownSuggestionClickDirect(event) { // Attached to suggestionBox
       const li = event.target.closest('li');
       if (li) {
@@ -2405,20 +2394,7 @@
         }
       }
     }
-    function handleDropdownBlurDirect(event) {
-      // If a dropdown selection is in progress, don't process blur
-      if (event.target._dropdownSelecting) return;
-      const dropdownContainer = event.target.closest('.custom-dropdown');
-      const suggestionBox = dropdownContainer?.querySelector('.suggestions');
-      if (suggestionBox && suggestionBox.contains(document.activeElement) && document.activeElement !== event.target) {
-        // If focus is now on a suggestion item, don't hide yet.
-        // The click on the suggestion will handle hiding.
-        return;
-      }
-      processDropdownBlur(event.target);
-    }
-
-    /** 
+    /**
      * Smart search scoring for dropdown items.
      * Returns a score where lower = better match. Returns Infinity if no match.
      * Supports: exact match, prefix match, contains, multi-word (all terms must match), and fuzzy matching.
