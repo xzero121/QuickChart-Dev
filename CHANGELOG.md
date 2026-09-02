@@ -50,16 +50,16 @@ this file starts being maintained going forward from `2.1.7`.
   duplicated section array.
 - Both features are config-driven and invisible by default: a configuration
   with no `pages` key and no link tags renders exactly as before — no page
-  steps, no chain icons. Added `waitreturn.json` as a working three-page
-  example.
+  steps, no chain icons. The page count is unbounded; added `cancercare.json`
+  as a working two-page example.
 - **Choose Template** replaces the free-text configuration name box. A button
   beside New Run opens a dialog listing the available templates by name and
-  description, marking the current one and flagging multi-page templates — so
-  nobody has to know a filename any more. The list comes from `templates.json`
-  (filenames, in display order); each template's own new `name` and
-  `description` fields supply its label and summary, so the catalogue stays in
-  the config files. Files left out of the manifest, such as `global.json`, are
-  never offered.
+  description, with a search box filtering the list, marking the current one
+  and flagging multi-page templates — so nobody has to know a filename any
+  more. The list comes from `templates.json` (filenames, in display order);
+  each template's own new `name` and `description` fields supply its label and
+  summary, so the catalogue stays in the config files. Files left out of the
+  manifest, such as `global.json`, are never offered.
 - **Output Section Titles** moved out of the header into a new Settings dialog,
   opened from the toolbox menu at bottom-left, and the setting is now
   remembered between visits. The duplicate mobile copy of the toggle is gone.
