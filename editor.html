@@ -550,11 +550,12 @@
         }
         
         if (type === 'customDropdown') {
-          const label = rest[0];
+          // A "~linkId" suffix binds the field to a shared value; it isn't part of the label
+          const label = rest[0] ? rest[0].split('~')[0] : rest[0];
           if (!label || label.trim() === '') {
             errors.push(`Dropdown missing label in [${content}]`);
           }
-          
+
           // Check if dropdown exists in local or global reference
           if (label && !templateData.localDropdownOptions[label] && !globalReference.globalDropdownOptions[label]) {
             // Check if it has inline options

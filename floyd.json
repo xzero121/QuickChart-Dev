@@ -1,4 +1,6 @@
 {
+  "name": "Baptist Health Floyd",
+  "description": "Narrative template for Baptist Health Floyd EMS transports in the DCHART-M format.",
   "localDropdownOptions": {
     "Unit #": [
       "Medic 5", 
@@ -104,7 +106,7 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "[customDropdown:Unit #] was dispatched to [customDropdown:Sending Facility] for [text:Age] [customDropdown:Age Unit:year-old, month-old] [customDropdown:Gender]."
+          "text": "[customDropdown:Unit #~unit] was dispatched to [customDropdown:Sending Facility~locA] for [text:Age] [customDropdown:Age Unit:year-old, month-old, week-old, day-old] [customDropdown:Gender]."
         },
         {
           "text": "The response was [customDropdown:Response Type]."
@@ -228,10 +230,10 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient was transferred to the stretcher via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], secured to stretcher with all available straps and side rails raised, and loaded into [customDropdown:Unit #], without complications."
+          "text": "The patient was transferred to the stretcher via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], secured to stretcher with all available straps and side rails raised, and loaded into [customDropdown:Unit #~unit], without complications."
         },
         {
-          "text": "The patient was transported to [customDropdown:Receiving Facility]."
+          "text": "The patient was transported to [customDropdown:Receiving Facility~locB]."
         },
         {
           "text": "Upon arrival, the patient's condition was [customDropdown:Arrival Condition:stable,stable and within normal limits]."
@@ -271,7 +273,7 @@
           "tabs": [
             {
               "title": "Interfacility",
-              "text": "The patient was taken to [customDropdown:Receiving Facility] due to the need for [customDropdown:Reason] that [customDropdown:Sending Facility] was unable to provide."
+              "text": "The patient was taken to [customDropdown:Receiving Facility~locB] due to the need for [customDropdown:Reason] that [customDropdown:Sending Facility~locA] was unable to provide."
             },
             {
               "title": "To Residence",

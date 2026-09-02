@@ -1,0 +1,8 @@
+{
+  "_comment": "Templates offered in the Choose Template dialog, in display order. Each entry is a config filename without the .json extension; the dialog reads that file's own 'name' and 'description' fields for its label and summary. Files not listed here (such as global.json) are never offered.",
+  "templates": [
+    "default",
+    "floyd",
+    "cancercare"
+  ]
+}

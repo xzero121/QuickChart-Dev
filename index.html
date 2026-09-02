@@ -26,33 +26,16 @@
           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
         <span style="display:none;">QuickChart</span>
       </div>
+      <!-- Page tabs sit between the logo and the controls; shown only for multi-page configs -->
       <div class="header-center d-flex align-items-center">
-        <!-- Mobile-only section titles toggle -->
-        <div class="form-check form-switch mobile-section-toggle" title="Toggle inclusion of section titles in the final narrative">
-          <input class="form-check-input" type="checkbox" id="toggleSectionTitlesMobile" checked>
-          <label class="form-check-label" for="toggleSectionTitlesMobile">
-            Output Section Titles
-          </label>
-        </div>
+        <div id="pageTabs" class="page-tabs" style="display: none;"></div>
       </div>
       <div class="header-right">
         <div class="header-controls-row">
-          <div class="input-group" id="jsonFileInputGroup">
-            <input type="text" id="jsonFileInput" class="form-control form-control-sm"
-              placeholder="Config Name (e.g., default)" value="default"
-              title="Enter configuration name (e.g., default, trauma) and click Load">
-            <button id="loadJsonBtn" class="btn btn-primary btn-sm">Load</button>
-          </div>
+          <button id="chooseTemplateBtn" class="btn btn-primary btn-sm"
+            title="Browse and load a narrative template">Choose Template</button>
           <button id="newRunBtn" class="btn btn-warning btn-sm"
             title="Clear the current narrative and start over with the loaded configuration's defaults">New Run</button>
-        </div>
-        <div class="toggle-newrun-row">
-          <div class="form-check form-switch" id="sectionTitlesToggle" title="Toggle inclusion of section titles in the final narrative">
-            <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked>
-            <label class="form-check-label" for="toggleSectionTitles">
-              Output Section Titles
-            </label>
-          </div>
         </div>
       </div>
     </div>
@@ -123,16 +106,70 @@
     </div>
   </div>
 
-  <div id="versionText" class="version-text">Version: 2.1.8</div>
+  <!-- Settings -->
+  <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="settingsModalLabel"><i class="bi bi-gear me-2"></i>Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-row">
+            <div class="form-check form-switch" id="sectionTitlesToggle">
+              <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked>
+              <label class="form-check-label" for="toggleSectionTitles">Output Section Titles</label>
+            </div>
+            <div class="settings-help">Include each section's heading (Dispatch, Assessment, …) above its text in the generated narrative.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template chooser -->
+  <div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="templateModalLabel"><i class="bi bi-collection me-2"></i>Choose a Template</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="template-search-wrap">
+            <i class="bi bi-search template-search-icon" aria-hidden="true"></i>
+            <input type="text" id="templateSearch" class="form-control template-search"
+              placeholder="Search templates…" autocomplete="off" aria-label="Search templates">
+          </div>
+          <div id="templateList" class="template-list">
+            <p class="text-muted text-center py-4 mb-0">Loading templates…</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="text-muted small me-auto">Loading a template discards the current narrative.</div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="versionText" class="version-text">Version: 3.1.0</div>
 
   <script src="JS/bootstrap-bundle-5.3.8-min.js"></script>
 
   <script>
     // --- Constants ---
     const DEBUG = false; // Set to true to enable console logging
-    const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
+    // Capture groups: 1=type, 2=label, 3=link id (optional, "~id"), 4=options (optional)
+    // The link id is placed BEFORE options so every consumer that reads match[2] (the label)
+    // or destructures (match, type, label) is unaffected by its addition.
+    const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:~\]]+)(?:~([^:~\]]+))?(?::([^:\]]+))?\]/g;
     const incrementalRegex = /\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g; // Updated regex for incremental content with nested brackets
     const LOCAL_STORAGE_KEY = 'QuickChart-Beta';
+    const SECTION_TITLES_KEY = 'QuickChart-SectionTitles'; // Remembered "Output Section Titles" setting
     const MIN_INLINE_WIDTH = 50; // Min width for inline fields (px)
     const MAX_INLINE_WIDTH_PERCENT = 80; // Max width relative to parent (%)
     const DEFAULT_CONFIG_NAME = 'default'; // Default config file name
@@ -142,12 +179,22 @@
     let rawCommonSentences = [];
     let commonSentences = [];
     let globalDropdownOptions = {};
-    let defaultNarrativeSections = []; // Holds the *defaults* from the loaded JSON
+    let defaultNarrativeSections = []; // Holds the *defaults* from the loaded JSON (active page)
     let narrativeSections = []; // Holds the *current working state* (potentially modified by user)
+
+    // --- Multi-page State ---
+    // pages: [{ name, sections, defaultSections }]. A config without a "pages" key
+    // produces exactly one implicit page, so all of this is inert for existing configs.
+    // `narrativeSections` and `defaultNarrativeSections` above are ALIASES for the active
+    // page's arrays, which is what lets the ~40 existing references keep working unchanged.
+    let pages = [];
+    let activePageIndex = 0;
+    let linkedValues = {}; // linkId -> value shared by every field tagged with that id
     let fuse;
     let sentenceIdCounter = 1;
     let widthMeasurerSpan; // Ref to hidden span for width calc
     let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
+    let currentConfigLabel = DEFAULT_CONFIG_NAME; // Its friendly "name" from the JSON, if any
     let activeDropdowns = []; // Track visible dropdown suggestion boxes
 
     /** Helper: Get the text value of an inline field (contenteditable span) */
@@ -168,6 +215,125 @@
       if (!val) {
         field.innerHTML = ''; // Remove any leftover <br>, whitespace, etc.
       }
+    }
+
+    // --- Multi-page / Linked-field Helpers ---
+
+    /** The page object currently being edited. */
+    function activePage() {
+      return pages[activePageIndex] || null;
+    }
+
+    /**
+     * Re-points `narrativeSections` / `defaultNarrativeSections` at the active page.
+     * Must be called after any change to `pages` or `activePageIndex`.
+     */
+    function syncActivePageAliases() {
+      const page = activePage();
+      narrativeSections = page ? page.sections : [];
+      defaultNarrativeSections = page ? page.defaultSections : [];
+    }
+
+    /** True if a sentence (or one of its tabs) uses incremental "+"/"++" text. */
+    function isIncrementalText(text) {
+      return !!text && (text.startsWith('+') || text.startsWith('++'));
+    }
+
+    /**
+     * Incremental sentences store values as per-occurrence arrays, which has no
+     * sensible single shared value, so they never participate in linking.
+     */
+    function sentenceSupportsLinking(sentenceObj, tabIndex) {
+      if (!sentenceObj) return false;
+      if (typeof tabIndex === 'number' && sentenceObj.tabs) {
+        return !isIncrementalText(sentenceObj.tabs[tabIndex]?.text || "");
+      }
+      return !isIncrementalText(sentenceObj.text || "");
+    }
+
+    /** Has the user detached this specific field from its shared variable? */
+    function isUnlinked(sentenceObj, tabIndex, linkId) {
+      if (!sentenceObj || !linkId) return false;
+      if (typeof tabIndex === 'number' && sentenceObj.tabs) {
+        return !!sentenceObj.tabUnlinked?.[tabIndex]?.[linkId];
+      }
+      return !!sentenceObj.unlinked?.[linkId];
+    }
+
+    /** Sets (or clears) the unlinked flag for one field. */
+    function setUnlinked(sentenceObj, tabIndex, linkId, value) {
+      if (!sentenceObj || !linkId) return;
+      if (typeof tabIndex === 'number' && sentenceObj.tabs) {
+        if (!sentenceObj.tabUnlinked) sentenceObj.tabUnlinked = sentenceObj.tabs.map(() => ({}));
+        if (!sentenceObj.tabUnlinked[tabIndex]) sentenceObj.tabUnlinked[tabIndex] = {};
+        if (value) sentenceObj.tabUnlinked[tabIndex][linkId] = true;
+        else delete sentenceObj.tabUnlinked[tabIndex][linkId];
+      } else {
+        if (!sentenceObj.unlinked) sentenceObj.unlinked = {};
+        if (value) sentenceObj.unlinked[linkId] = true;
+        else delete sentenceObj.unlinked[linkId];
+      }
+    }
+
+    /**
+     * Resolves the value for a single placeholder occurrence: the shared value when the
+     * field is linked and still attached, otherwise the sentence's own stored value.
+     */
+    function valueFor(label, linkId, values, sentenceObj, tabIndex) {
+      if (linkId
+        && sentenceSupportsLinking(sentenceObj, tabIndex)
+        && !isUnlinked(sentenceObj, tabIndex, linkId)
+        && Object.prototype.hasOwnProperty.call(linkedValues, linkId)) {
+        return linkedValues[linkId];
+      }
+      return (values || {})[label];
+    }
+
+    /** Reads the (sentenceObj, tabIndex) pair a rendered inline field belongs to. */
+    function fieldContext(field) {
+      const li = field.closest('li[data-id]');
+      if (!li) return { sentenceObj: null, tabIndex: undefined };
+      const sentenceObj = findSentenceById(li.dataset.id);
+      const tabPane = field.closest('.tab-pane[data-tab-index]');
+      const tabIndex = tabPane ? parseInt(tabPane.dataset.tabIndex) : undefined;
+      return { sentenceObj, tabIndex: isNaN(tabIndex) ? undefined : tabIndex };
+    }
+
+    /**
+     * Pushes a new shared value into every other still-linked field carrying the same
+     * link id, so same-page links update live as the user types.
+     */
+    function propagateLinkedValue(linkId, value, sourceField) {
+      if (!linkId) return;
+      document.querySelectorAll(`.inline-field[data-link-id="${linkId}"]`).forEach(field => {
+        if (field === sourceField) return;
+        if (field.dataset.linked !== 'true') return; // user detached this one
+        if (getFieldValue(field) === value) return;
+
+        const { sentenceObj, tabIndex } = fieldContext(field);
+        setFieldValue(field, value);
+        field.title = value || field.dataset.placeholder || '';
+        if (value && value.trim() !== '') field.classList.remove('empty-field');
+        adjustInputWidth(field);
+
+        // Keep the owning sentence's own store in step, so unlinking later retains the value.
+        const label = field.dataset.label;
+        if (sentenceObj && label) {
+          if (typeof tabIndex === 'number' && sentenceObj.tabValues?.[tabIndex]) {
+            sentenceObj.tabValues[tabIndex][label] = value;
+          } else if (sentenceObj.values) {
+            sentenceObj.values[label] = value;
+          }
+        }
+      });
+    }
+
+    /** Records a field's value as the shared value for its link id and fans it out. */
+    function commitLinkedValue(field, value) {
+      const linkId = field.dataset.linkId;
+      if (!linkId || field.dataset.linked !== 'true') return;
+      linkedValues[linkId] = value;
+      propagateLinkedValue(linkId, value, field);
     }
 
     // --- Fuse.js Options ---
@@ -203,7 +369,7 @@
       attachHeaderListeners();
       initializeDarkMode(); // Add dark mode initialization
       initializeBugReport(); // Initialize bug report functionality
-      initializeSectionTitlesToggleSync(); // Sync mobile and desktop toggles
+      initializeSettings(); // Settings modal (opened from the toolbox menu)
 
       try {
         const savedConfigName = localStorage.getItem("QuickChart-Beta-Config");
@@ -215,6 +381,7 @@
           await loadConfiguration(savedConfigName, true);
         }
         loadState();
+        renderPageTabs();
         buildSectionsUI();
         initializeTooltips();
         attachAllEventListeners(); // Consolidated event listener attachment
@@ -234,6 +401,92 @@
       attachBlurListeners();
       attachDropdownLogic();
       attachContentEditableHandlers();
+      attachLinkToggleListeners();
+    }
+
+    // --- Linked Field Chain Toggle ---
+
+    function attachLinkToggleListeners() {
+      const container = document.getElementById('sectionContainer');
+      if (!container) return;
+      // Delegated, so dynamically added sentences are covered without direct listeners
+      container.removeEventListener('click', handleLinkToggleClickDelegated);
+      container.addEventListener('click', handleLinkToggleClickDelegated);
+    }
+
+    function handleLinkToggleClickDelegated(event) {
+      const btn = event.target.closest('.link-chain-btn');
+      if (!btn) return;
+      event.preventDefault();
+      event.stopPropagation();
+      toggleFieldLink(btn);
+    }
+
+    /** The chain button leads its field inside the shared .linked-field wrapper. */
+    function findFieldForLinkToggle(btn) {
+      const wrap = btn.closest('.linked-field');
+      return wrap ? wrap.querySelector('.inline-field') : null;
+    }
+
+    /** Writes a value into the sentence's own store, where unlinked fields read from. */
+    function writeSentenceValue(sentenceObj, tabIndex, label, value) {
+      if (!sentenceObj || !label) return;
+      if (typeof tabIndex === 'number' && sentenceObj.tabs) {
+        if (!sentenceObj.tabValues) sentenceObj.tabValues = sentenceObj.tabs.map(() => ({}));
+        if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {};
+        sentenceObj.tabValues[tabIndex][label] = value;
+      } else {
+        if (!sentenceObj.values) sentenceObj.values = {};
+        sentenceObj.values[label] = value;
+      }
+    }
+
+    /**
+     * Toggles one field between linked (golden key) and unlinked (grey key).
+     * Unlinking keeps the field's current value but stops it syncing; re-linking adopts
+     * the shared value if there is one, otherwise promotes this field's value.
+     */
+    function toggleFieldLink(btn) {
+      const linkId = btn.dataset.linkId;
+      const field = findFieldForLinkToggle(btn);
+      if (!linkId || !field) return;
+
+      const { sentenceObj, tabIndex } = fieldContext(field);
+      if (!sentenceObj) return;
+
+      const label = field.dataset.label;
+      const willBeLinked = field.dataset.linked !== 'true';
+
+      if (willBeLinked) {
+        field.dataset.linked = 'true';
+        setUnlinked(sentenceObj, tabIndex, linkId, false);
+
+        if (Object.prototype.hasOwnProperty.call(linkedValues, linkId)) {
+          // Adopt the shared value
+          const shared = linkedValues[linkId];
+          setFieldValue(field, shared);
+          field.title = shared || field.dataset.placeholder || '';
+          if (shared && shared.trim() !== '') field.classList.remove('empty-field');
+          adjustInputWidth(field);
+          writeSentenceValue(sentenceObj, tabIndex, label, shared);
+        } else {
+          // Nothing shared yet: this field's value becomes the shared one
+          commitLinkedValue(field, getFieldValue(field));
+        }
+      } else {
+        field.dataset.linked = 'false';
+        setUnlinked(sentenceObj, tabIndex, linkId, true);
+        // Retain whatever is showing as this field's own independent value
+        writeSentenceValue(sentenceObj, tabIndex, label, getFieldValue(field));
+      }
+
+      const nowLinked = field.dataset.linked === 'true';
+      btn.closest('.linked-field')?.classList.toggle('unlinked', !nowLinked);
+      btn.title = nowLinked ? LINK_TITLE_LINKED : LINK_TITLE_UNLINKED;
+      btn.setAttribute('aria-label', btn.title);
+
+      saveState();
+      if (DEBUG) console.log(`Field "${label}" (${linkId}) ${nowLinked ? 'linked' : 'unlinked'}.`);
     }
 
     function attachAllEventListenersForElement(element) {
@@ -324,34 +577,25 @@
 
     /** Attaches event listeners to header elements */
     function attachHeaderListeners() {
-      const loadBtn = document.getElementById('loadJsonBtn');
-      const fileInput = document.getElementById('jsonFileInput');
+      const chooseTemplateBtn = document.getElementById('chooseTemplateBtn');
       const newRunBtn = document.getElementById('newRunBtn');
 
-      // Attach event listeners to the load button and file input
-      if (loadBtn && fileInput) {
-        loadBtn.addEventListener('click', () => {
-          const configName = fileInput.value.trim() || DEFAULT_CONFIG_NAME;
-          showConfirmationModal(
-            `Load Configuration: ${configName}?`,
-            `Loading '${configName}' will discard your current narrative and replace it with the defaults from that configuration. Continue?`,
-            "Your work will not be saved.",
-            () => {
-              const modalEl = document.getElementById("confirmationModal");
-              // Use a one-time event listener for when the modal is hidden
-              modalEl.addEventListener('hidden.bs.modal', async function handler() {
-                modalEl.removeEventListener('hidden.bs.modal', handler); // Clean up
-                await loadConfiguration(configName);
-                resetToCurrentConfigDefaults(); // This will rebuild UI and reattach listeners
-              }, { once: true });
-            },
-            () => { } // User cancelled
-          );
+      if (chooseTemplateBtn) {
+        chooseTemplateBtn.addEventListener('click', () => openTemplateChooser());
+      } else { console.error("Choose Template button not found."); }
+
+      const templateSearch = document.getElementById('templateSearch');
+      if (templateSearch) {
+        templateSearch.addEventListener('input', () => renderTemplateList(templateSearch.value));
+        templateSearch.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && templateSearch.value) {
+            // First Escape clears the search; a second closes the dialog
+            e.stopPropagation();
+            templateSearch.value = '';
+            renderTemplateList('');
+          }
         });
-        fileInput.addEventListener("keypress", (e) => {
-          if (e.key === 'Enter') { e.preventDefault(); loadBtn.click(); }
-        });
-      } else { console.error("Load button or file input not found."); }
+      }
 
       // Attach event listener to the new run button
       if (newRunBtn) {
@@ -367,6 +611,177 @@
           );
         });
       } else { console.error("New Run button not found."); }
+    }
+
+    // --- Template Chooser ---
+
+    let templateCatalogue = []; // Last fetched list, kept so searching filters without refetching
+
+    /** Keeps the loaded template's name discoverable now that the name box is gone. */
+    function updateTemplateButtonLabel() {
+      const btn = document.getElementById('chooseTemplateBtn');
+      if (btn) btn.title = `Current template: ${currentConfigLabel}. Click to choose another.`;
+    }
+
+    /**
+     * Reads the list of selectable templates from templates.json, then pulls each
+     * one's own `name`/`description` so the list stays described by the config files
+     * themselves rather than by a duplicated catalogue.
+     */
+    async function fetchTemplateList() {
+      let names = [];
+      try {
+        const res = await fetch('templates.json', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          names = Array.isArray(data) ? data : (data.templates || []);
+        } else {
+          console.warn('templates.json not found; falling back to the default template only.');
+        }
+      } catch (e) {
+        console.warn('Could not read templates.json:', e);
+      }
+      if (names.length === 0) names = [DEFAULT_CONFIG_NAME];
+
+      return Promise.all(names.map(async (entry) => {
+        const file = typeof entry === 'string' ? entry : entry.file;
+        const template = { file, name: file, description: '', pages: 0 };
+        try {
+          const res = await fetch(`${String(file).toLowerCase()}.json`, { cache: 'no-store' });
+          if (res.ok) {
+            const cfg = await res.json();
+            if (cfg.name) template.name = cfg.name;
+            if (cfg.description) template.description = cfg.description;
+            if (Array.isArray(cfg.pages)) template.pages = cfg.pages.length;
+          } else {
+            template.missing = true;
+          }
+        } catch (e) {
+          template.missing = true;
+        }
+        return template;
+      }));
+    }
+
+    async function openTemplateChooser() {
+      const modalEl = document.getElementById('templateModal');
+      const listEl = document.getElementById('templateList');
+      const searchEl = document.getElementById('templateSearch');
+      if (!modalEl || !listEl) return;
+
+      if (searchEl) searchEl.value = ''; // Always open on the full list
+      listEl.innerHTML = '<p class="text-muted text-center py-4 mb-0">Loading templates…</p>';
+
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modalEl.addEventListener('shown.bs.modal', () => searchEl?.focus(), { once: true });
+      modal.show();
+
+      templateCatalogue = await fetchTemplateList();
+      renderTemplateList(searchEl ? searchEl.value : '');
+    }
+
+    /** Builds one row of the template list. */
+    function buildTemplateItem(t) {
+      const isCurrent = String(t.file).toLowerCase() === String(currentConfigName).toLowerCase();
+
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.classList.add('template-item');
+      if (isCurrent) item.classList.add('current');
+      if (t.missing) item.classList.add('missing');
+      item.disabled = !!t.missing;
+
+      const title = document.createElement('div');
+      title.classList.add('template-item-title');
+      title.textContent = t.name;
+
+      if (t.pages > 1) {
+        const badge = document.createElement('span');
+        badge.classList.add('template-badge');
+        badge.textContent = `${t.pages} pages`;
+        badge.title = 'This template produces more than one narrative page';
+        title.appendChild(badge);
+      }
+      if (isCurrent) {
+        const badge = document.createElement('span');
+        badge.classList.add('template-badge', 'current-badge');
+        badge.textContent = 'Current';
+        title.appendChild(badge);
+      }
+
+      const desc = document.createElement('div');
+      desc.classList.add('template-item-desc');
+      desc.textContent = t.missing
+        ? `Missing file: ${t.file}.json`
+        : (t.description || 'No description provided.');
+
+      item.append(title, desc);
+      if (!t.missing) item.addEventListener('click', () => selectTemplate(t, isCurrent));
+      return item;
+    }
+
+    /** Renders the catalogue, filtered by a plain substring match on name and description. */
+    function renderTemplateList(filterText) {
+      const listEl = document.getElementById('templateList');
+      if (!listEl) return;
+
+      const query = (filterText || '').trim().toLowerCase();
+      const matches = query
+        ? templateCatalogue.filter(t =>
+          String(t.name || '').toLowerCase().includes(query) ||
+          String(t.description || '').toLowerCase().includes(query))
+        : templateCatalogue;
+
+      listEl.innerHTML = '';
+
+      if (templateCatalogue.length === 0) {
+        listEl.innerHTML = '<p class="text-muted text-center py-4 mb-0">No templates available.</p>';
+        return;
+      }
+      if (matches.length === 0) {
+        const msg = document.createElement('p');
+        msg.classList.add('text-muted', 'text-center', 'py-4', 'mb-0');
+        msg.textContent = `No templates match “${filterText.trim()}”.`;
+        listEl.appendChild(msg);
+        return;
+      }
+
+      matches.forEach(t => listEl.appendChild(buildTemplateItem(t)));
+      listEl.scrollTop = 0;
+    }
+
+    /** Confirms discarding the current narrative, then loads the chosen template. */
+    function selectTemplate(template, isCurrent) {
+      const modalEl = document.getElementById('templateModal');
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+      const doLoad = async () => {
+        await loadConfiguration(template.file);
+        resetToCurrentConfigDefaults(); // Rebuilds UI and reattaches listeners
+      };
+
+      // Wait for the chooser to finish closing before opening the confirmation,
+      // so the two modals never overlap.
+      modalEl.addEventListener('hidden.bs.modal', function handler() {
+        modalEl.removeEventListener('hidden.bs.modal', handler);
+        showConfirmationModal(
+          `Load "${template.name}"?`,
+          isCurrent
+            ? `This will reload '${template.name}' and discard your current narrative. Continue?`
+            : `Loading '${template.name}' will discard your current narrative and replace it with that template's defaults. Continue?`,
+          "Your work will not be saved.",
+          () => {
+            const confirmEl = document.getElementById("confirmationModal");
+            confirmEl.addEventListener('hidden.bs.modal', function h2() {
+              confirmEl.removeEventListener('hidden.bs.modal', h2);
+              doLoad();
+            }, { once: true });
+          },
+          () => { } // User cancelled
+        );
+      }, { once: true });
+
+      modal.hide();
     }
 
     async function loadConfiguration(configName, isInitialLoad = false) {
@@ -415,10 +830,22 @@
         const localOptions = data.localDropdownOptions || data.globalDropdownOptions || {};
         globalDropdownOptions = { ...globalOptions, ...localOptions };
 
-        defaultNarrativeSections = data.narrativeSections || [];
+        // --- Pages ---
+        // "pages" and a top-level "narrativeSections" are two alternative spellings of the
+        // same thing, never combined. No "pages" key => one implicit page, i.e. today's
+        // behavior with no tab strip.
+        const hasPages = Array.isArray(data.pages) && data.pages.length > 0;
+        if (hasPages && data.narrativeSections) {
+          console.warn(`Config '${configName}' declares both 'pages' and a top-level 'narrativeSections'; the top-level one is ignored.`);
+        }
+        const pageDefs = hasPages
+          ? data.pages
+          : [{ name: null, narrativeSections: data.narrativeSections || [] }];
 
-        // Assign stable IDs on defaultNarrativeSections so locks persist across resets
-        assignInitialIDs(defaultNarrativeSections);
+        // Assign stable IDs on each page's defaults so locks persist across resets
+        pages = buildPagesFromDefs(pageDefs);
+        activePageIndex = 0;
+        syncActivePageAliases();
 
         // Handle both old format (string) and new format (object with name/text or tabs)
         // Support both regular sentences and tabbed sentences
@@ -475,74 +902,112 @@
         fuse = new Fuse(commonSentences, fuseOptions);
 
         currentConfigName = configName;
-        document.getElementById('jsonFileInput').value = configName;
+        currentConfigLabel = data.name || configName;
+        updateTemplateButtonLabel();
 
         if (!isInitialLoad) {
-          showConfirmationModal("Load Successful", `Configuration '${configName}' loaded successfully.`, "", () => { }, () => { }, true);
+          showConfirmationModal("Load Successful", `Template '${currentConfigLabel}' loaded successfully.`, "", () => { }, () => { }, true);
         }
         if (DEBUG) console.log(`Configuration '${configName}' loaded.`);
       } catch (error) {
         console.error(`Failed to load or parse configuration '${filename}':`, error);
-        showConfirmationModal("Load Error", `Could not load configuration '${configName}'. Please check the name and ensure the file exists. <br><small>(${error.message})</small>`, "", () => { }, () => { }, true);
-        document.getElementById('jsonFileInput').value = currentConfigName;
+        showConfirmationModal("Load Error", `Could not load template '${configName}'. Please check that the file exists. <br><small>(${error.message})</small>`, "", () => { }, () => { }, true);
+        updateTemplateButtonLabel();
         throw error;
       }
     }
 
     // --- State Management ---
+
+    /**
+     * Merges locked sentences from a saved sections array so locked status and content
+     * survive a refresh. Extracted verbatim from the old single-page loadState so it can
+     * run once per page; the merge rules are unchanged.
+     */
+    function mergeLockedSentences(savedSections) {
+      const lockedSentenceMap = new Map();
+
+      // First, identify all locked sentences from the loaded state
+      savedSections.forEach(section => {
+        if (!section.sentences) return;
+        section.sentences.forEach(s => {
+          if (s.locked && s.id) {
+            lockedSentenceMap.set(s.id, {
+              text: s.text,
+              values: s.values ? { ...s.values } : {},
+              tabValues: s.tabValues ? JSON.parse(JSON.stringify(s.tabValues)) : [],
+              activeTabIndex: s.activeTabIndex,
+              locked: true
+            });
+          }
+        });
+      });
+
+      const sections = savedSections;
+
+      // Ensure locked state is preserved even if IDs get reassigned
+      if (lockedSentenceMap.size > 0) {
+        assignInitialIDs(sections);
+
+        // Re-apply locked status and content to matching sentences
+        sections.forEach(section => {
+          if (!section.sentences) return;
+          section.sentences.forEach(s => {
+            if (lockedSentenceMap.has(s.id)) {
+              const lockedData = lockedSentenceMap.get(s.id);
+              s.locked = true;
+              s.text = lockedData.text; // Preserve edited text
+              s.values = lockedData.values;
+              if (s.tabs && lockedData.tabValues) {
+                s.tabValues = lockedData.tabValues;
+                if (typeof lockedData.activeTabIndex === 'number') {
+                  s.activeTabIndex = lockedData.activeTabIndex;
+                }
+              }
+            }
+          });
+        });
+      }
+
+      return sections;
+    }
+
+    /** A fresh working copy of one page's default sections. */
+    function freshSectionsFor(page) {
+      return JSON.parse(JSON.stringify(page.defaultSections || []));
+    }
+
     function loadState() {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedState) {
         try {
-          let loadedState = JSON.parse(savedState);
+          const parsed = JSON.parse(savedState);
 
-          // If there was previously saved state, merge locked sentences with defaults
-          // to ensure locked status persists through refresh
-          const lockedSentenceMap = new Map();
-
-          // First, identify all locked sentences from the loaded state
-          loadedState.forEach(section => {
-            if (!section.sentences) return;
-            section.sentences.forEach(s => {
-              if (s.locked && s.id) {
-                lockedSentenceMap.set(s.id, {
-                  text: s.text,
-                  values: s.values ? { ...s.values } : {},
-                  tabValues: s.tabValues ? JSON.parse(JSON.stringify(s.tabValues)) : [],
-                  activeTabIndex: s.activeTabIndex,
-                  locked: true
-                });
-              }
+          if (Array.isArray(parsed)) {
+            // v1 format: a bare sections array saved before multi-page support existed.
+            // Treat it as the first page and start any further pages from their defaults.
+            if (DEBUG) console.log("Migrating v1 (single-page) saved state.");
+            pages.forEach((page, i) => {
+              page.sections = (i === 0) ? mergeLockedSentences(parsed) : freshSectionsFor(page);
             });
-          });
-
-          // Set narrative sections to loaded state
-          narrativeSections = loadedState;
-
-          // Ensure locked state is preserved even if IDs get reassigned
-          if (lockedSentenceMap.size > 0) {
-            assignInitialIDs(narrativeSections);
-
-            // Re-apply locked status and content to matching sentences
-            narrativeSections.forEach(section => {
-              if (!section.sentences) return;
-              section.sentences.forEach(s => {
-                if (lockedSentenceMap.has(s.id)) {
-                  const lockedData = lockedSentenceMap.get(s.id);
-                  s.locked = true;
-                  s.text = lockedData.text; // Preserve edited text
-                  s.values = lockedData.values;
-                  if (s.tabs && lockedData.tabValues) {
-                    s.tabValues = lockedData.tabValues;
-                    if (typeof lockedData.activeTabIndex === 'number') {
-                      s.activeTabIndex = lockedData.activeTabIndex;
-                    }
-                  }
-                }
-              });
+            linkedValues = {};
+            activePageIndex = 0;
+          } else {
+            const savedPages = Array.isArray(parsed?.pages) ? parsed.pages : [];
+            linkedValues = (parsed && typeof parsed.linkedValues === 'object' && parsed.linkedValues) || {};
+            // Map saved pages onto the config's pages by position; any page the saved
+            // state doesn't cover (e.g. the config gained a page) starts from defaults.
+            pages.forEach((page, i) => {
+              const saved = savedPages[i];
+              page.sections = (saved && Array.isArray(saved.sections))
+                ? mergeLockedSentences(saved.sections)
+                : freshSectionsFor(page);
             });
+            const savedIndex = parseInt(parsed?.activePageIndex);
+            activePageIndex = (!isNaN(savedIndex) && savedIndex >= 0 && savedIndex < pages.length) ? savedIndex : 0;
           }
 
+          syncActivePageAliases();
           if (DEBUG) console.log("Working state loaded from localStorage with locked sentences preserved.");
         } catch (e) {
           console.error("Failed to parse saved state, using defaults from loaded config.", e);
@@ -553,12 +1018,23 @@
         if (DEBUG) console.log("No saved working state found, using defaults from loaded config.");
         resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
       }
-      sentenceIdCounter = findHighestSentenceId(narrativeSections) + 1;
+
+      // IDs are unique across every page, so seed the counter from all of them.
+      let highestId = 0;
+      pages.forEach(page => {
+        highestId = Math.max(highestId, findHighestSentenceId(page.sections), findHighestSentenceId(page.defaultSections));
+      });
+      sentenceIdCounter = highestId + 1;
     }
 
     function saveState() {
       try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(narrativeSections));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+          v: 2,
+          activePageIndex,
+          linkedValues,
+          pages: pages.map(page => ({ name: page.name, sections: page.sections }))
+        }));
       } catch (e) {
         console.error("Failed to save state.", e);
         showConfirmationModal("Save Error", "Could not save changes to browser storage. Storage might be full.", "", () => { }, () => { }, true);
@@ -567,9 +1043,52 @@
 
     // --- resetToCurrentConfigDefaults remains the same but will now re-apply locks correctly ---
     function resetToCurrentConfigDefaults(rebuildUI = true) {
+      if (DEBUG) console.log(`Resetting to defaults for config: ${currentConfigName}`);
+
+      // Reset every page, not just the active one, so a New Run clears the whole trip.
+      pages.forEach(page => resetPageToDefaults(page));
+
+      activePageIndex = 0;
+      syncActivePageAliases();
+
+      // Shared values belong to the run, not the template: drop them, then re-seed from
+      // any locked sentence so locking still preserves its value as it did before.
+      linkedValues = {};
+      reseedLinkedValuesFromLockedSentences();
+
+      saveState(); // Save this state so it persists across refreshes
+
+      if (rebuildUI) {
+        renderPageTabs();
+        buildSectionsUI();
+        attachAllEventListeners();
+        adjustAllInitialSizes();
+      }
+
+      // Clear the final text area and warnings
+      document.getElementById("finalText").value = "";
+
+      // Clear the placeholder warning without checking
+      showPlaceholderWarning(false);
+
+      // Clear the unadded sentence warning
+      showUnaddedSentenceWarning(false);
+
+      // Clear the locked sentences info
+      const copyLockedInfoEl = document.getElementById('copyLockedInfo');
+      if (copyLockedInfoEl) {
+        copyLockedInfoEl.style.display = 'none';
+      }
+    }
+
+    /**
+     * Resets one page to its own defaults, carrying locked sentences (and their values)
+     * across. This is the original single-page reset logic, now applied per page.
+     */
+    function resetPageToDefaults(page) {
       // Store locked sentences with their values before reset
       const lockedSentenceData = new Map();
-      narrativeSections.forEach(sec =>
+      (page.sections || []).forEach(sec =>
         sec.sentences?.forEach(s => {
           if (s.locked) {
             // Store complete sentence data including text and all values
@@ -577,18 +1096,19 @@
               text: s.text, // Store the text content specifically
               values: s.values ? { ...s.values } : {}, // Copy values
               tabValues: s.tabValues ? JSON.parse(JSON.stringify(s.tabValues)) : [], // Deep copy tab values if present
-              activeTabIndex: s.activeTabIndex // Remember active tab
+              activeTabIndex: s.activeTabIndex, // Remember active tab
+              unlinked: s.unlinked ? { ...s.unlinked } : undefined,
+              tabUnlinked: s.tabUnlinked ? JSON.parse(JSON.stringify(s.tabUnlinked)) : undefined
             });
           }
         })
       );
 
-      if (DEBUG) console.log(`Resetting to defaults for config: ${currentConfigName}`);
-      narrativeSections = JSON.parse(JSON.stringify(defaultNarrativeSections));
-      assignInitialIDs(narrativeSections); // IDs preserved from defaultNarrativeSections, so lockedIDs now match
+      page.sections = freshSectionsFor(page);
+      assignInitialIDs(page.sections); // IDs preserved from defaultSections, so lockedIDs now match
 
       // Re-apply locks and restore their values
-      narrativeSections.forEach(sec =>
+      page.sections.forEach(sec =>
         sec.sentences?.forEach(s => {
           if (lockedSentenceData.has(s.id)) {
             const savedData = lockedSentenceData.get(s.id);
@@ -614,32 +1134,99 @@
                 s.activeTabIndex = savedData.activeTabIndex;
               }
             }
+
+            // Keep the user's link/unlink choices on a locked sentence
+            if (savedData.unlinked) s.unlinked = savedData.unlinked;
+            if (savedData.tabUnlinked) s.tabUnlinked = savedData.tabUnlinked;
           }
         })
       );
+    }
 
-      saveState(); // Save this state so it persists across refreshes
+    /**
+     * After a reset, restores shared values that belong to sentences the user locked,
+     * so a locked sentence's linked fields keep the value locking was meant to preserve.
+     */
+    function reseedLinkedValuesFromLockedSentences() {
+      pages.forEach(page => {
+        (page.sections || []).forEach(section => {
+          (section.sentences || []).forEach(s => {
+            if (!s.locked) return;
 
-      if (rebuildUI) {
-        buildSectionsUI();
-        attachAllEventListeners();
-        adjustAllInitialSizes();
-      }
+            const isTabbed = s.tabs && Array.isArray(s.tabs);
+            const tabIndex = isTabbed ? (s.activeTabIndex || 0) : undefined;
+            const text = isTabbed ? (s.tabs[tabIndex]?.text || "") : (s.text || "");
+            const values = isTabbed ? (s.tabValues?.[tabIndex] || {}) : (s.values || {});
+            if (!sentenceSupportsLinking(s, tabIndex)) return;
 
-      // Clear the final text area and warnings
-      document.getElementById("finalText").value = "";
+            [...text.matchAll(placeholderRegex)].forEach(match => {
+              const label = match[2];
+              const linkId = match[3];
+              if (!linkId || isUnlinked(s, tabIndex, linkId)) return;
+              const value = values[label];
+              if (value && value.trim() !== '') linkedValues[linkId] = value;
+            });
+          });
+        });
+      });
+    }
 
-      // Clear the placeholder warning without checking
-      showPlaceholderWarning(false);
+    // --- Page Construction ---
 
-      // Clear the unadded sentence warning
-      showUnaddedSentenceWarning(false);
+    /**
+     * Turns the config's page definitions into page objects with stamped default sections.
+     * IDs are assigned from the shared `sentenceIdCounter`, so no two pages ever produce
+     * the same `sentence-N` and DOM lookups stay unambiguous.
+     */
+    function buildPagesFromDefs(pageDefs) {
+      const built = [];
 
-      // Clear the locked sentences info
-      const copyLockedInfoEl = document.getElementById('copyLockedInfo');
-      if (copyLockedInfoEl) {
-        copyLockedInfoEl.style.display = 'none';
-      }
+      pageDefs.forEach((def, index) => {
+        const name = def.name || (pageDefs.length > 1 ? `Page ${index + 1}` : null);
+        let sections;
+
+        if (def.inherit) {
+          const source = built.find(p => p.name && p.name.toLowerCase() === String(def.inherit).toLowerCase());
+          if (!source) {
+            throw new Error(`Page '${name || (index + 1)}' inherits from unknown page '${def.inherit}'. A page can only inherit from one declared before it.`);
+          }
+          sections = JSON.parse(JSON.stringify(source.defaultSections));
+          // Drop the cloned IDs so this page gets its own, keeping IDs unique app-wide.
+          sections.forEach(sec => (sec.sentences || []).forEach(s => { delete s.id; }));
+          if (def.remapLinks && typeof def.remapLinks === 'object') {
+            remapSectionLinks(sections, def.remapLinks);
+          }
+        } else {
+          sections = JSON.parse(JSON.stringify(def.narrativeSections || []));
+        }
+
+        assignInitialIDs(sections);
+        built.push({ name, sections: [], defaultSections: sections });
+      });
+
+      return built;
+    }
+
+    /**
+     * Rewrites `~oldId` link tags to `~newId` throughout a cloned page's sentence text.
+     * Uses a single alternation pass so a swap ({locA:"locB", locB:"locA"}) works.
+     */
+    function remapSectionLinks(sections, remap) {
+      const keys = Object.keys(remap).filter(k => k && remap[k]);
+      if (keys.length === 0) return;
+
+      // A link id is always terminated by ':' (options follow) or ']' (end of placeholder).
+      const pattern = new RegExp(`~(${keys.map(escapeRegex).join('|')})(?=[:\\]])`, 'g');
+      const rewrite = (text) => (typeof text === 'string' ? text.replace(pattern, (m, id) => `~${remap[id]}`) : text);
+
+      sections.forEach(section => {
+        (section.sentences || []).forEach(s => {
+          if (typeof s.text === 'string') s.text = rewrite(s.text);
+          if (Array.isArray(s.tabs)) {
+            s.tabs.forEach(tab => { if (typeof tab.text === 'string') tab.text = rewrite(tab.text); });
+          }
+        });
+      });
     }
 
     // --- ID and Value Initialization ---
@@ -806,16 +1393,96 @@
       const processedSentence = cleanSentence.replace(incrementalRegex, '$1');
       // Convert \n to spaces for search
       const searchSentence = processedSentence.replace(/\\n/g, ' ');
-      return searchSentence.replace(placeholderRegex, (match, theType, label, opts) => opts ? `[${label}(${opts})]` : `[${label}]`);
+      // Link ids are internal, so they're dropped here — only the label and options are searchable
+      return searchSentence.replace(placeholderRegex, (match, theType, label, linkId, opts) => opts ? `[${label}(${opts})]` : `[${label}]`);
     }
 
     // --- UI Building ---
+    // --- Page Tabs ---
+
+    /**
+     * Draws the page tab strip. Stays hidden for single-page configurations, so
+     * configs that don't declare "pages" look exactly as they always have.
+     */
+    function renderPageTabs() {
+      const container = document.getElementById('pageTabs');
+      if (!container) return;
+
+      container.innerHTML = "";
+      if (pages.length < 2) {
+        container.style.display = 'none';
+        return;
+      }
+
+      pages.forEach((page, index) => {
+        const label = page.name || `Page ${index + 1}`;
+
+        // Pages are sequential legs of one trip, so separate them with a chevron
+        if (index > 0) {
+          const sep = document.createElement('span');
+          sep.classList.add('page-tab-sep');
+          sep.setAttribute('aria-hidden', 'true');
+          sep.innerHTML = '<i class="bi bi-chevron-right"></i>';
+          container.appendChild(sep);
+        }
+
+        const btn = document.createElement('button');
+        btn.type = "button";
+        btn.tabIndex = -1; // Exclude from tab order, like every other chrome control
+        btn.classList.add('page-tab');
+        if (index === activePageIndex) btn.classList.add('active');
+        btn.title = `Switch to ${label}`;
+        btn.dataset.pageIndex = index;
+
+        const num = document.createElement('span');
+        num.classList.add('page-tab-num');
+        num.textContent = index + 1;
+
+        const text = document.createElement('span');
+        text.classList.add('page-tab-label');
+        text.textContent = label;
+
+        btn.append(num, text);
+        btn.addEventListener('click', () => switchPage(index));
+        container.appendChild(btn);
+      });
+
+      container.style.display = '';
+    }
+
+    /** Switches the editor to another page, preserving the current page's typed values. */
+    function switchPage(index) {
+      if (index === activePageIndex || index < 0 || index >= pages.length) return;
+
+      storeAllInlineValues(); // Capture what's on screen before swapping it out
+      saveState();
+
+      activePageIndex = index;
+      syncActivePageAliases();
+
+      renderPageTabs();
+      buildSectionsUI();
+      attachAllEventListeners();
+      adjustAllInitialSizes();
+
+      // Output is per-page, so the previous page's narrative and warnings no longer apply
+      document.getElementById("finalText").value = "";
+      showPlaceholderWarning(false);
+      showUnaddedSentenceWarning(false);
+      const copyLockedInfoEl = document.getElementById('copyLockedInfo');
+      if (copyLockedInfoEl) copyLockedInfoEl.style.display = 'none';
+
+      saveState();
+      if (DEBUG) console.log(`Switched to page ${index} (${activePage()?.name}).`);
+    }
+
     function buildSectionsUI() {
       const container = document.getElementById("sectionContainer");
       if (!container) {
         console.error("Section container not found.");
         return;
       }
+      closeCopyToPageMenu(); // The picker is anchored to a button that's about to go away
       container.innerHTML = ""; // Clear existing content
       narrativeSections.forEach(sec => {
         const sectionEl = createSectionElement(sec);
@@ -1049,20 +1716,22 @@
         }
         
         // For incremental sentences, pass the incrementalValues object to support multiple values per label
-        contentDiv.innerHTML = buildInlineFields(textToProcess, sentenceObj.values, isIncremental ? sentenceObj.incrementalValues : undefined);
+        contentDiv.innerHTML = buildInlineFields(textToProcess, sentenceObj.values, isIncremental ? sentenceObj.incrementalValues : undefined, sentenceObj);
       }
       li.appendChild(contentDiv);
 
-      // Top-right Controls (Edit, Lock, Remove buttons)
+      // Top-right Controls (Copy, Edit, Lock, Remove buttons)
       const topControls = document.createElement('div');
       topControls.classList.add('sentence-controls');
-      
+
+      // Copy is null for base sentences and single-page runs, so it drops out of the row
       const topButtons = [
+        createCopyButton(sentenceObj, partLabel),
         createEditButton(sentenceObj, partLabel),
         createLockButton(sentenceObj, partLabel),
         createRemoveButton(sentenceObj.id, partLabel)
-      ];
-      
+      ].filter(Boolean);
+
       topControls.append(...topButtons);
       li.appendChild(topControls);
 
@@ -1123,7 +1792,7 @@
       
       const tabValues = sentenceObj.tabValues[tabIndex] || {}; // Ensure tabValues for this index exists
       const tabIncrementalValues = isTabIncremental ? (sentenceObj.tabIncrementalValues?.[tabIndex] || {}) : undefined;
-      tabPane.innerHTML = buildInlineFields(tabContent, tabValues, tabIncrementalValues);
+      tabPane.innerHTML = buildInlineFields(tabContent, tabValues, tabIncrementalValues, sentenceObj, tabIndex);
       return tabPane;
     }
 
@@ -1143,6 +1812,243 @@
         );
       });
       return removeBtn;
+    }
+
+    // --- Copy Sentence To Another Page ---
+
+    /**
+     * True when the sentence was added during this run (typed in, quick-added, or
+     * copied from another page) rather than shipped with the configuration. Base
+     * sentences keep the id their page's defaults stamped on them, so anything whose
+     * id is absent from the defaults is user-added.
+     */
+    function isAddedSentence(sentenceObj) {
+      if (!sentenceObj || !sentenceObj.id) return false;
+      return !defaultNarrativeSections.some(sec =>
+        (sec.sentences || []).some(s => s.id === sentenceObj.id));
+    }
+
+    /** Every page but the active one, flagged with whether it carries this section. */
+    function copyTargetsFor(partLabel) {
+      return pages
+        .map((page, index) => ({
+          index,
+          page,
+          label: page.name || `Page ${index + 1}`,
+          hasSection: (page.sections || []).some(s => s.part === partLabel)
+        }))
+        .filter(t => t.index !== activePageIndex);
+    }
+
+    /**
+     * Copy-to-page button, offered only on user-added sentences of a multi-page run.
+     * Base sentences already sit on whichever pages their config puts them on, so a
+     * button on every one of those would only crowd the control row.
+     */
+    function createCopyButton(sentenceObj, partLabel) {
+      if (pages.length < 2 || !isAddedSentence(sentenceObj)) return null;
+
+      const btn = document.createElement('button');
+      btn.classList.add('btn', 'btn-sm', 'copy-sentence-btn');
+      btn.type = 'button';
+      btn.tabIndex = -1; // Exclude from tab order
+      btn.title = 'Copy this sentence to another page';
+      btn.setAttribute('aria-label', 'Copy sentence to another page');
+      btn.innerHTML = '<i class="bi bi-files"></i>';
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Read the part from the DOM: a cross-section drag rewrites it in place
+        const currentPart = btn.closest('li[data-id]')?.dataset.part || partLabel;
+        openCopyToPageMenu(btn, sentenceObj, currentPart);
+      });
+      return btn;
+    }
+
+    let openCopyMenu = null; // At most one page picker is open at a time
+    const copyFlashTimers = new WeakMap();
+
+    function closeCopyToPageMenu() {
+      if (!openCopyMenu) return;
+      openCopyMenu.remove();
+      openCopyMenu = null;
+      document.removeEventListener('mousedown', handleCopyMenuOutsideClick, true);
+      document.removeEventListener('keydown', handleCopyMenuKeydown, true);
+      window.removeEventListener('scroll', closeCopyToPageMenu, true);
+    }
+
+    function handleCopyMenuOutsideClick(event) {
+      if (openCopyMenu && !openCopyMenu.contains(event.target)) closeCopyToPageMenu();
+    }
+
+    function handleCopyMenuKeydown(event) {
+      if (event.key === 'Escape') closeCopyToPageMenu();
+    }
+
+    /** Opens the "copy to page" picker beneath its button. */
+    function openCopyToPageMenu(btn, sentenceObj, partLabel) {
+      const wasOpenForThis = openCopyMenu && openCopyMenu.dataset.sentenceId === sentenceObj.id;
+      closeCopyToPageMenu();
+      if (wasOpenForThis) return; // A second click on the same button closes it
+
+      const targets = copyTargetsFor(partLabel);
+      if (targets.length === 0) return;
+
+      const menu = document.createElement('div');
+      menu.classList.add('copy-page-menu');
+      menu.dataset.sentenceId = sentenceObj.id;
+
+      const heading = document.createElement('div');
+      heading.classList.add('copy-page-menu-heading');
+      heading.textContent = 'Copy to page';
+      menu.appendChild(heading);
+
+      targets.forEach(target => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.classList.add('copy-page-menu-item');
+
+        const num = document.createElement('span');
+        num.classList.add('copy-page-menu-num');
+        num.textContent = target.index + 1;
+
+        const text = document.createElement('span');
+        text.classList.add('copy-page-menu-label');
+        text.textContent = target.label;
+
+        item.append(num, text);
+
+        if (target.hasSection) {
+          item.addEventListener('click', () => {
+            closeCopyToPageMenu();
+            copySentenceToPage(sentenceObj, partLabel, target.index, btn);
+          });
+        } else {
+          // A page without this section has nowhere to put the sentence
+          item.disabled = true;
+          item.title = `${target.label} has no "${partLabel}" section`;
+        }
+
+        menu.appendChild(item);
+      });
+
+      document.body.appendChild(menu);
+      openCopyMenu = menu;
+      positionCopyMenu(menu, btn);
+
+      document.addEventListener('mousedown', handleCopyMenuOutsideClick, true);
+      document.addEventListener('keydown', handleCopyMenuKeydown, true);
+      window.addEventListener('scroll', closeCopyToPageMenu, true);
+    }
+
+    /** Pins the picker below its button, flipping or nudging it to stay on screen. */
+    function positionCopyMenu(menu, btn) {
+      const rect = btn.getBoundingClientRect();
+      const gap = 6;
+      menu.style.position = 'fixed';
+      menu.style.zIndex = '1000';
+      menu.style.top = `${rect.bottom + gap}px`;
+      menu.style.left = `${rect.left}px`;
+
+      requestAnimationFrame(() => {
+        const menuRect = menu.getBoundingClientRect();
+        const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+        const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+
+        if (menuRect.bottom > viewportHeight && rect.top - menuRect.height - gap > 0) {
+          menu.style.top = `${rect.top - menuRect.height - gap}px`;
+        }
+        if (menuRect.right > viewportWidth - 5) {
+          menu.style.left = `${Math.max(5, viewportWidth - menuRect.width - 5)}px`;
+        }
+        if (menuRect.left < 5) menu.style.left = '5px';
+      });
+    }
+
+    /** Drops `~linkId` tags from a sentence template, leaving plain placeholders. */
+    function stripLinkTags(text) {
+      if (typeof text !== 'string') return text;
+      return text.replace(placeholderRegex, (match, type, label, linkId, options) =>
+        linkId ? `[${type}:${label}${options ? `:${options}` : ''}]` : match);
+    }
+
+    /**
+     * Writes each linked field's currently shared value into the value store that
+     * travels with the copy, so the clone keeps that value once its link tag is gone.
+     */
+    function bakeLinkedValues(text, values, sourceObj, tabIndex) {
+      if (typeof text !== 'string' || !values) return;
+      text.replace(placeholderRegex, (match, type, label, linkId) => {
+        if (linkId) {
+          const resolved = valueFor(label, linkId, values, sourceObj, tabIndex);
+          if (typeof resolved !== 'undefined') values[label] = resolved;
+        }
+        return match;
+      });
+    }
+
+    /**
+     * Clones one sentence onto another page's section of the same name. The copy is a
+     * snapshot, not a second view of the original: typed values come across, but link
+     * tags are dropped so the two never track each other afterwards.
+     */
+    function copySentenceToPage(sentenceObj, partLabel, targetIndex, btn) {
+      const targetPage = pages[targetIndex];
+      if (!targetPage) return;
+      const targetSection = (targetPage.sections || []).find(s => s.part === partLabel);
+      if (!targetSection) {
+        console.warn(`Page ${targetIndex} has no section '${partLabel}'; copy skipped.`);
+        return;
+      }
+
+      storeAllInlineValues(); // Catch anything typed but not yet blurred
+
+      const clone = JSON.parse(JSON.stringify(sentenceObj));
+      delete clone.id;
+      delete clone.locked;        // Locking is a per-page choice about the original
+      delete clone.QuickSentence; // The copy is a real sentence, not a quick-add slot
+
+      if (Array.isArray(clone.tabs)) {
+        clone.tabs.forEach((tab, i) => {
+          bakeLinkedValues(tab.text, clone.tabValues?.[i], sentenceObj, i);
+          tab.text = stripLinkTags(tab.text);
+        });
+        delete clone.tabUnlinked;
+      } else {
+        bakeLinkedValues(clone.text, clone.values, sentenceObj);
+        clone.text = stripLinkTags(clone.text);
+      }
+      delete clone.unlinked;
+
+      clone.id = "sentence-" + sentenceIdCounter++;
+      initializeSentenceValues(clone);
+      if (!targetSection.sentences) targetSection.sentences = [];
+      targetSection.sentences.push(clone);
+      saveState();
+
+      const label = targetPage.name || `Page ${targetIndex + 1}`;
+      if (DEBUG) console.log(`Copied ${sentenceObj.id} to ${label} / ${partLabel} as ${clone.id}.`);
+      flashCopyConfirmation(btn, label);
+    }
+
+    /** Brief in-place acknowledgement — the copy lands on a page the user can't see. */
+    function flashCopyConfirmation(btn, pageLabel) {
+      if (!btn) return;
+      // Stash the resting state once, so a repeat click mid-flash can't capture the tick
+      if (!btn.dataset.restIcon) {
+        btn.dataset.restIcon = btn.innerHTML;
+        btn.dataset.restTitle = btn.title;
+      }
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+      btn.title = `Copied to ${pageLabel}`;
+
+      clearTimeout(copyFlashTimers.get(btn));
+      copyFlashTimers.set(btn, setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = btn.dataset.restIcon;
+        btn.title = btn.dataset.restTitle;
+        copyFlashTimers.delete(btn);
+      }, 1500));
     }
 
     function createEditButton(sentenceObj, partLabel) {
@@ -1261,9 +2167,9 @@
                   processedText = processedText.replace(/\\n/g, '<br>');
                 }
                 
-                contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values || {}, sentenceObj.incrementalValues);
+                contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values || {}, sentenceObj.incrementalValues, sentenceObj);
               } else {
-                contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {});
+                contentDiv.innerHTML = buildInlineFields(newText, sentenceObj.values || {}, undefined, sentenceObj);
               }
             }
 
@@ -1511,7 +2417,7 @@
           }
           
           // Pass incrementalValues to buildInlineFields so existing values are preserved
-          contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values, sentenceObj.incrementalValues);
+          contentDiv.innerHTML = buildInlineFields(processedText, sentenceObj.values, sentenceObj.incrementalValues, sentenceObj);
           
           // Reattach event listeners for the updated content
           attachAllEventListenersForElement(contentDiv);
@@ -1983,10 +2889,17 @@
       if (value && value.trim() !== '') {
         field.classList.remove('empty-field');
       }
-      
+
       // Normalize empty contenteditable fields so :empty CSS pseudo-class works for placeholders
       normalizeFieldEmpty(field);
-      
+
+      // Share the value with every other still-linked field carrying the same link id
+      if (field.dataset.linkId && field.dataset.linked === 'true') {
+        const previousShared = linkedValues[field.dataset.linkId];
+        commitLinkedValue(field, value);
+        if (previousShared !== value) valueChanged = true;
+      }
+
       if (valueChanged) {
         if (DEBUG) console.log(`Value saved for ${sentenceId} - ${label}: ${value}`);
         saveState();
@@ -2097,8 +3010,9 @@
                 }
               });
             } else {
-              // Regular non-incremental sentence
-              li.querySelectorAll(".sentence-content > .inline-field[data-label]").forEach(field => {
+              // Regular non-incremental sentence. Linked fields sit inside a .linked-field
+              // wrapper rather than directly under .sentence-content, so match both.
+              li.querySelectorAll(".sentence-content > .inline-field[data-label], .sentence-content > .linked-field .inline-field[data-label]").forEach(field => {
                 // Ensure we only get direct children of sentence-content, not those inside tab-panes if any mix-up
                 const label = field.dataset.label;
                 const newValue = getFieldValue(field);
@@ -2111,50 +3025,91 @@
           }
         });
       });
+      // Keep shared values in step with what's on screen. This runs over every linked
+      // field regardless of type, so it also covers customDropdown inputs that the
+      // direct-child selector above doesn't reach.
+      document.querySelectorAll('.inline-field[data-link-id][data-linked="true"]').forEach(field => {
+        const linkId = field.dataset.linkId;
+        const newValue = getFieldValue(field);
+        if (linkedValues[linkId] !== newValue) {
+          linkedValues[linkId] = newValue;
+          changesMade = true;
+        }
+      });
+
       if (changesMade) console.log("Stored all inline values, changes detected.");
       return changesMade;
     }
 
 
     // --- HTML Building for Inline Fields ---
-    function buildInlineFields(textTemplate, valuesObject, incrementalValuesObject) {
+
+    const LINK_TITLE_LINKED = 'Linked — this value is shared with matching fields. Click to unlink.';
+    const LINK_TITLE_UNLINKED = 'Unlinked — this field keeps its own value. Click to re-link.';
+
+    /** The chain toggle that leads a linked field. */
+    function linkChainButtonHtml(linkId, isLinked) {
+      const title = isLinked ? LINK_TITLE_LINKED : LINK_TITLE_UNLINKED;
+      return `<button type="button" tabindex="-1" class="link-chain-btn" data-link-id="${linkId}" title="${title}" aria-label="${title}"><i class="bi bi-link-45deg"></i></button>`;
+    }
+
+    /**
+     * `sentenceObj`/`tabIndex` are optional and only needed to resolve link tags; without
+     * them the fields render exactly as they did before linking existed.
+     */
+    function buildInlineFields(textTemplate, valuesObject, incrementalValuesObject, sentenceObj, tabIndex) {
       if (!valuesObject) valuesObject = {}; // Ensure valuesObject is an object
       if (!incrementalValuesObject) incrementalValuesObject = {}; // For incremental sentences
-      
+
       let displayText = textTemplate || "";
-      
+
       // If there are no placeholders in the text, return as-is (no more \n conversion needed)
       if (!placeholderRegex.test(displayText)) {
         return displayText;
       }
-      
+
       // Track placeholder counts for incremental sentences
       const placeholderCounts = {};
-    
-      const processedText = displayText.replace(placeholderRegex, (match, type, label, options) => {
+
+      const processedText = displayText.replace(placeholderRegex, (match, type, label, linkId, options) => {
         // For incremental sentences, track how many times we've seen each placeholder
         if (!placeholderCounts[label]) {
           placeholderCounts[label] = 0;
         }
         const currentIndex = placeholderCounts[label];
         placeholderCounts[label]++;
-        
-        // Get value: first try incrementalValues array, then fall back to regular values
+
+        // Incremental fields store per-occurrence arrays, so they never take part in linking
+        const isIncrementalField = Array.isArray(incrementalValuesObject[label]);
+        const linkable = !!linkId && !isIncrementalField && sentenceSupportsLinking(sentenceObj, tabIndex);
+        const isLinked = linkable && !isUnlinked(sentenceObj, tabIndex, linkId);
+
+        // Get value: first try incrementalValues array, then the shared value, then the sentence's own
         let currentValue = "";
-        if (incrementalValuesObject[label] && Array.isArray(incrementalValuesObject[label])) {
+        if (isIncrementalField) {
           currentValue = incrementalValuesObject[label][currentIndex] || "";
+        } else if (linkable) {
+          currentValue = valueFor(label, linkId, valuesObject, sentenceObj, tabIndex) || "";
         } else {
           currentValue = valuesObject[label] || "";
         }
-        
+
+        // Link metadata on the field itself, so the blur/propagate path never re-parses text
+        const linkAttrs = linkable ? ` data-link-id="${linkId}" data-linked="${isLinked}"` : '';
+        // A linked field is wrapped in a bordered chip led by the chain toggle
+        const wrapOpen = linkable
+          ? `<span class="linked-field${isLinked ? '' : ' unlinked'}">${linkChainButtonHtml(linkId, isLinked)}`
+          : '';
+        const wrapClose = linkable ? `</span>` : '';
+
         let dropdownOptionsArray = [];
-    
+
         if (options) { // Options defined directly in template
           dropdownOptionsArray = options.split(",").map(x => x.trim());
         } else if (globalDropdownOptions[label]) { // Options from global config
           dropdownOptionsArray = globalDropdownOptions[label];
         }
-    
+
         switch (type) {
           case "customDropdown":
             const listItems = dropdownOptionsArray.map(opt => {
@@ -2163,27 +3118,28 @@
               const hiddenAttr = isHidden ? ' data-hidden="true"' : '';
               return `<li class="list-group-item"${hiddenAttr} title="${displayOpt}">${displayOpt}</li>`;
             }).join("");
-            return `
+            // The chain sits outside .custom-dropdown so it can't be mistaken for a suggestion click
+            return `${wrapOpen}
             <div class="custom-dropdown">
-              <span contenteditable="true" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>
+              <span contenteditable="true" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>
               <div class="suggestions">
                 <ul class="list-group">${listItems}</ul>
               </div>
-            </div>`;
+            </div>${wrapClose}`;
           case "text":
             // Keep the original value (with \n) for the field
-            return `<span contenteditable="true" class="inline-field" data-type="text" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocapitalize="off">${currentValue}</span>`;
+            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="text" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" autocapitalize="off">${currentValue}</span>${wrapClose}`;
           case "number":
-            return `<span contenteditable="true" class="inline-field" data-type="number" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" inputmode="numeric" autocapitalize="off">${currentValue}</span>`;
+            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="number" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" inputmode="numeric" autocapitalize="off">${currentValue}</span>${wrapClose}`;
           case "dropdown":
             console.warn(`Standard 'dropdown' type encountered for [${label}]. Consider using 'customDropdown' for richer features or ensure specific handling is implemented if needed.`);
-            return `<span contenteditable="true" class="inline-field" data-type="dropdown" data-label="${label}" data-placeholder="${label}" title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>`;
+            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="dropdown" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>${wrapClose}`;
           default:
             console.warn(`Unknown placeholder type: ${type} for label: ${label}`);
             return match;
         }
       });
-    
+
       return processedText;
     }
 
@@ -3083,8 +4039,8 @@
       } else {
         // Regular non-incremental sentence processing
         processedText = processedText.replace(/\[\+([^\[\]]*(?:\[[^\]]*\][^\[\]]*)*)\]/g, '$1');
-        processedText = processedText.replace(placeholderRegex, (match, type, label) => {
-          const value = values[label];
+        processedText = processedText.replace(placeholderRegex, (match, type, label, linkId) => {
+          const value = valueFor(label, linkId, values, sentenceObj, tabIndex);
           return (value && value.toString().trim()) ? value.toString().trim() : `[${label}]`;
         });
       }
@@ -3105,6 +4061,21 @@
       }
       navigator.clipboard.writeText("\u200B" + textToCopy).then(() => {
         if (DEBUG) console.log("Text copied to clipboard.");
+
+        // Output is per-page, so on a multi-page run the next step is usually the next
+        // leg of the trip rather than a whole new run.
+        const hasNextPage = activePageIndex < pages.length - 1;
+        if (hasNextPage) {
+          const nextPageName = pages[activePageIndex + 1].name || `Page ${activePageIndex + 2}`;
+          showConfirmationModal("Copied to Clipboard",
+            `The narrative for this page has been copied to the clipboard.<br><br>Would you like to move on to <strong>${nextPageName}</strong>?`,
+            "<span>Paste your narrative first.</span><br>",
+            () => switchPage(activePageIndex + 1),
+            () => { }
+          );
+          return;
+        }
+
         showConfirmationModal("Copied to Clipboard",
           "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
           // Fix: Use HTML for disclaimer to properly render the <br> tag
@@ -3179,12 +4150,12 @@
             } else {
               // Regular non-incremental sentence
               const values = sentenceObj.values || {};
-              
+
               // Find all placeholders in the text
               const placeholderMatches = [...text.matchAll(placeholderRegex)];
               placeholderMatches.forEach(match => {
                 const label = match[2]; // The label is the second capture group
-                const value = values[label];
+                const value = valueFor(label, match[3], values, sentenceObj);
                 if (!value || value.trim() === '') {
                   hasEmptyFields = true;
                 }
@@ -3234,7 +4205,7 @@
                 const placeholderMatches = [...text.matchAll(placeholderRegex)];
                 placeholderMatches.forEach(match => {
                   const label = match[2]; // The label is the second capture group
-                  const value = tabValues[label];
+                  const value = valueFor(label, match[3], tabValues, sentenceObj, activeTabIndex);
                   if (!value || value.trim() === '') {
                     hasEmptyFields = true;
                   }
@@ -3306,7 +4277,7 @@
               const placeholderMatches = [...text.matchAll(placeholderRegex)];
               placeholderMatches.forEach(match => {
                 const label = match[2]; // The label is the second capture group
-                const value = values[label];
+                const value = valueFor(label, match[3], values, sentenceObj);
                 if (!value || value.trim() === '') {
                   // Find and highlight the corresponding input field
                   const field = li.querySelector(`.inline-field[data-label="${label}"]:not(.tab-pane .inline-field)`);
@@ -3363,7 +4334,7 @@
                 const placeholderMatches = [...text.matchAll(placeholderRegex)];
                 placeholderMatches.forEach(match => {
                   const label = match[2]; // The label is the second capture group
-                  const value = tabValues[label];
+                  const value = valueFor(label, match[3], tabValues, sentenceObj, activeTabIndex);
                   if (!value || value.trim() === '') {
                     // Find and highlight the corresponding input field in the active tab
                     const field = tabPane.querySelector(`.inline-field[data-label="${label}"]`);
@@ -3701,43 +4672,48 @@
       bsModal.show();
     }
 
-    // Function to unlock all locked sentences
+    // Function to unlock all locked sentences (across every page, since New Run resets them all)
     function unlockAllSentences() {
       let unlockedCount = 0;
-      narrativeSections.forEach(section => {
-        if (!section.sentences) return;
-        section.sentences.forEach(sentenceObj => {
-          if (sentenceObj.locked) {
-            sentenceObj.locked = false;
-            unlockedCount++;
-          }
+      pages.forEach(page => {
+        (page.sections || []).forEach(section => {
+          if (!section.sentences) return;
+          section.sentences.forEach(sentenceObj => {
+            if (sentenceObj.locked) {
+              sentenceObj.locked = false;
+              unlockedCount++;
+            }
+          });
         });
       });
       if (DEBUG) console.log(`Unlocked ${unlockedCount} sentences`);
       saveState(); // Save the unlocked state
     }
 
-    // Sync mobile and desktop section titles toggles
-    function initializeSectionTitlesToggleSync() {
-      const desktopToggle = document.getElementById('toggleSectionTitles');
-      const mobileToggle = document.getElementById('toggleSectionTitlesMobile');
-
-      if (!desktopToggle || !mobileToggle) {
-        console.warn("Section titles toggles not found for sync");
+    /**
+     * Settings now live behind the toolbox menu rather than in the header, so the
+     * choice is remembered — an out-of-sight toggle that reset on every load would
+     * be a nuisance to find again.
+     */
+    function initializeSettings() {
+      const toggle = document.getElementById('toggleSectionTitles');
+      if (!toggle) {
+        console.warn("Section titles toggle not found");
         return;
       }
 
-      // Sync mobile to desktop on change
-      mobileToggle.addEventListener('change', () => {
-        desktopToggle.checked = mobileToggle.checked;
+      const saved = localStorage.getItem(SECTION_TITLES_KEY);
+      if (saved !== null) toggle.checked = saved === 'true';
+
+      toggle.addEventListener('change', () => {
+        try {
+          localStorage.setItem(SECTION_TITLES_KEY, toggle.checked);
+        } catch (e) {
+          console.error("Failed to save the section titles setting.", e);
+        }
       });
 
-      // Sync desktop to mobile on change
-      desktopToggle.addEventListener('change', () => {
-        mobileToggle.checked = desktopToggle.checked;
-      });
-
-      if (DEBUG) console.log("Section titles toggle sync initialized");
+      if (DEBUG) console.log("Settings initialized");
     }
 
     // Bug Report initialization function
@@ -3837,6 +4813,11 @@
       o2Btn?.addEventListener('click', () => {
         loadToolContent('tools/oxygen.html', 'Oxygen Duration Calculator');
         toolMenu.style.display = 'none';
+      });
+
+      document.getElementById('settingsBtn')?.addEventListener('click', () => {
+        toolMenu.style.display = 'none';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('settingsModal')).show();
       });
 
       // Close menu when clicking outside
@@ -3949,7 +4930,12 @@
         <img src="./icons/oxygen.svg" alt="O2" style="width: 24px; height: 24px;" />
       </button>
       <div class="tool-menu-separator" style="height: 1px; background: #adb5bd; margin: 4px 8px;"></div>
-      <button id="bugReportBtn" class="btn btn-light border-0" 
+      <button id="settingsBtn" class="btn btn-light border-0"
+              title="Settings"
+              style="width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #dee2e6;">
+        <i class="bi bi-gear-fill" style="font-size: 1.5rem;"></i>
+      </button>
+      <button id="bugReportBtn" class="btn btn-light border-0"
               title="Report an issue"
               style="width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #dee2e6;">
         <i class="bi bi-bug-fill" style="font-size: 1.5rem;"></i>

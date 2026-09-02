@@ -22,22 +22,17 @@ html,
       align-items: center;
     }
 
+    /* Holds the page tabs, centred between the logo and the controls */
     .header-center {
       gap: 0.75rem;
       justify-content: center;
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     #sectionTitlesToggle {
       margin: 0;
       white-space: nowrap;
-    }
-
-    #sectionTitlesToggle .form-check-label {
-      font-size: 0.9rem;
-    }
-
-    .mobile-section-toggle {
-      display: none !important;
     }
 
     .header-right {
@@ -47,23 +42,10 @@ html,
       gap: 0.5rem;
     }
 
-    #jsonFileInputGroup {
-      min-width: 250px;
-      max-width: 400px;
-    }
-
     .header-controls-row {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-    }
-
-    .toggle-newrun-row {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      justify-content: flex-end;
-      width: 100%;
     }
 
     .form-check-label {
@@ -241,6 +223,83 @@ html,
     .sentence-controls .remove-sentence-btn:hover {
       background-color: #c82333;
       border-color: #bd2130;
+    }
+
+    /* Copy-to-page sits left of Edit and stays neutral — it's the least destructive
+       control in the row, so it shouldn't compete with the yellow and red ones. */
+    .sentence-controls .copy-sentence-btn:hover {
+      background-color: #e9ecef;
+    }
+
+    .sentence-controls .copy-sentence-btn.copied {
+      background-color: #198754;
+      border-color: #198754;
+      color: #fff;
+    }
+
+    /* ===== COPY-TO-PAGE PICKER ===== */
+    .copy-page-menu {
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: .25rem;
+      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+      padding: .25rem;
+      min-width: 11rem;
+      max-width: 18rem;
+    }
+
+    .copy-page-menu-heading {
+      padding: .25rem .5rem .35rem;
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color: var(--bs-secondary-color, #868e96);
+    }
+
+    .copy-page-menu-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      width: 100%;
+      padding: .35rem .5rem;
+      background: none;
+      border: none;
+      border-radius: .2rem;
+      font-size: .9rem;
+      text-align: left;
+      color: var(--bs-body-color, #212529);
+      cursor: pointer;
+    }
+
+    .copy-page-menu-item:hover:not(:disabled) {
+      background-color: rgba(128, 128, 128, .12);
+    }
+
+    .copy-page-menu-item:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    /* Same numbered ring as the page tabs, so a target reads as the page it names */
+    .copy-page-menu-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 1.4rem;
+      height: 1.4rem;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      font-size: .75rem;
+      font-weight: 600;
+      line-height: 1;
+      opacity: .7;
+    }
+
+    .copy-page-menu-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .sentence-controls-bottom {
@@ -533,6 +592,258 @@ html,
       display: block;
     }
 
+
+    /* ===== PAGE TABS (multi-page configurations only) =====
+       Sequential legs of one trip: no container chrome, just centered steps
+       separated by chevrons, with the active step carried in the same muted
+       gold as a linked field. */
+    .page-tabs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .1rem;
+      margin: 0;
+    }
+
+    .page-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .3rem .7rem;
+      background: none;
+      border: none;
+      border-radius: 2rem;
+      font-size: .95rem;
+      /* Inactive pages read as placeholder text; the active one as body text */
+      color: var(--bs-secondary-color, #868e96);
+      cursor: pointer;
+      transition: color .12s ease, background-color .12s ease;
+    }
+
+    .page-tab:hover {
+      color: var(--bs-body-color, #212529);
+      background-color: rgba(128, 128, 128, .12);
+    }
+
+    /* Step number sits in a ring that fills in on the active page */
+    .page-tab-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.4rem;
+      height: 1.4rem;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      font-size: .75rem;
+      font-weight: 600;
+      line-height: 1;
+      opacity: .7;
+      transition: background-color .12s ease, color .12s ease, opacity .12s ease;
+    }
+
+    .page-tab.active {
+      color: var(--bs-body-color, #212529);
+      font-weight: 600;
+    }
+
+    /* Active step: filled ring with the numeral punched out in the page background */
+    .page-tab.active .page-tab-num {
+      background-color: var(--bs-body-color, #212529);
+      border-color: var(--bs-body-color, #212529);
+      color: var(--bs-body-bg, #fff);
+      opacity: 1;
+    }
+
+    .page-tab-sep {
+      color: var(--bs-secondary-color, #ced4da);
+      opacity: .5;
+      font-size: .75rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+    }
+
+
+    /* ===== TEMPLATE CHOOSER ===== */
+    .template-search-wrap {
+      position: relative;
+      margin-bottom: .85rem;
+    }
+
+    .template-search-icon {
+      position: absolute;
+      left: .75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--bs-secondary-color, #6c757d);
+      pointer-events: none;
+      font-size: .95rem;
+    }
+
+    .template-search {
+      padding-left: 2.25rem;
+    }
+
+    /* The search box stays put while the results scroll beneath it */
+    .template-list {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      max-height: 55vh;
+      overflow-y: auto;
+      /* Room so focus rings and hover borders aren't clipped by the scroll edge */
+      padding: .15rem;
+      margin: -.15rem;
+    }
+
+    .template-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: .85rem 1rem;
+      background-color: var(--bs-body-bg, #fff);
+      border: 1px solid var(--bs-border-color, #dee2e6);
+      border-radius: .4rem;
+      cursor: pointer;
+      transition: border-color .12s ease, background-color .12s ease;
+    }
+
+    .template-item:hover:not(:disabled) {
+      border-color: #0d6efd;
+      background-color: rgba(13, 110, 253, .04);
+    }
+
+    .template-item.current {
+      border-color: #0d6efd;
+    }
+
+    .template-item.missing {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .template-item-title {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .5rem;
+      font-weight: 600;
+      font-size: 1.02rem;
+      margin-bottom: .2rem;
+    }
+
+    .template-item-desc {
+      font-size: .875rem;
+      color: var(--bs-secondary-color, #6c757d);
+      line-height: 1.45;
+    }
+
+    .template-badge {
+      font-size: .7rem;
+      font-weight: 500;
+      padding: .1rem .45rem;
+      border-radius: 1rem;
+      background-color: var(--bs-secondary-bg, #e9ecef);
+      color: var(--bs-secondary-color, #6c757d);
+    }
+
+    .template-badge.current-badge {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+
+
+    /* ===== SETTINGS MODAL ===== */
+    .settings-row+.settings-row {
+      margin-top: 1.1rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid var(--bs-border-color, #dee2e6);
+    }
+
+    .settings-help {
+      font-size: .85rem;
+      color: var(--bs-secondary-color, #6c757d);
+      margin-top: .25rem;
+      margin-left: 2.5rem;
+      line-height: 1.45;
+    }
+
+
+    /* ===== LINKED FIELDS (value shared with matching fields) ===== */
+    .linked-field {
+      display: inline;
+      border: 1px solid rgba(184, 134, 11, .45);
+      /* Muted gold */
+      border-radius: .3rem;
+      background-color: rgba(212, 160, 23, .07);
+      padding: .05rem .3rem .05rem .2rem;
+      /* The chip's hard border needs more breathing room against neighbouring
+         words than the plain field's dotted underline did (which had .25rem). */
+      margin: 0 .3rem;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+
+    /* The chip already frames the field, so drop the standalone underline */
+    .linked-field .inline-field {
+      border-bottom: none;
+      margin: 0;
+      padding: 0 .1rem;
+    }
+
+    .linked-field .inline-field:focus {
+      border-bottom: none;
+      background-color: rgba(212, 160, 23, .12);
+      border-radius: .15rem;
+    }
+
+    .linked-field.unlinked {
+      border-color: rgba(173, 181, 189, .55);
+      border-style: dashed;
+      background-color: transparent;
+    }
+
+    .link-chain-btn {
+      display: inline;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-right: .1rem;
+      line-height: 1;
+      font-size: 0.92em;
+      vertical-align: baseline;
+      cursor: pointer;
+      color: #b8860b;
+      /* Muted gold: this field's value is shared */
+    }
+
+    .link-chain-btn:hover {
+      color: #8a6508;
+    }
+
+    .link-chain-btn:focus {
+      outline: none;
+    }
+
+    /* No broken-chain glyph exists in Bootstrap Icons, so slash the linked one */
+    .linked-field.unlinked .link-chain-btn {
+      color: #adb5bd;
+      position: relative;
+    }
+
+    .linked-field.unlinked .link-chain-btn::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 1.05em;
+      height: 1px;
+      background-color: currentColor;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      pointer-events: none;
+    }
+
     /* ===== LICENSE & UTILITY BUTTONS ===== */
     #license {
       font-size: 0.9rem;
@@ -640,6 +951,39 @@ html,
       color: #fff;
     }
 
+    /* Page tabs derive from --bs-body-color / --bs-body-bg, so they follow the
+       theme automatically; only the hover wash needs a dark-mode nudge. */
+    [data-bs-theme="dark"] .page-tab:hover {
+      background-color: rgba(255, 255, 255, .08);
+    }
+
+    [data-bs-theme="dark"] .linked-field {
+      border-color: rgba(240, 193, 75, .4);
+      background-color: rgba(240, 193, 75, .09);
+    }
+
+    [data-bs-theme="dark"] .linked-field .inline-field:focus {
+      background-color: rgba(240, 193, 75, .16);
+    }
+
+    [data-bs-theme="dark"] .linked-field.unlinked {
+      border-color: rgba(138, 145, 153, .5);
+      background-color: transparent;
+    }
+
+    [data-bs-theme="dark"] .link-chain-btn {
+      color: #f0c14b;
+      /* Brighter gold so it stays legible on the dark background */
+    }
+
+    [data-bs-theme="dark"] .link-chain-btn:hover {
+      color: #ffd875;
+    }
+
+    [data-bs-theme="dark"] .linked-field.unlinked .link-chain-btn {
+      color: #8a9199;
+    }
+
     [data-bs-theme="dark"] .modal-content {
       background-color: #2a2a2a !important;
       color: #e0e0e0;
@@ -672,19 +1016,41 @@ html,
       background-color: #333 !important;
     }
 
-    [data-bs-theme="dark"] .sentence-controls .lock-sentence-btn {
+    [data-bs-theme="dark"] .sentence-controls .lock-sentence-btn,
+    [data-bs-theme="dark"] .sentence-controls .copy-sentence-btn {
       background-color: #333;
       border-color: #555;
       color: #e0e0e0;
     }
 
-    [data-bs-theme="dark"] .sentence-controls .lock-sentence-btn:hover {
+    [data-bs-theme="dark"] .sentence-controls .lock-sentence-btn:hover,
+    [data-bs-theme="dark"] .sentence-controls .copy-sentence-btn:hover {
       background-color: #444;
       border-color: #666;
     }
 
     [data-bs-theme="dark"] .sentence-controls .lock-sentence-btn i.bi-lock-fill.text-primary {
       color: #7cb0ff !important;
+    }
+
+    /* The copied flash keeps its green in both themes */
+    [data-bs-theme="dark"] .sentence-controls .copy-sentence-btn.copied {
+      background-color: #198754;
+      border-color: #198754;
+      color: #fff;
+    }
+
+    [data-bs-theme="dark"] .copy-page-menu {
+      background-color: #2b2b2b;
+      border-color: #555;
+    }
+
+    [data-bs-theme="dark"] .copy-page-menu-item {
+      color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .copy-page-menu-item:hover:not(:disabled) {
+      background-color: #444;
     }
 
     .header-controls {
@@ -1148,9 +1514,9 @@ html,
         gap: 0.75rem;
       }
 
-      #jsonFileInputGroup {
-        min-width: 200px;
-        max-width: 300px;
+      .page-tab {
+        padding: .3rem .5rem;
+        font-size: .88rem;
       }
     }
 
@@ -1190,24 +1556,27 @@ html,
         gap: 0.35rem;
       }
 
-      #jsonFileInputGroup {
-        min-width: unset;
-        max-width: none;
-        flex: 1 1 auto;
-        min-width: 150px;
-      }
-
+      #chooseTemplateBtn,
       #newRunBtn {
         white-space: nowrap;
+        flex: 1 1 auto;
       }
 
-      .toggle-newrun-row {
-        justify-content: center;
-        gap: 0.5rem;
+      /* Page tabs drop below the controls on mobile */
+      .header-center {
+        order: 2;
+        width: 100%;
       }
 
-      .toggle-newrun-row .form-check {
-        margin: 0;
+      .page-tab {
+        padding: .3rem .5rem;
+        font-size: .88rem;
+      }
+
+      .page-tab-num {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: .7rem;
       }
 
       .narrative-section {
@@ -1288,10 +1657,6 @@ html,
         border-radius: 0.3rem !important;
       }
 
-      .toggle-newrun-row {
-        display: none !important;
-      }
-
       .header-center {
         width: 100%;
         display: flex;
@@ -1299,26 +1664,6 @@ html,
         flex-wrap: wrap;
         gap: 0.5rem;
         order: 3; /* Show at bottom */
-      }
-
-      .header-center #bugReportBtn,
-      .header-center #darkModeToggle {
-        flex: 1;
-        width: auto;
-        height: auto;
-        padding: 0.5rem;
-        font-size: 1rem;
-      }
-
-      .header-center .mobile-section-toggle {
-        display: flex !important;
-        flex: 0 0 100%;
-        justify-content: center;
-        margin: 0;
-      }
-
-      .header-center .mobile-section-toggle .form-check-label {
-        font-size: 0.9rem;
       }
 
       .tabs-container {
@@ -1450,10 +1795,7 @@ html,
         width: 100%;
       }
 
-      #jsonFileInputGroup {
-        width: 100%;
-      }
-
+      #chooseTemplateBtn,
       #newRunBtn {
         width: 100%;
       }

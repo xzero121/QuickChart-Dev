@@ -1,0 +1,431 @@
+{
+  "name": "Baptist Health Floyd - Cancer Care",
+  "description": "Narrative template for Baptist Health Floyd EMS Cancer Care transports in the DCHART-M format.",
+  "localDropdownOptions": {
+    "Unit #": [
+      "Medic 5", 
+      "Medic 6", 
+      "*Medic 1", 
+      "*Medic 2", 
+      "*Medic 3", 
+      "*Medic 4", 
+      "*Medic 7", 
+      "*Medic 8", 
+      "*Medic 9", 
+      "*Medic 10", 
+      "*Medic 11", 
+      "*Medic 12", 
+      "*Medic 13", 
+      "*Medic 14", 
+      "*Medic 15",
+      "*Medic 16",
+      "*Medic 17",
+      "*Medic 18"
+    ],
+    "Provider": [
+      "*T. Anderson, Paramedic",
+      "*A. Brown, Paramedic",
+      "*D. Brown, Paramedic",
+      "*A. Gubler, Paramedic",
+      "*J. Harrison, Paramedic",
+      "*M. Kincaid, Paramedic",
+      "*C. Lefebvre, Paramedic",
+      "*V. Lemmel, Paramedic",
+      "*G. Linker, Paramedic",
+      "*M. Powers, Paramedic",
+      "*T. Spalding, Paramedic",
+      "*L. Kleinhouse, EMT-A",
+      "*A. VanTassell, EMT-A",
+      "*D. Sooter, EMT-A",
+      "*B. Brown, EMT-B",
+      "*E. Brown, EMT-B",
+      "*K. Frost, EMT-B",
+      "*V. Nguyen, EMT-B",
+      "*S. Park, EMT-B",
+      "*C. Tate, EMT-B"
+    ],
+    "Sending Facility": [
+      "Baptist Health Floyd"
+    ],
+    "Receiving Facility": [
+      "Baptist Health Cancer Care"
+    ]
+  },
+  "pages": [
+    {
+      "name": "Initial Trip",
+      "narrativeSections": [
+        {
+          "part": "D",
+          "subpart": "ispatch:",
+          "tooltip": "Dispatch and arrival information.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "[customDropdown:Unit #~unit] was dispatched to [customDropdown:Sending Facility~locA] for [text:Age~age] [customDropdown:Age Unit~ageUnit:year-old, month-old, week-old, day-old] [customDropdown:Gender~gender]."
+            },
+            {
+              "text": "The response was [customDropdown:Response Type]."
+            },
+            { "QuickSentence": "PTA Contact" },
+            { "QuickSentence": "PTA Medications" },
+            { "QuickSentence": "PTA Treatments" },
+            {
+              "text": "Upon arrival, the patient’s condition was [customDropdown:Initial Condition:stable,stable and within normal limits]."
+            },
+            {
+              "tabs": [
+                {
+                  "title": "No Immediate Intervention",
+                  "text": "No immediate intervention or additional resources were required."
+                },
+                {
+                  "title": "Immediate Intervention",
+                  "text": "Immediate intervention was required due to [text:Reason for Intervention], and included [text:Intervention]."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "part": "C",
+          "subpart": "hief Complaint:",
+          "tooltip": "Chief complaint at the time of EMS transport.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "tabs": [
+                {
+                  "title": "Complaint",
+                  "text": "The patient’s chief complaint is [text:Chief Complaint~complaint], which has been ongoing for [text:Duration~Dur] [customDropdown:Duration Units~DurUnit:minutes, hours, days, weeks, months, years]."
+                },
+                {
+                  "title": "No Complaint",
+                  "text": "The patient had no stated complaint at the time of EMS transport. [text:Additional Info]."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "part": "H",
+          "subpart": "istory of Present Illness:",
+          "tooltip": "History of present illness, including any pertinent medical history.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "The patient was recently [customDropdown:Hospitalized / Evaluated~HospEval] for [text:Reason~HPIreason]."
+            },
+            {
+              "text": "The patient’s medical history, medications, and allergies are detailed in their associated sections."
+            }
+          ]
+        },
+        {
+          "part": "A",
+          "subpart": "ssessment:",
+          "tooltip": "Assessment of the patient’s condition.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
+            },
+            {
+              "text": "Primary assessment findings, documented in the assessment section, revealed [text:Assessment Status]."
+            },
+            { "QuickSentence": "PTA IV Access" },
+            { "QuickSentence": "Ventilator" },
+            { "QuickSentence": "Skin Assessment" },
+            { "QuickSentence": "Lung Assessment" },
+            { "QuickSentence": "Vitals Assessment" },
+            {
+              "text": "Advanced Life Support (ALS) assessment was performed by [customDropdown:Provider~ALS]."
+            },
+            {
+              "text": "Basic Life Support (BLS) assessments were conducted by [customDropdown:Provider~BLS]."
+            }
+          ]
+        },
+        {
+          "part": "R",
+          "subpart": "eassessment:",
+          "tooltip": "Reassessment of the patient's condition and any interventions performed.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "The patient's vital signs, along with any performed interventions, are detailed in the flowchart section."
+            },
+            { "QuickSentence": "Transported Medications" },
+            { "QuickSentence": "Medications Administered" },
+            { "QuickSentence": "GCS" },
+            { "QuickSentence": "Ventilator" },
+            { "QuickSentence": "O2 Therapy" },
+            { "QuickSentence": "IV Placement" },
+            { "QuickSentence": "Cardiac Monitor" },
+            {
+              "tabs": [
+                {
+                  "title": "No Interventions",
+                  "text": "No additional interventions were necessary to manage the patient's condition during transport."
+                },
+                {
+                  "title": "Interventions",
+                  "text": "Additional interventions were necessary to manage the patient's condition due to [text:Additional Reason], and these included [text:Interventions]."
+                }
+              ]
+            },
+            {
+              "text": "The patient's condition [customDropdown:Patient Condition] during transport."
+            }
+          ]
+        },
+        {
+          "part": "T",
+          "subpart": "ransport:",
+          "tooltip": "Transport information, including the method of transport and any complications.",
+          "includeTitle": true,
+          "sentences": [
+        {
+          "text": "The patient was transferred to the stretcher via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], secured to stretcher with all available straps and side rails raised, and loaded into [customDropdown:Unit #~unit], without complications."
+        },
+        {
+          "text": "The patient was transported to [customDropdown:Receiving Facility~locB]."
+        },
+        {
+          "text": "Upon arrival, the patient's condition was [customDropdown:Arrival Condition:stable,stable and within normal limits]."
+        },
+        {
+          "text": "The patient was transferred to [customDropdown:Transfer of Location:Treatment Table] via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], without complications."
+        },
+        { "QuickSentence": "Belongings" }
+      ]
+        },
+        {
+          "part": "M",
+          "subpart": "edical Necessity:",
+          "tooltip": "Medical necessity for ambulance transport.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "tabs": [
+                {
+                  "title": "Necessary",
+                  "text": "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity~MedNec]."
+                },
+                {
+                  "title": "Bed Confined",
+                  "text": "The medical necessity for ambulance transport was justified because 1: Patient was bed confined before and after transport, due to [text:Bed Confined Reason~BedConf]."
+                },
+                {
+                  "title": "Not Necessary",
+                  "text": "There was no medical necessity for ambulance transport."
+                }
+              ]
+            },
+            {
+              "text": "The patient was taken to [customDropdown:Receiving Facility~locB] due to the need for [customDropdown:Reason~Reason:Cancer Treatment] that [customDropdown:Sending Facility~locA] was unable to provide."
+            }
+          ]
+        },
+        {
+          "part": "Sign Off",
+          "tooltip": "Sign off information, including the provider's name and signature.",
+          "includeTitle": false,
+          "sentences": [
+            {
+              "text": "I, [customDropdown:Provider~provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
+            }, 
+            {
+              "text": "This is the initial trip for return run number: [text:Run Number]."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Return Trip",
+      "narrativeSections": [
+        {
+          "part": "D",
+          "subpart": "ispatch:",
+          "tooltip": "Dispatch and arrival information for the return leg.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "[customDropdown:Unit #~unit] remained on scene for the duration of treatment for a [text:Age~age] [customDropdown:Age Unit~ageUnit:year-old, month-old] [customDropdown:Gender~gender]."
+            },
+            {
+              "text": "Upon completion, the patient’s condition was [customDropdown:Initial Condition:stable,stable and within normal limits]."
+            },
+            {
+              "tabs": [
+                {
+                  "title": "No Immediate Intervention",
+                  "text": "No immediate intervention or additional resources were required."
+                },
+                {
+                  "title": "Immediate Intervention",
+                  "text": "Immediate intervention was required due to [text:Reason for Intervention], and included [text:Intervention]."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "part": "C",
+          "subpart": "hief Complaint:",
+          "tooltip": "Chief complaint at the time of the return transport.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "tabs": [
+                {
+                  "title": "Unchanged",
+                  "text": "The patient’s chief complaint remains [text:Chief Complaint~complaint], unchanged from the initial transport."
+                },
+                {
+                  "title": "No Complaint",
+                  "text": "The patient had no stated complaint at the time of the return transport."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "part": "H",
+          "subpart": "istory of Present Illness:",
+          "tooltip": "History of present illness, including any pertinent medical history.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "The patient was recently [customDropdown:Hospitalized / Evaluated~HospEval] for [text:Reason~HPIreason]."
+            },
+            {
+              "text": "The patient’s medical history, medications, and allergies are detailed in their associated sections."
+            }
+          ]
+        },
+        {
+          "part": "A",
+          "subpart": "ssessment:",
+          "tooltip": "Assessment of the patient’s condition.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
+            },
+            {
+              "text": "Primary assessment findings, documented in the assessment section, revealed [text:Assessment Status]."
+            },
+            { "QuickSentence": "PTA IV Access" },
+            { "QuickSentence": "Ventilator" },
+            { "QuickSentence": "Skin Assessment" },
+            { "QuickSentence": "Lung Assessment" },
+            { "QuickSentence": "Vitals Assessment" },
+            {
+              "text": "Advanced Life Support (ALS) assessment was performed by [customDropdown:Provider~ALS]."
+            },
+            {
+              "text": "Basic Life Support (BLS) assessments were conducted by [customDropdown:Provider~BLS]."
+            }
+          ]
+        },
+        {
+          "part": "R",
+          "subpart": "eassessment:",
+          "tooltip": "Reassessment of the patient's condition and any interventions performed.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "The patient's vital signs, along with any performed interventions, are detailed in the flowchart section."
+            },
+            { "QuickSentence": "Transported Medications" },
+            { "QuickSentence": "Medications Administered" },
+            { "QuickSentence": "GCS" },
+            { "QuickSentence": "Ventilator" },
+            { "QuickSentence": "O2 Therapy" },
+            { "QuickSentence": "IV Placement" },
+            { "QuickSentence": "Cardiac Monitor" },
+            {
+              "tabs": [
+                {
+                  "title": "No Interventions",
+                  "text": "No additional interventions were necessary to manage the patient's condition during transport."
+                },
+                {
+                  "title": "Interventions",
+                  "text": "Additional interventions were necessary to manage the patient's condition due to [text:Additional Reason], and these included [text:Interventions]."
+                }
+              ]
+            },
+            {
+              "text": "The patient's condition [customDropdown:Patient Condition] during transport."
+            }
+          ]
+        },
+        {
+          "part": "T",
+          "subpart": "ransport:",
+          "tooltip": "Return transport information.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "text": "The patient was transferred to the stretcher via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], secured to stretcher with all available straps and side rails raised, and loaded into [customDropdown:Unit #~unit], without complications."
+            },
+            {
+              "text": "The patient was transported back to [customDropdown:Receiving Facility~locA]."
+            },
+            {
+              "text": "Upon arrival, the patient’s condition was [customDropdown:Arrival Condition:stable,stable and within normal limits]."
+            },
+            {
+              "text": "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], without complications."
+            },
+            {
+              "text": "A full report was provided to [text:Receiving Provider]."
+            }
+          ]
+        },
+        {
+          "part": "M",
+          "subpart": "edical Necessity:",
+          "tooltip": "Medical necessity for the return ambulance transport.",
+          "includeTitle": true,
+          "sentences": [
+            {
+              "tabs": [
+                {
+                  "title": "Necessary",
+                  "text": "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity~MedNec]."
+                },
+                {
+                  "title": "Bed Confined",
+                  "text": "The medical necessity for ambulance transport was justified because 1: Patient was bed confined before and after transport, due to [text:Bed Confined Reason~BedConf]."
+                },
+                {
+                  "title": "Not Necessary",
+                  "text": "There was no medical necessity for ambulance transport."
+                }
+              ]
+            },
+            {
+              "text": "The patient was returned to [customDropdown:Receiving Facility~locA] due to the need for [customDropdown:Reason:Inpatient Care] that [customDropdown:Sending Facility~locB] was unable to provide."
+            }
+          ]
+        },
+        {
+          "part": "Sign Off",
+          "includeTitle": false,
+          "sentences": [
+            {
+              "text": "I, [text:Provider~provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
+            },
+            {
+              "text": "This is the return trip for initial run number: [text:Run Number]."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

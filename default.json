@@ -1,4 +1,6 @@
 {
+  "name": "Baptist Health EMS",
+  "description": "Generic template for Baptist Health EMS transports in the DCHART-M format.",
   "localDropdownOptions": {
     "Unit #": [
       "Medic 1", 
