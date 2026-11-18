@@ -8,6 +8,17 @@ Versions follow `Major.Minor.Revision`:
 The entries below `2.1.7` are backfilled from git history for continuity;
 this file starts being maintained going forward from `2.1.7`.
 
+## 3.2.0 — 2026-11-18
+- Minor: **bug reports go to Project Monolith** instead of Google Forms. The
+  dialog now says "Submitted" only after the server confirms, and keeps your
+  text if sending fails. Reports are screened for patient information before
+  triage.
+- Minor: **anonymous run count**. Copying a finished narrative sends a random
+  per-browser ID, the template name and the app version. No narrative text.
+- Fix: values, labels and dropdown options are escaped before display, so
+  characters like `<` and `"` no longer break fields.
+- Privacy Policy and Terms of Use updated to match.
+
 ## 3.1.0 — 2026-09-01
 - Minor: **copy a sentence to another page**. On a multi-page run, every
   sentence *added* during the run — typed in, quick-added, or copied — gains a

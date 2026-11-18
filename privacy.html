@@ -65,7 +65,7 @@
         <p>Welcome to QuickChart. This Privacy Policy describes how QuickChart ("we," "our," or "us") handles information. We have designed this Application with a <strong>privacy-first approach</strong> specifically for the sensitive nature of EMS documentation.</p>
 
         <h4 class="mt-4 policy-header">1. Information Collection</h4>
-        <p>QuickChart does not collect, transmit, or store any information on external servers. We do not collect personally identifiable information (PII), Protected Health Information (PHI), or aggregated usage analytics. Any data you enter remains exclusively on your device, with one exception: the optional Bug Report tool (see Section 5).</p>
+        <p>QuickChart does not collect personally identifiable information (PII) or Protected Health Information (PHI). Narratives, facility lists, and patient data you enter remain exclusively on your device. Only two things are ever sent to our server (Project Monolith, operated by us): an anonymous run count (see Section 5) and the text of any bug report you choose to submit.</p>
 
         <h4 class="mt-4 policy-header">2. How Your Information is Processed</h4>
         <p>All processing of narratives, facility lists, and patient data occurs locally within your browser. Because we do not receive your data, we cannot use, see, sell, or share it with any third parties.</p>
@@ -73,7 +73,7 @@
         <h4 class="mt-4 policy-header">3. Local Browser Storage</h4>
         <p>The Application utilizes local browser storage (such as <em>localStorage</em> or <em>IndexedDB</em>) to save your settings and documentation drafts. 
         <ul>
-          <li><strong>Control:</strong> This data never leaves your device.</li>
+          <li><strong>Control:</strong> Your drafts and settings never leave your device. The anonymous device ID described in Section 5 is also kept here.</li>
           <li><strong>Deletion:</strong> Clearing your browser cache or "Site Data" will permanently delete any stored information.</li>
           <li><strong>Security:</strong> You are responsible for maintaining the physical and digital security of your device to prevent unauthorized access to this local storage.</li>
         </ul>
@@ -82,9 +82,10 @@
         <h4 class="mt-4 policy-header">4. HIPAA and Regulatory Compliance</h4>
         <p>Because QuickChart does not "create, receive, maintain, or transmit" PHI on behalf of a covered entity (it merely provides a local tool for the user to do so), QuickChart does not function as a Business Associate as defined by HIPAA. Users are responsible for ensuring their use of the Application aligns with their employer's specific data privacy and retention policies.</p>
 
-        <h4 class="mt-4 policy-header">5. Third-Party Links and Services</h4>
-        <p>This Application does not contain third-party trackers or advertisements. Any links provided within the app are for user convenience only.</p>
-        <p><strong>Bug Report Tool:</strong> The in-app Bug Report feature is the one exception to Section 1. If you choose to submit a bug report, the text you type into the report field is sent to Google Forms so we can review it; this text is sent over an encrypted (HTTPS) connection, but it is stored by Google in the associated Google Forms/Sheets response and can be read by us. <strong>Do not include patient information, PHI, or any other sensitive or identifying data in a bug report</strong> — describe only the technical issue you encountered.</p>
+        <h4 class="mt-4 policy-header">5. Usage Counts, Bug Reports, and Third Parties</h4>
+        <p>This Application does not contain third-party trackers, cookies, or advertisements, and does not fingerprint your device. Any links provided within the app are for user convenience only.</p>
+        <p><strong>Anonymous Run Count:</strong> The first time you use QuickChart, your browser generates a random ID and stores it locally. Each time you copy a finished narrative, the App sends that ID, the name of the template in use, and the App version to our server, so we can count how many runs and devices use QuickChart. No narrative text, field values, or patient information is sent, and the ID is not linked to your name or account. Clearing your browser&rsquo;s site data creates a new ID. Your network address is used only to prevent abuse and is not stored.</p>
+        <p><strong>Bug Report Tool:</strong> The in-app Bug Report feature is the one exception to Section 1. If you choose to submit a bug report, the text you type, the page address, and your browser type are sent over an encrypted (HTTPS) connection to our server, where we can read them. Reports are automatically screened for personal information; any report that appears to contain some is held for manual review. Reports that pass may be analyzed with an AI service (Anthropic&rsquo;s Claude) to help diagnose the problem. <strong>Do not include patient information, PHI, or any other sensitive or identifying data in a bug report</strong> — describe only the technical issue you encountered.</p>
 
         <h4 class="mt-4 policy-header">6. Changes to This Policy</h4>
         <p>As the Software evolves, we may update this policy to reflect changes in how local data is handled. The "Effective Date" at the top will reflect the most recent version; please check it periodically. Continued use of the Application after a change means you accept the updated policy.</p>

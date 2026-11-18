@@ -97,6 +97,7 @@
         </div>
         <div class="modal-body">
           <textarea id="bugDescription" class="form-control" rows="4" placeholder="Describe the issue..."></textarea>
+          <p class="form-text mb-0">Describe only the technical problem. Do not include patient names, dates of birth or any other patient information.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -156,7 +157,7 @@
     </div>
   </div>
 
-  <div id="versionText" class="version-text">Version: 3.1.0</div>
+  <div id="versionText" class="version-text">Version: 3.2.0</div>
 
   <script src="JS/bootstrap-bundle-5.3.8-min.js"></script>
 
@@ -4057,6 +4058,44 @@
       return processedText;
     }
 
+    // --- Project Monolith (bug reports + anonymous run counts) ---
+    // Only these leave the device: bug report text the user types, and on each
+    // finished run {device_id, template, app_version}. Never narrative text.
+    const MONOLITH_API = 'https://monolith.bbrown.access.ly/public_api.php';
+    const APP_VERSION = '3.2.0';
+
+    function getDeviceId() {
+      // A random id this browser keeps for itself, not a fingerprint.
+      // Clearing site data makes a new one.
+      try {
+        let id = localStorage.getItem('QuickChart-DeviceId');
+        if (!id || !/^[0-9a-f-]{36}$/.test(id)) {
+          id = crypto.randomUUID();
+          localStorage.setItem('QuickChart-DeviceId', id);
+        }
+        return id;
+      } catch (e) {
+        return null; // storage blocked: don't count this run
+      }
+    }
+
+    function postToMonolith(payload) {
+      return fetch(MONOLITH_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'omit',
+        cache: 'no-store'
+      });
+    }
+
+    function recordRun() {
+      const deviceId = getDeviceId();
+      if (!deviceId) return;
+      postToMonolith({ action: 'quickchart_run', device_id: deviceId, template: currentConfigName, app_version: APP_VERSION })
+        .catch(() => { }); // counting must never get in the way
+    }
+
     // --- Button Event Listeners ---
     document.getElementById("copyBtn").addEventListener("click", () => {
       const finalTextArea = document.getElementById("finalText");
@@ -4074,13 +4113,15 @@
         if (hasNextPage) {
           const nextPageName = pages[activePageIndex + 1].name || `Page ${activePageIndex + 2}`;
           showConfirmationModal("Copied to Clipboard",
-            `The narrative for this page has been copied to the clipboard.<br><br>Would you like to move on to <strong>${nextPageName}</strong>?`,
+            `The narrative for this page has been copied to the clipboard.<br><br>Would you like to move on to <strong>${escapeHtml(nextPageName)}</strong>?`,
             "<span>Paste your narrative first.</span><br>",
             () => switchPage(activePageIndex + 1),
             () => { }
           );
           return;
         }
+
+        recordRun();
 
         showConfirmationModal("Copied to Clipboard",
           "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
@@ -4751,28 +4792,26 @@
         submitBugBtn.addEventListener('click', () => {
           const desc = document.getElementById('bugDescription').value;
           if (desc.trim()) {
-            // Encode the bug description for URL
-            const encodedDescription = encodeURIComponent(desc.trim());
-
-            // Construct the Google Forms URL with the bug report
-            const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfiovEazZnz0HhEULNqjiyrbC6CyhPi0MVd7qWeJvKUTWoBIA/formResponse?submit=Submit&usp=pp_url&entry.1588653800=${encodedDescription}`;
-
-            // Open the form in a new tab
-            window.open(formUrl, '_blank');
-
-            // Clear the textarea and hide the modal
-            document.getElementById('bugDescription').value = '';
-            bugReportModal.hide();
-
-            // Show confirmation message
-            showConfirmationModal(
-              "Bug Report Submitted",
-              "Thank you for your bug report!",
-              "",
-              () => { },
-              () => { },
-              true
-            );
+            submitBugBtn.disabled = true;
+            postToMonolith({
+              action: 'quickchart_bug_report',
+              description: desc.trim(),
+              page_url: location.origin + location.pathname,
+              report_type: 'bug'
+            })
+              .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+                document.getElementById('bugDescription').value = '';
+                bugReportModal.hide();
+                showConfirmationModal("Bug Report Submitted", "Thank you for your bug report!", "", () => { }, () => { }, true);
+              })
+              .catch((err) => {
+                showConfirmationModal("Bug Report Not Sent",
+                  "Your report could not be sent: " + escapeHtml(err.message || 'network error') + ". Your text is still in the box; please try again later.",
+                  "", () => { }, () => { }, true);
+              })
+              .finally(() => { submitBugBtn.disabled = false; });
           } else {
             // Show error if description is empty
             showConfirmationModal(
