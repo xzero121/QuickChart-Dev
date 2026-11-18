@@ -3057,6 +3057,12 @@
      * `sentenceObj`/`tabIndex` are optional and only needed to resolve link tags; without
      * them the fields render exactly as they did before linking existed.
      */
+    // Escape text before inserting it into HTML markup
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     function buildInlineFields(textTemplate, valuesObject, incrementalValuesObject, sentenceObj, tabIndex) {
       if (!valuesObject) valuesObject = {}; // Ensure valuesObject is an object
       if (!incrementalValuesObject) incrementalValuesObject = {}; // For incremental sentences
@@ -3095,7 +3101,7 @@
         }
 
         // Link metadata on the field itself, so the blur/propagate path never re-parses text
-        const linkAttrs = linkable ? ` data-link-id="${linkId}" data-linked="${isLinked}"` : '';
+        const linkAttrs = linkable ? ` data-link-id="${escapeHtml(linkId)}" data-linked="${isLinked}"` : '';
         // A linked field is wrapped in a bordered chip led by the chain toggle
         const wrapOpen = linkable
           ? `<span class="linked-field${isLinked ? '' : ' unlinked'}">${linkChainButtonHtml(linkId, isLinked)}`
@@ -3116,24 +3122,24 @@
               const isHidden = opt.startsWith(HIDDEN_ITEM_MARKER);
               const displayOpt = isHidden ? opt.substring(HIDDEN_ITEM_MARKER.length) : opt;
               const hiddenAttr = isHidden ? ' data-hidden="true"' : '';
-              return `<li class="list-group-item"${hiddenAttr} title="${displayOpt}">${displayOpt}</li>`;
+              return `<li class="list-group-item"${hiddenAttr} title="${escapeHtml(displayOpt)}">${escapeHtml(displayOpt)}</li>`;
             }).join("");
             // The chain sits outside .custom-dropdown so it can't be mistaken for a suggestion click
             return `${wrapOpen}
             <div class="custom-dropdown">
-              <span contenteditable="true" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>
+              <span contenteditable="true" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${escapeHtml(label)}" data-placeholder="${escapeHtml(label)}"${linkAttrs} title="${escapeHtml(currentValue || label)}" autocomplete="off" autocapitalize="off">${escapeHtml(currentValue)}</span>
               <div class="suggestions">
                 <ul class="list-group">${listItems}</ul>
               </div>
             </div>${wrapClose}`;
           case "text":
             // Keep the original value (with \n) for the field
-            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="text" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" autocapitalize="off">${currentValue}</span>${wrapClose}`;
+            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="text" data-label="${escapeHtml(label)}" data-placeholder="${escapeHtml(label)}"${linkAttrs} title="${escapeHtml(currentValue || label)}" autocapitalize="off">${escapeHtml(currentValue)}</span>${wrapClose}`;
           case "number":
-            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="number" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" inputmode="numeric" autocapitalize="off">${currentValue}</span>${wrapClose}`;
+            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="number" data-label="${escapeHtml(label)}" data-placeholder="${escapeHtml(label)}"${linkAttrs} title="${escapeHtml(currentValue || label)}" inputmode="numeric" autocapitalize="off">${escapeHtml(currentValue)}</span>${wrapClose}`;
           case "dropdown":
             console.warn(`Standard 'dropdown' type encountered for [${label}]. Consider using 'customDropdown' for richer features or ensure specific handling is implemented if needed.`);
-            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="dropdown" data-label="${label}" data-placeholder="${label}"${linkAttrs} title="${currentValue || label}" autocomplete="off" autocapitalize="off">${currentValue}</span>${wrapClose}`;
+            return `${wrapOpen}<span contenteditable="true" class="inline-field" data-type="dropdown" data-label="${escapeHtml(label)}" data-placeholder="${escapeHtml(label)}"${linkAttrs} title="${escapeHtml(currentValue || label)}" autocomplete="off" autocapitalize="off">${escapeHtml(currentValue)}</span>${wrapClose}`;
           default:
             console.warn(`Unknown placeholder type: ${type} for label: ${label}`);
             return match;
